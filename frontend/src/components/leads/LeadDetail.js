@@ -146,7 +146,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                 <DetailItem label="Status" value={lead.status} badge />
                 <DetailItem label="Priority" value={lead.priority} badge color={lead.priority === 'URGENT' ? 'red' : 'blue'} />
                 <DetailItem label="Source" value={lead.source || "Not specified"} />
-                <DetailItem label="Assigned To" value={lead.assignedTo ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}` : "Unassigned"} />
+                <DetailItem label="Assigned To" value={lead.assignedTo ? `${lead.assignedTo.name}` : "Unassigned"} />
                 {lead.followUpDate && (
                     <DetailItem label="Follow-up Date" value={new Date(lead.followUpDate).toLocaleDateString()} icon={<HiCalendar />} />
                 )}
@@ -254,7 +254,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                     </p>
                                     <span className="text-xs text-gray-300">•</span>
                                     <p className="text-xs font-semibold text-gray-600">
-                                        {activity.user ? `${activity.user.firstName} ${activity.user.lastName}` : 'System'}
+                                        {activity.user ? `${activity.user.name}` : 'System'}
                                     </p>
                                 </div>
                             </div>
@@ -281,7 +281,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                 <div>
                                     <p className="text-sm text-gray-600">{activity.description}</p>
                                     <p className="text-xs text-green-600 mt-0.5">
-                                        {new Date(activity.createdAt).toLocaleString()} • <span className="font-semibold text-blue-500">{activity.user ? `${activity.user.firstName} ${activity.user.lastName}` : 'System'}</span>
+                                        {new Date(activity.createdAt).toLocaleString()} • <span className="font-semibold text-blue-500">{activity.user ? `${activity.user.name}` : 'System'}</span>
                                     </p>
                                 </div>
                             </div>

@@ -123,7 +123,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
   }, [initialData, reset, users]);
 
   const userOptions = users.map(u => ({
-    label: `${u.firstName} ${u.lastName} (${u.role})`,
+    label: `${u.name} (${u.role})`,
     value: u.id
   }));
 

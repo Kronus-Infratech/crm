@@ -121,16 +121,14 @@ const getLeadById = async (req, res, next) => {
         createdBy: {
           select: {
             id: true,
-            firstName: true,
-            lastName: true,
+            name: true,
             email: true,
           },
         },
         assignedTo: {
           select: {
             id: true,
-            firstName: true,
-            lastName: true,
+            name: true,
             email: true,
           },
         },
