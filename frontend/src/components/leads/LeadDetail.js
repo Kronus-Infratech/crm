@@ -8,24 +8,39 @@ import { HiMail, HiPhone, HiOfficeBuilding, HiCalendar, HiCurrencyDollar } from 
 export default function LeadDetail({ lead: initialLead }) {
     const [lead, setLead] = useState(initialLead);
     const [loadingActivities, setLoadingActivities] = useState(true);
+    const [newNote, setNewNote] = useState("");
+    const [savingNote, setSavingNote] = useState(false);
+
+    const fetchFullDetails = async () => {
+        if (!initialLead?.id) return;
+        try {
+            // Fetch full details to get activities
+            const response = await api.get(`/leads/${initialLead.id}`);
+            setLead(response.data.data);
+        } catch (error) {
+            console.error("Failed to fetch lead details", error);
+        } finally {
+            setLoadingActivities(false);
+        }
+    };
 
     useEffect(() => {
-        if (!initialLead?.id) return;
-
-        const fetchFullDetails = async () => {
-            try {
-                // Fetch full details to get activities
-                const response = await api.get(`/leads/${initialLead.id}`);
-                setLead(response.data.data);
-            } catch (error) {
-                console.error("Failed to fetch lead details", error);
-            } finally {
-                setLoadingActivities(false);
-            }
-        };
-
         fetchFullDetails();
     }, [initialLead]);
+
+    const handleAddNote = async () => {
+        if (!newNote.trim()) return;
+        setSavingNote(true);
+        try {
+            await api.put(`/leads/${lead.id}`, { activityNote: newNote });
+            setNewNote("");
+            fetchFullDetails(); // Refresh activities
+        } catch (error) {
+            console.error("Failed to add note", error);
+        } finally {
+            setSavingNote(false);
+        }
+    };
 
     if (!lead) return null;
 
@@ -36,9 +51,9 @@ export default function LeadDetail({ lead: initialLead }) {
                 <div>
                     <Heading level={2} className="text-3xl! mb-1">{lead.firstName} {lead.lastName}</Heading>
                     <div className="flex items-center gap-4 text-gray-500">
-                        {lead.company && (
+                        {lead.property && (
                             <div className="flex items-center gap-1">
-                                <HiOfficeBuilding /> {lead.company}
+                                <HiOfficeBuilding /> {lead.property}
                             </div>
                         )}
                         <div className="flex items-center gap-1">
@@ -64,38 +79,81 @@ export default function LeadDetail({ lead: initialLead }) {
                 <DetailItem label="Assigned To" value={lead.assignedTo ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}` : "Unassigned"} />
             </div>
 
-            {/* Notes / Description */}
-            {lead.notes && (
-                <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
-                    <h4 className="font-bold text-gray-900 mb-2">Notes</h4>
-                    <p className="text-gray-700 whitespace-pre-wrap">{lead.notes}</p>
+            {/* Add Note Section */}
+            <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+                <h4 className="font-bold text-gray-900 mb-4">Add Note</h4>
+                <div className="flex gap-2">
+                    <input 
+                        type="text" 
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        placeholder="Type a note about this lead..."
+                        className="flex-1 text-black px-2 rounded-lg bg-white border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary"
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
+                    />
+                    <button 
+                        onClick={handleAddNote}
+                        disabled={savingNote || !newNote.trim()}
+                        className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 disabled:opacity-50 font-medium"
+                    >
+                        {savingNote ? 'Saving...' : 'Add Note'}
+                    </button>
                 </div>
-            )}
+            </div>
 
-            {/* Recent Activity */}
-            <div>
-                <h4 className="font-bold text-gray-900 mb-4 border-b pb-2">Recent Activity</h4>
-                {loadingActivities ? (
-                    <div className="flex items-center gap-2 text-gray-500 italic">
-                        <div className="w-4 h-4 border-2 border-gray-300 border-t-brand-primary rounded-full animate-spin"></div>
-                        Loading activities...
-                    </div>
-                ) : lead.activities && lead.activities.length > 0 ? (
+            {/* Filtered Notes History */}
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span className="bg-yellow-100 text-yellow-800 p-1 rounded-md text-xs">NOTE</span> Notes History
+                </h4>
+                {lead.activities && lead.activities.filter(a => a.title === 'Note Added').length > 0 ? (
                     <div className="space-y-4">
-                        {lead.activities.map((activity) => (
-                            <div key={activity.id} className="flex gap-3">
-                                <div className="w-2 h-2 mt-1.5 rounded-full bg-brand-primary shrink-0" />
-                                <div>
-                                    <p className="text-sm text-gray-900">{activity.description}</p>
-                                    <p className="text-xs text-gray-500 mt-1">
+                        {lead.activities.filter(a => a.title === 'Note Added').map((activity) => (
+                            <div key={activity.id} className="p-3 bg-yellow-50/50 rounded-lg border border-yellow-100">
+                                <p className="text-gray-800 whitespace-pre-wrap font-medium">
+                                    {activity.description}
+                                </p>
+                                <div className="flex gap-2 items-center mt-2">
+                                    <p className="text-xs text-gray-500">
                                         {new Date(activity.createdAt).toLocaleString()}
+                                    </p>
+                                    <span className="text-xs text-gray-300">•</span>
+                                    <p className="text-xs font-semibold text-gray-600">
+                                        {activity.user ? `${activity.user.firstName} ${activity.user.lastName}` : 'System'}
                                     </p>
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <p className="text-gray-500 italic">No recent activities recorded.</p>
+                    <p className="text-gray-400 italic text-sm">No notes added yet.</p>
+                )}
+            </div>
+
+            {/* Recent Activity (Excluding Notes) */}
+            <div>
+                <h4 className="font-bold text-gray-900 mb-4 border-b pb-2">System Activity Log</h4>
+                {loadingActivities ? (
+                    <div className="flex items-center gap-2 text-gray-500 italic">
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-brand-primary rounded-full animate-spin"></div>
+                        Loading activities...
+                    </div>
+                ) : lead.activities && lead.activities.filter(a => a.title !== 'Note Added').length > 0 ? (
+                    <div className="space-y-4">
+                        {lead.activities.filter(a => a.title !== 'Note Added').map((activity) => (
+                            <div key={activity.id} className="flex gap-3">
+                                <div className="w-2 h-2 mt-1.5 rounded-full bg-gray-300 shrink-0" />
+                                <div>
+                                    <p className="text-sm text-gray-600">{activity.description}</p>
+                                    <p className="text-xs text-green-600 mt-0.5">
+                                        {new Date(activity.createdAt).toLocaleString()} • <span className="font-semibold text-blue-500">{activity.user ? `${activity.user.firstName} ${activity.user.lastName}` : 'System'}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-gray-500 italic">No system activities recorded.</p>
                 )}
             </div>
         </div>

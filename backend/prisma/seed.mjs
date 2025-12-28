@@ -50,11 +50,11 @@ async function main() {
     const assignedTo = faker.helpers.arrayElement(users);
 
     return {
-      firstName: `test${index + 1}`, // 👈 changed
+      firstName: `test${index + 1}`,
       lastName: faker.person.lastName(),
       email: faker.internet.email(),
-      phone: faker.phone.number('##########'),
-      company: faker.company.name(),
+      phone: String(faker.number.int({ min: 6000000000, max: 9999999999 })),
+      property: faker.location.streetAddress(),
       position: faker.person.jobTitle(),
       source: randomEnum(leadSources),
       status: randomEnum(leadStatuses),

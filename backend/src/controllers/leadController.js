@@ -32,7 +32,7 @@ const getLeads = async (req, res, next) => {
           { firstName: { contains: search, mode: 'insensitive' } },
           { lastName: { contains: search, mode: 'insensitive' } },
           { email: { contains: search, mode: 'insensitive' } },
-          { company: { contains: search, mode: 'insensitive' } },
+          { property: { contains: search, mode: 'insensitive' } },
           { phone: { contains: search, mode: 'insensitive' } },
         ],
       }),
@@ -193,7 +193,7 @@ const createLead = async (req, res, next) => {
       lastName,
       email,
       phone,
-      company,
+      property,
       position,
       source,
       status,
@@ -228,7 +228,7 @@ const createLead = async (req, res, next) => {
         lastName,
         email,
         phone,
-        company: company || null,
+        property: property || null,
         position: position || null,
         source: source || 'WEBSITE',
         status: status || 'NEW',
@@ -292,7 +292,8 @@ const createLead = async (req, res, next) => {
 const updateLead = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    // EXTRACT activityNote so it is NOT passed to Prisma
+    const { activityNote, ...updateData } = req.body;
 
     // Check if lead exists
     const existingLead = await prisma.lead.findUnique({
@@ -319,8 +320,32 @@ const updateLead = async (req, res, next) => {
       });
     }
 
+    // Generate detailed logs by comparing changes
+    const changes = [];
+
+    // List of fields to track for activity log
+    const trackedFields = {
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      email: 'Email',
+      phone: 'Phone',
+      status: 'Status',
+      priority: 'Priority',
+      estimatedValue: 'Value',
+      property: 'Property'
+    };
+
+    Object.keys(updateData).forEach(key => {
+      if (trackedFields[key] && updateData[key] !== existingLead[key] && updateData[key] !== undefined) {
+        // Handle potential nulls for display
+        const oldVal = existingLead[key] || 'Empty';
+        const newVal = updateData[key];
+        changes.push(`${trackedFields[key]} changed from "${oldVal}" to "${newVal}"`);
+      }
+    });
+
     // If assignedToId is being updated, verify the user exists
-    if (updateData.assignedToId) {
+    if (updateData.assignedToId && updateData.assignedToId !== existingLead.assignedToId) {
       const assignedUser = await prisma.user.findUnique({
         where: { id: updateData.assignedToId },
       });
@@ -331,12 +356,13 @@ const updateLead = async (req, res, next) => {
           message: 'Assigned user not found',
         });
       }
+      changes.push(`Assigned to ${assignedUser.firstName} ${assignedUser.lastName}`);
     }
 
-    // Update lead
+    // Update lead in Database
     const lead = await prisma.lead.update({
       where: { id },
-      data: updateData,
+      data: updateData, // This now excludes activityNote
       include: {
         createdBy: {
           select: {
@@ -357,16 +383,31 @@ const updateLead = async (req, res, next) => {
       },
     });
 
-    // Create activity for lead update
-    await prisma.activity.create({
-      data: {
-        type: 'NOTE',
-        title: 'Lead Updated',
-        description: `Lead updated by ${req.user.firstName} ${req.user.lastName}`,
-        userId: req.user.id,
-        leadId: lead.id,
-      },
-    });
+    // Create activity for SYSTEM changes (excluding manual notes)
+    if (changes.length > 0) {
+      await prisma.activity.create({
+        data: {
+          type: 'NOTE',
+          title: 'Lead Updated',
+          description: changes.join(', '),
+          userId: req.user.id,
+          leadId: lead.id,
+        },
+      });
+    }
+
+    // Create SEPARATE activity for USER NOTE (if provided)
+    if (activityNote) {
+      await prisma.activity.create({
+        data: {
+          type: 'NOTE',
+          title: 'Note Added', // Specific title for notes
+          description: activityNote,
+          userId: req.user.id,
+          leadId: lead.id,
+        },
+      });
+    }
 
     res.status(HTTP_STATUS.OK).json({
       success: true,

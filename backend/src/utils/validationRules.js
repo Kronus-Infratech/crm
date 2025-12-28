@@ -6,7 +6,13 @@ const { body, param, query } = require('express-validator');
 const registerValidation = [
   body('email')
     .isEmail()
-    .withMessage('Please provide a valid email address'),
+    .withMessage('Please provide a valid email address')
+    .custom((value) => {
+      if (!value.endsWith('@kronusinfra.org')) {
+        throw new Error('Registration is restricted to @kronusinfra.org email addresses');
+      }
+      return true;
+    }),
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
@@ -113,7 +119,7 @@ const createLeadValidation = [
     .withMessage('Phone number is required')
     .matches(/^\+?[\d\s\-()]+$/)
     .withMessage('Please provide a valid phone number'),
-  body('company')
+  body('property')
     .optional()
     .trim(),
   body('position')

@@ -41,7 +41,7 @@ model Lead {
   lastName        String
   email           String
   phone           String
-  company         String?
+  property        String?
   position        String?
   source          LeadSource  @default(WEBSITE)
   status          LeadStatus  @default(NEW)

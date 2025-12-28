@@ -27,7 +27,7 @@ export default function RecentLeads({ leads }) {
                     <thead>
                         <tr className="border-b border-gray-100 text-gray-500">
                             <th className="pb-3 font-medium">Name</th>
-                            <th className="pb-3 font-medium">Company</th>
+                            <th className="pb-3 font-medium">Property</th>
                             <th className="pb-3 font-medium">Status</th>
                             <th className="pb-3 font-medium text-right">Value</th>
                         </tr>
@@ -38,7 +38,7 @@ export default function RecentLeads({ leads }) {
                                 <td className="py-3 font-medium text-gray-900">
                                     {lead.firstName} {lead.lastName}
                                 </td>
-                                <td className="py-3 text-gray-600">{lead.company || "-"}</td>
+                                <td className="py-3 text-gray-600">{lead.property || "-"}</td>
                                 <td className="py-3">
                                     <StatusBadge status={lead.status} />
                                 </td>
