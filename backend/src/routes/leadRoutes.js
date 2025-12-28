@@ -8,6 +8,7 @@ const {
   deleteLead,
   getLeadStats,
   assignLead,
+  deleteDocument,
 } = require('../controllers/leadController');
 const { protect, authorize } = require('../middleware/auth');
 const { ROLES } = require('../config/constants');
@@ -26,5 +27,8 @@ router.delete('/:id', protect, authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN), idVali
 
 // Lead assignment (Admin and Manager only)
 router.put('/:id/assign', protect, authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.MANAGER), idValidation, validate, assignLead);
+
+// Document deletion
+router.delete('/documents/:id', protect, idValidation, validate, deleteDocument);
 
 module.exports = router;

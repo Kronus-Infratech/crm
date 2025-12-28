@@ -56,7 +56,7 @@ export default function LeadsPage() {
     const handleCloseLead = async (status) => {
         if (!closingLead) return;
         try {
-            await api.put(`/leads/${closingLead.id}`, { 
+            await api.put(`/leads/${closingLead.id}`, {
                 status,
                 activityNote: closeReason ? `Closed as ${status}. Reason: ${closeReason}` : `Closed as ${status}`
             });
@@ -78,7 +78,7 @@ export default function LeadsPage() {
     const confirmReopenLead = async () => {
         if (!reopeningLead || !reopenReason.trim()) return;
         try {
-            await api.put(`/leads/${reopeningLead.id}`, { 
+            await api.put(`/leads/${reopeningLead.id}`, {
                 status: "NEW", // Default to NEW when reopening
                 activityNote: `Lead Reopened. Reason: ${reopenReason}`
             });
@@ -158,7 +158,7 @@ export default function LeadsPage() {
     };
 
     const SortIcon = ({ field }) => {
-        if (sortBy !== field) return <span className="w-4 inline-block">-</span>; 
+        if (sortBy !== field) return <span className="w-4 inline-block">-</span>;
         return sortOrder === "asc" ? <span className="inline-block ml-1">▲</span> : <span className="inline-block ml-1">▼</span>;
     };
 
@@ -286,7 +286,7 @@ export default function LeadsPage() {
                                         </td>
                                         <td className="px-4 py-4 text-right flex justify-end gap-2">
                                             {isLeadClosed(lead.status) ? (
-                                                 <Button
+                                                <Button
                                                     variant="primary"
                                                     size="xs"
                                                     className="bg-green-500 text-white hover:bg-green-600 px-2 py-1 text-xs"
@@ -390,7 +390,14 @@ export default function LeadsPage() {
                   Pass a key to force re-mounting when selectedLead changes, 
                   ensuring fresh state and eliminating duplicate calls from old instances 
                 */}
-                <LeadDetail key={selectedLead?.id} lead={selectedLead} />
+                <LeadDetail
+                    key={selectedLead?.id}
+                    lead={selectedLead}
+                    onLeadDeleted={() => {
+                        setSelectedLead(null);
+                        fetchLeads();
+                    }}
+                />
                 <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
                     <Button variant="outline" onClick={() => setSelectedLead(null)}>Close</Button>
                     <Button
@@ -418,7 +425,7 @@ export default function LeadsPage() {
                     <p className="text-gray-600">
                         Please select the final status for this lead. You can optionally provide a reason or note.
                     </p>
-                    
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Reason / Note (Optional)</label>
                         <textarea
@@ -430,13 +437,13 @@ export default function LeadsPage() {
                     </div>
 
                     <div className="flex gap-3 justify-end pt-2">
-                        <Button 
+                        <Button
                             className="bg-red-500 text-white hover:bg-red-700 border-red-700"
                             onClick={() => handleCloseLead('LOST')}
                         >
                             Mark as LOST
                         </Button>
-                        <Button 
+                        <Button
                             className="bg-green-600 text-white hover:bg-green-700 focus:ring-green-500"
                             onClick={() => handleCloseLead('WON')}
                         >
@@ -459,7 +466,7 @@ export default function LeadsPage() {
                     <p className="text-gray-600">
                         Are you sure you want to reopen this lead? Please provide a reason.
                     </p>
-                    
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Reason (Required)</label>
                         <textarea
@@ -474,7 +481,7 @@ export default function LeadsPage() {
                         <Button variant="outline" onClick={() => setReopeningLead(null)}>
                             Cancel
                         </Button>
-                        <Button 
+                        <Button
                             className="bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={confirmReopenLead}
                             disabled={!reopenReason.trim()}

@@ -149,6 +149,7 @@ const getLeadById = async (req, res, next) => {
             },
           },
         },
+        documents: true, // Fetch attached documents
       },
     });
 
@@ -206,6 +207,7 @@ const createLead = async (req, res, next) => {
       country,
       zipCode,
       assignedToId,
+      documents = [] // Expecting array of { name, url, type, size }
     } = req.body;
 
     // If assignedToId is provided, verify the user exists
@@ -242,6 +244,14 @@ const createLead = async (req, res, next) => {
         zipCode: zipCode || null,
         createdById: req.user.id,
         assignedToId: assignedToId || null,
+        documents: {
+          create: documents.map(doc => ({
+            name: doc.name,
+            url: doc.url,
+            type: doc.type,
+            size: doc.size
+          }))
+        }
       },
       include: {
         createdBy: {
@@ -292,8 +302,8 @@ const createLead = async (req, res, next) => {
 const updateLead = async (req, res, next) => {
   try {
     const { id } = req.params;
-    // EXTRACT activityNote so it is NOT passed to Prisma
-    const { activityNote, ...updateData } = req.body;
+    // EXTRACT activityNote and documents so they are NOT passed to Prisma update directly
+    const { activityNote, documents, ...updateData } = req.body;
 
     // Check if lead exists
     const existingLead = await prisma.lead.findUnique({
@@ -382,6 +392,23 @@ const updateLead = async (req, res, next) => {
         },
       },
     });
+
+    // Create documents if provided (for adding attachments to existing leads)
+    if (documents && Array.isArray(documents) && documents.length > 0) {
+      await prisma.document.createMany({
+        data: documents.map(doc => ({
+          name: doc.name,
+          url: doc.url,
+          type: doc.type,
+          size: doc.size,
+          leadId: lead.id
+        }))
+      });
+
+      // Add to activity log (BEFORE creating the activity)
+      const fileNames = documents.map(d => d.name).join(', ');
+      changes.push(`Added ${documents.length} attachment(s): ${fileNames}`);
+    }
 
     // Create activity for SYSTEM changes (excluding manual notes)
     if (changes.length > 0) {
@@ -604,6 +631,68 @@ const assignLead = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Delete document
+ * @route   DELETE /api/documents/:id
+ * @access  Private
+ */
+const deleteDocument = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Check if document exists
+    const document = await prisma.document.findUnique({
+      where: { id },
+      include: {
+        lead: true
+      }
+    });
+
+    if (!document) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: 'Document not found',
+      });
+    }
+
+    // Check access permission
+    if (
+      req.user.role !== ROLES.SUPER_ADMIN &&
+      req.user.role !== ROLES.ADMIN &&
+      document.lead.createdById !== req.user.id &&
+      document.lead.assignedToId !== req.user.id
+    ) {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        success: false,
+        message: 'You do not have permission to delete this document',
+      });
+    }
+
+    // Delete document from database
+    await prisma.document.delete({
+      where: { id },
+    });
+
+    // Log the deletion
+    await prisma.activity.create({
+      data: {
+        type: 'NOTE',
+        title: 'Lead Updated',
+        description: `Deleted attachment: ${document.name}`,
+        userId: req.user.id,
+        leadId: document.leadId,
+      },
+    });
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: 'Document deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getLeads,
   getLeadById,
@@ -612,4 +701,5 @@ module.exports = {
   deleteLead,
   getLeadStats,
   assignLead,
+  deleteDocument,
 };

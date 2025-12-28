@@ -8,6 +8,8 @@ import Input from "@/src/components/ui/Input";
 import Select from "@/src/components/ui/Select";
 import Button from "@/src/components/ui/Button";
 import api from "@/src/services/api";
+import { toast } from "react-hot-toast";
+import { uploadFile } from "@/src/services/supabase";
 
 const schema = z.object({
   firstName: z.string().min(1, "First Name is required"),
@@ -23,6 +25,44 @@ const schema = z.object({
 
 export default function LeadForm({ initialData, onSubmit, loading }) {
   const [users, setUsers] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileSelect = (e) => {
+      if (e.target.files) {
+          const newFiles = Array.from(e.target.files);
+          // TODO: Add size validation if needed here (e.g. max 5MB)
+          setSelectedFiles((prev) => [...prev, ...newFiles]);
+      }
+  };
+
+  const removeFile = (index) => {
+      setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleFormSubmit = async (data) => {
+      try {
+          let documents = [];
+
+          if (selectedFiles.length > 0) {
+              setUploading(true);
+              const uploadPromises = selectedFiles.map(file => uploadFile(file));
+              documents = await Promise.all(uploadPromises);
+              setUploading(false);
+          }
+          
+          // Pass documents to the parent onSubmit handler
+          await onSubmit({ ...data, documents });
+          
+          // Clear files on success
+          setSelectedFiles([]);
+          
+      } catch (error) {
+          console.error("Upload failed", error);
+          setUploading(false);
+          toast.error("Failed to upload files. Please try again.");
+      }
+  };
 
   const {
     register,
@@ -85,7 +125,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
   }));
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
           label="First Name"
@@ -166,9 +206,60 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         />
       </div>
 
+      <div className="grid grid-cols-1 gap-4">
+        <label className="block text-sm font-medium text-gray-700">Attachments (PDF / Images)</label>
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-brand-primary transition-colors cursor-pointer relative bg-gray-50">
+           <input 
+              type="file" 
+              multiple 
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              onChange={handleFileSelect}
+              accept="image/*,.pdf"
+            />
+            <div className="text-gray-500">
+                <span className="text-brand-primary font-medium">Click to upload</span> or drag and drop
+                <p className="text-xs mt-1">PDF, PNG, JPG up to 5MB</p>
+            </div>
+        </div>
+        
+        {/* File List */}
+        {selectedFiles.length > 0 && (
+            <div className="space-y-2 mt-2">
+                {selectedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                         <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded text-gray-500 text-xs font-bold">
+                                {file.name.split('.').pop().toUpperCase()}
+                            </div>
+                            <div className="truncate">
+                                <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{file.name}</p>
+                                <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(0)} KB</p>
+                            </div>
+                         </div>
+                         <button 
+                            type="button"
+                            onClick={() => removeFile(index)} 
+                            className="text-red-500 hover:text-red-700 text-sm font-medium"
+                         >
+                            Remove
+                         </button>
+                    </div>
+                ))}
+            </div>
+        )}
+
+         {/* Uploading Status */}
+         {uploading && (
+             <div className="text-sm text-brand-primary flex items-center gap-2">
+                 <div className="w-4 h-4 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+                 Uploading files...
+             </div>
+         )}
+      </div>
+
       <div className="flex justify-end gap-3 pt-4">
-        <Button type="submit" disabled={loading}>
-          {loading ? "Saving..." : initialData ? "Update Lead" : "Create Lead"}
+        <Button type="submit" disabled={loading || uploading}>
+          {loading || uploading ? "Processing..." : initialData ? "Update Lead" : "Create Lead"}
         </Button>
       </div>
     </form>

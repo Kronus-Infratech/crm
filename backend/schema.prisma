@@ -60,6 +60,7 @@ model Lead {
   assignedToId    String?     @db.ObjectId
   assignedTo      User?       @relation("LeadAssignee", fields: [assignedToId], references: [id])
   activities      Activity[]
+  documents       Document[]
   
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -142,4 +143,19 @@ model SystemLog {
   timestamp DateTime @default(now())
   
   @@map("system_logs")
+}
+
+model Document {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  url       String
+  type      String   // "PDF", "IMAGE"
+  size      Int?     // in bytes
+  
+  leadId    String   @db.ObjectId
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  
+  createdAt DateTime @default(now())
+  
+  @@map("documents")
 }
