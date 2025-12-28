@@ -42,38 +42,42 @@ const errorHandler = async (err, req, res, next) => {
     error.message = Object.values(err.errors).map(e => e.message).join(', ');
     error.statusCode = HTTP_STATUS.UNPROCESSABLE_ENTITY;
   }
-  
+
   // Set default status code if not set
   if (!error.statusCode) {
-      error.statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR;
+    error.statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR;
   }
 
   // Handle Internal Server Errors (500)
   if (error.statusCode === HTTP_STATUS.INTERNAL_SERVER_ERROR) {
-      // Log to database
-      try {
-        await prisma.systemLog.create({
-            data: {
-                level: 'ERROR',
-                message: err.message || 'Unknown Error',
-                stack: err.stack,
-                path: req.originalUrl,
-                method: req.method,
-                userId: req.user ? req.user.id : null
-            }
-        });
-      } catch (logErr) {
-          console.error("Failed to log error to DB:", logErr);
-      }
+    // Log to database
+    try {
+      await prisma.systemLog.create({
+        data: {
+          level: 'ERROR',
+          message: err.message || 'Unknown Error',
+          stack: err.stack,
+          path: req.originalUrl,
+          method: req.method,
+          userId: req.user ? req.user.id : null
+        }
+      });
+    } catch (logErr) {
+      console.error("Failed to log error to DB:", logErr);
+    }
 
-      // Hide details from user
-      error.message = "This is an Internal Error. Please contact your Developers.";
+    // Hide details from user
+    error.message = "This is an Internal Error. Please contact your Developers.";
   }
 
   res.status(error.statusCode).json({
     success: false,
     message: error.message || 'Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    ...(process.env.NODE_ENV === 'development' && { 
+        stack: err.stack,
+        prismaCode: err.code,
+        prismaMeta: err.meta
+    }),
   });
 };
 
@@ -96,7 +100,7 @@ const handlePrismaError = (err) => {
       // Invalid relation
       return 'Invalid relation data';
     default:
-      return 'Database operation failed';
+      return err.message || 'Database operation failed';
   }
 };
 

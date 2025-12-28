@@ -472,7 +472,13 @@ const deleteLead = async (req, res, next) => {
       });
     }
 
-    // Delete lead and related activities (cascade)
+    // Explicitly delete related records first to avoid constraint issues in MongoDB if Prisma cascade fails
+    await Promise.all([
+        prisma.activity.deleteMany({ where: { leadId: id } }),
+        prisma.document.deleteMany({ where: { leadId: id } })
+    ]);
+
+    // Finally delete the lead
     await prisma.lead.delete({
       where: { id },
     });
@@ -482,6 +488,7 @@ const deleteLead = async (req, res, next) => {
       message: 'Lead deleted successfully',
     });
   } catch (error) {
+    console.error('Lead deletion failed:', error);
     next(error);
   }
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HiUserGroup, HiCurrencyDollar, HiChartPie, HiLightningBolt } from "react-icons/hi";
+import { HiUserGroup, HiCurrencyRupee, HiChartPie, HiLightningBolt } from "react-icons/hi";
 import { motion } from "framer-motion";
 import api from "@/src/services/api";
 import Heading from "@/src/components/ui/Heading";
@@ -79,7 +79,7 @@ export default function DashboardPage() {
     {
       label: "Pipeline Value",
       value: `₹${stats.pipelineValue.toLocaleString()}`,
-      icon: <HiCurrencyDollar />,
+      icon: <HiCurrencyRupee />,
       color: "text-green-600",
       bg: "bg-green-50"
     },

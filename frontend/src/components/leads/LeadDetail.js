@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import api from "@/src/services/api";
 import Heading from "@/src/components/ui/Heading";
-import { 
-    HiMail, HiPhone, HiCalendar, HiCurrencyDollar, HiLocationMarker, 
+import {
+    HiMail, HiPhone, HiCalendar, HiCurrencyRupee, HiLocationMarker,
     HiUserCircle, HiTag, HiClock, HiPaperClip, HiTrash, HiX, HiExternalLink,
     HiIdentification, HiChartBar, HiDownload
 } from "react-icons/hi";
@@ -158,13 +158,13 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Left Column: Core Info & Timeline */}
                 <div className="lg:col-span-8 space-y-8">
-                    
+
                     {/* Key Metrics Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-linear-to-br from-indigo-500 to-indigo-600 p-5 rounded-2xl text-white shadow-lg shadow-indigo-100">
                             <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">Deal Value</p>
                             <div className="flex items-center gap-2">
-                                <HiCurrencyDollar size={24} className="text-indigo-200" />
+                                <HiCurrencyRupee size={24} className="text-indigo-200" />
                                 <span className="text-2xl font-black">₹{(lead.value || 0).toLocaleString()}</span>
                             </div>
                         </div>
@@ -229,11 +229,11 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                     <div className="space-y-6">
                         {/* Timeline Header */}
                         <div className="flex items-center justify-between mb-2">
-                             <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                                 <HiClock className="text-indigo-500" size={20} />
                                 <h3 className="text-lg font-bold text-gray-900">Activity Timeline</h3>
-                             </div>
-                             <span className="text-xs font-bold text-gray-400 uppercase">Latest 10 Interactions</span>
+                            </div>
+                            <span className="text-xs font-bold text-gray-400 uppercase">Latest 10 Interactions</span>
                         </div>
 
                         {/* Add Note Input Area */}
@@ -267,7 +267,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                     <div key={activity.id} className="relative">
                                         {/* Dot */}
                                         <div className={`absolute -left-[29px] top-1.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ring-4 ring-white ${activity.title !== 'Note Added' ? 'bg-indigo-500' : 'bg-amber-500'}`} />
-                                        
+
                                         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                                             <div className="flex items-center justify-between mb-2">
                                                 <p className="text-xs font-black uppercase tracking-wider text-indigo-600">{activity.title}</p>
@@ -297,7 +297,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
 
                 {/* Right Column: Sidebar */}
                 <div className="lg:col-span-4 space-y-6">
-                    
+
                     {/* Assignment Block */}
                     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                         <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
@@ -333,7 +333,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                 {lead.documents?.length || 0}
                             </span>
                         </div>
-                        
+
                         <div className="space-y-3">
                             {lead.documents && lead.documents.length > 0 ? (
                                 lead.documents.map((doc) => (
@@ -351,7 +351,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                                 <p className="text-[10px] font-medium text-gray-400 uppercase">{(doc.size / 1024).toFixed(0)} KB</p>
                                             </div>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => setDeletingDoc(doc)}
                                             className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1.5 transition-all"
                                         >
@@ -375,9 +375,9 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
             {previewImage && (
                 <div className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center p-6 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
                     <div className="relative max-w-5xl w-full flex flex-col items-center gap-6" onClick={e => e.stopPropagation()}>
-                        <button onClick={() => setPreviewImage(null)} className="absolute -top-12 right-0 text-white/50 hover:text-white transition-colors"><HiX size={32}/></button>
+                        <button onClick={() => setPreviewImage(null)} className="absolute -top-12 right-0 text-white/50 hover:text-white transition-colors"><HiX size={32} /></button>
                         <div className="bg-white p-2 rounded-2xl shadow-2xl overflow-hidden max-h-[70vh] flex">
-                             <img src={previewImage.url} alt={previewImage.name} className="object-contain max-h-full" />
+                            <img src={previewImage.url} alt={previewImage.name} className="object-contain max-h-full" />
                         </div>
                         <div className="flex items-center justify-between w-full max-w-2xl bg-white/10 p-5 rounded-2xl backdrop-blur-md border border-white/10 text-white">
                             <div>
@@ -423,7 +423,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                             You are about to permanently delete <span className="font-bold text-gray-900">{lead.name}</span>. This will destroy all associated records, activities, and documents.
                         </p>
                         <div className="bg-red-50 p-4 rounded-2xl mb-8 border border-red-100">
-                             <p className="text-red-700 text-xs font-bold border-l-4 border-red-500 pl-3">This action is irreversible and will be logged.</p>
+                            <p className="text-red-700 text-xs font-bold border-l-4 border-red-500 pl-3">This action is irreversible and will be logged.</p>
                         </div>
                         <div className="flex gap-4">
                             <button onClick={() => setDeletingLead(false)} className="flex-1 py-4 font-bold text-gray-500 hover:bg-gray-50 rounded-2xl transition-all">Go Back</button>
