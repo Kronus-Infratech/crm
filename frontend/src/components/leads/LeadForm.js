@@ -10,6 +10,7 @@ import Button from "@/src/components/ui/Button";
 import api from "@/src/services/api";
 import { toast } from "react-hot-toast";
 import { uploadFile } from "@/src/services/supabase";
+import { HiCloudUpload, HiX, HiDocumentText, HiPhotograph } from "react-icons/hi";
 
 const schema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
@@ -32,37 +33,12 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
   const handleFileSelect = (e) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      // TODO: Add size validation if needed here (e.g. max 5MB)
       setSelectedFiles((prev) => [...prev, ...newFiles]);
     }
   };
 
   const removeFile = (index) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleFormSubmit = async (data) => {
-    try {
-      let documents = [];
-
-      if (selectedFiles.length > 0) {
-        setUploading(true);
-        const uploadPromises = selectedFiles.map(file => uploadFile(file));
-        documents = await Promise.all(uploadPromises);
-        setUploading(false);
-      }
-
-      // Pass documents to the parent onSubmit handler
-      await onSubmit({ ...data, documents });
-
-      // Clear files on success
-      setSelectedFiles([]);
-
-    } catch (error) {
-      console.error("Upload failed", error);
-      setUploading(false);
-      toast.error("Failed to upload files. Please try again.");
-    }
   };
 
   const {
@@ -82,11 +58,30 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
     }
   });
 
+  const handleFormSubmit = async (data) => {
+    try {
+      let documents = [];
+
+      if (selectedFiles.length > 0) {
+        setUploading(true);
+        const uploadPromises = selectedFiles.map(file => uploadFile(file));
+        documents = await Promise.all(uploadPromises);
+        setUploading(false);
+      }
+
+      await onSubmit({ ...data, documents });
+      setSelectedFiles([]);
+    } catch (error) {
+      console.error("Upload failed", error);
+      setUploading(false);
+      toast.error("Failed to upload files. Please try again.");
+    }
+  };
+
   useEffect(() => {
-    // Fetch users for assignment dropdown
     const fetchUsers = async () => {
       try {
-        const res = await api.get('/users?limit=100'); // Simple fetch for dropdown
+        const res = await api.get('/users?limit=100');
         if (res.data.success) {
           setUsers(res.data.data.users);
         }
@@ -98,7 +93,6 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
   }, []);
 
   useEffect(() => {
-    // Determine the assignedToId value
     let assignedId = "";
     if (initialData) {
       assignedId = initialData.assignedTo?.id || initialData.assignedToId || "";
@@ -107,11 +101,11 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
     if (initialData) {
       const formData = {
         ...initialData,
-        assignedToId: assignedId
+        assignedToId: assignedId,
+        followUpDate: initialData.followUpDate ? new Date(initialData.followUpDate).toISOString().split('T')[0] : ""
       };
       reset(formData);
     } else {
-      // Reset to defaults for Create mode
       reset({
         status: "NEW",
         priority: "MEDIUM",
@@ -120,7 +114,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         assignedToId: ""
       });
     }
-  }, [initialData, reset, users]);
+  }, [initialData, reset]);
 
   const userOptions = users.map(u => ({
     label: `${u.name} (${u.roles[0]})`,
@@ -128,160 +122,185 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
   }));
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Full Name"
-          placeholder="John Doe"
-          error={errors.name?.message}
-          {...register("name")}
-        />
-        <Input
-          label="Phone"
-          placeholder="+91 98765 43210"
-          error={errors.phone?.message}
-          {...register("phone")}
-        />
-      </div>
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 text-black p-1">
+      {/* Contact Info Group */}
+      <section className="space-y-4">
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">Lead Information</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Input
+            label="Customer Name"
+            placeholder="e.g. Rahul Sharma"
+            className="text-black!"
+            error={errors.name?.message}
+            {...register("name")}
+            />
+            <Input
+            label="Contact Number"
+            placeholder="+91 99999 00000"
+            className="text-black!"
+            error={errors.phone?.message}
+            {...register("phone")}
+            />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Email (Optional)"
-          type="email"
-          placeholder="john@example.com"
-          error={errors.email?.message}
-          {...register("email")}
-        />
-        <Input
-          label="Property Name/Area"
-          placeholder="Green Valley Plot 4B"
-          error={errors.property?.message}
-          {...register("property")}
-        />
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Input
+            label="Email Address"
+            type="email"
+            placeholder="rahul@example.com"
+            className="text-black!"
+            error={errors.email?.message}
+            {...register("email")}
+            />
+            <Input
+            label="Interested Property"
+            placeholder="e.g. Kronus Heights, 3BHK"
+            className="text-black!"
+            error={errors.property?.message}
+            {...register("property")}
+            />
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Select
-          label="Source"
-          options={[
-            { label: "Website", value: "WEBSITE" },
-            { label: "Referral", value: "REFERRAL" },
-            { label: "Instagram", value: "INSTAGRAM" },
-            { label: "YouTube", value: "YOUTUBE" },
-            { label: "Email", value: "EMAIL" },
-            { label: "WhatsApp", value: "WHATSAPP" },
-            { label: "99Acres", value: "NINETY_NINE_ACRES" },
-            { label: "MagicBricks", value: "MAGICBRICKS" },
-            { label: "OLX", value: "OLX" },
-            { label: "Cold Outreach", value: "COLD_OUTREACH" },
-          ]}
-          error={errors.source?.message}
-          {...register("source")}
-        />
-        <Select
-          label="Status"
-          options={[
-            { label: "New", value: "NEW" },
-            { label: "Contacted", value: "CONTACTED" },
-            { label: "Interested", value: "INTERESTED" },
-            { label: "Not Interested", value: "NOT_INTERESTED" },
-            { label: "Site Visit", value: "SITE_VISIT" },
-            { label: "Negotiation", value: "NEGOTIATION" },
-            { label: "Documentation", value: "DOCUMENTATION" },
-            { label: "Won", value: "WON" },
-            { label: "Lost", value: "LOST" },
-          ]}
-          error={errors.status?.message}
-          {...register("status")}
-        />
-        <Select
-          label="Priority"
-          options={[
-            { label: "Low", value: "LOW" },
-            { label: "Medium", value: "MEDIUM" },
-            { label: "High", value: "HIGH" },
-            { label: "Urgent", value: "URGENT" },
-          ]}
-          error={errors.priority?.message}
-          {...register("priority")}
-        />
-      </div>
+      {/* Business Details Group */}
+      <section className="space-y-4 pt-2">
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">Deal Metrics</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <Select
+            label="Source"
+            className="text-black!"
+            options={[
+                { label: "Website", value: "WEBSITE" },
+                { label: "Referral", value: "REFERRAL" },
+                { label: "Instagram", value: "INSTAGRAM" },
+                { label: "YouTube", value: "YOUTUBE" },
+                { label: "WhatsApp", value: "WHATSAPP" },
+                { label: "99Acres", value: "NINETY_NINE_ACRES" },
+                { label: "MagicBricks", value: "MAGICBRICKS" },
+                { label: "OLX", value: "OLX" },
+                { label: "Cold Outreach", value: "COLD_OUTREACH" },
+            ]}
+            error={errors.source?.message}
+            {...register("source")}
+            />
+            <Select
+            label="Pipeline Status"
+            className="text-black!"
+            options={[
+                { label: "New Lead", value: "NEW" },
+                { label: "Contacted", value: "CONTACTED" },
+                { label: "Interested", value: "INTERESTED" },
+                { label: "Site Visit Scheduled", value: "SITE_VISIT" },
+                { label: "Negotiation", value: "NEGOTIATION" },
+                { label: "Documentation", value: "DOCUMENTATION" },
+                { label: "Closed Won", value: "WON" },
+                { label: "Closed Lost", value: "LOST" },
+            ]}
+            error={errors.status?.message}
+            {...register("status")}
+            />
+            <Select
+            label="Priority Level"
+            className="text-black!"
+            options={[
+                { label: "Low", value: "LOW" },
+                { label: "Medium", value: "MEDIUM" },
+                { label: "High", value: "HIGH" },
+                { label: "Urgent", value: "URGENT" },
+            ]}
+            error={errors.priority?.message}
+            {...register("priority")}
+            />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Input
-          label="Value (₹)"
-          type="number"
-          error={errors.value?.message}
-          {...register("value", { valueAsNumber: true })}
-        />
-        <Input
-          label="Follow-up Date (Optional)"
-          type="date"
-          error={errors.followUpDate?.message}
-          {...register("followUpDate")}
-        />
-        <Select
-          label="Assign To"
-          options={userOptions}
-          error={errors.assignedToId?.message}
-          {...register("assignedToId")}
-        />
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <Input
+            label="Property Value (₹)"
+            type="number"
+            className="text-black!"
+            error={errors.value?.message}
+            {...register("value", { valueAsNumber: true })}
+            />
+            <Input
+            label="Next Follow-up"
+            type="date"
+            className="text-black!"
+            error={errors.followUpDate?.message}
+            {...register("followUpDate")}
+            />
+            <Select
+            label="Assign Agent"
+            className="text-black!"
+            options={[{ label: "Unassigned", value: "" }, ...userOptions]}
+            error={errors.assignedToId?.message}
+            {...register("assignedToId")}
+            />
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 gap-4">
-        <label className="block text-sm font-medium text-gray-700">Attachments (PDF / Images)</label>
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-brand-primary transition-colors cursor-pointer relative bg-gray-50">
+      {/* Attachments Section */}
+      <section className="space-y-4 pt-2">
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">Project Documents</h4>
+        <div className="relative group border-2 border-dashed border-gray-100 rounded-2xl p-8 text-center hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer overflow-hidden">
           <input
             type="file"
             multiple
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             onChange={handleFileSelect}
             accept="image/*,.pdf"
           />
-          <div className="text-gray-500">
-            <span className="text-brand-primary font-medium">Click to upload</span> or drag and drop
-            <p className="text-xs mt-1">PDF, PNG, JPG up to 5MB</p>
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
+                <HiCloudUpload size={28} />
+            </div>
+            <div>
+                <p className="text-sm font-bold text-gray-900">Upload property documents</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Images or PDF up to 10MB each</p>
+            </div>
           </div>
         </div>
 
-        {/* File List */}
+        {/* Selected Files Preview */}
         {selectedFiles.length > 0 && (
-          <div className="space-y-2 mt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
             {selectedFiles.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+              <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl shadow-sm group">
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded text-gray-500 text-xs font-bold">
-                    {file.name.split('.').pop().toUpperCase()}
+                  <div className="w-10 h-10 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-lg text-xs font-black">
+                    {file.type.includes('image') ? <HiPhotograph size={20}/> : <HiDocumentText size={20}/>}
                   </div>
                   <div className="truncate">
-                    <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{file.name}</p>
-                    <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(0)} KB</p>
+                    <p className="text-xs font-bold text-gray-900 truncate max-w-[120px]">{file.name}</p>
+                    <p className="text-[10px] font-bold text-gray-400">{(file.size / 1024).toFixed(0)} KB</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeFile(index)}
-                  className="text-red-500 hover:text-red-700 text-sm font-medium"
+                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                 >
-                  Remove
+                  <HiX size={18} />
                 </button>
               </div>
             ))}
           </div>
         )}
 
-        {/* Uploading Status */}
         {uploading && (
-          <div className="text-sm text-brand-primary flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
-            Uploading files...
+          <div className="flex items-center justify-center gap-2 py-4 text-indigo-600 animate-pulse">
+            <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs font-black uppercase tracking-widest">Encrypting & Uploading...</span>
           </div>
         )}
-      </div>
+      </section>
 
-      <div className="flex justify-end gap-3 pt-4">
-        <Button type="submit" disabled={loading || uploading}>
-          {loading || uploading ? "Processing..." : initialData ? "Update Lead" : "Create Lead"}
+      <div className="flex justify-end gap-3 pt-6 border-t border-gray-50">
+        <Button 
+            type="submit" 
+            disabled={loading || uploading}
+            className="bg-indigo-600! hover:bg-indigo-700! px-10! py-4! text-base font-black shadow-xl shadow-indigo-100 rounded-2xl!"
+        >
+          {loading || uploading ? "Processing..." : initialData ? "Save Changes" : "Create Folder"}
         </Button>
       </div>
     </form>
