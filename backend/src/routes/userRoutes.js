@@ -24,10 +24,10 @@ const {
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfileValidation, validate, updateProfile);
 
-// User management routes (accessible by Admin and Manager)
-router.get('/stats', protect, authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.DIRECTOR), getUserStats);
-router.get('/', protect, authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.DIRECTOR), getUsers);
-router.get('/:id', protect, authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.DIRECTOR), idValidation, validate, getUserById);
+// User management routes (accessible by all internal roles for assignment/stats)
+router.get('/stats', protect, authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.DIRECTOR, ROLES.EXECUTIVE, ROLES.SALESMAN), getUserStats);
+router.get('/', protect, authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.DIRECTOR, ROLES.EXECUTIVE, ROLES.SALESMAN), getUsers);
+router.get('/:id', protect, authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.DIRECTOR, ROLES.EXECUTIVE, ROLES.SALESMAN), idValidation, validate, getUserById);
 
 // Admin-only routes
 router.post('/', protect, authorize(ROLES.ADMIN), createUserValidation, validate, createUser);

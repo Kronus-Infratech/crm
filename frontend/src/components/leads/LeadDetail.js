@@ -91,7 +91,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
         }
     };
 
-    const isAdmin = user && (user.roles || []).includes('ADMIN');
+    const isAdmin = user && (user.roles || []).includes('ADMIN') || (user.roles || []).includes('EXECUTIVE') || (user.roles || []).includes('DIRECTOR');
 
     if (!lead) return null;
 
@@ -119,12 +119,12 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-3 mb-1">
                         <Heading level={2} className="text-3xl! font-extrabold tracking-tight text-gray-900">{lead.name}</Heading>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${priorityColors[lead.priority] || 'bg-gray-100 text-gray-700'}`}>
+                        <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${priorityColors[lead.priority] || 'bg-gray-100 text-gray-700'}`}>
                             {lead.priority} Priority
                         </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-gray-500 text-sm">
-                        <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-md">
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-200 rounded-lg">
                             <HiTag className="text-gray-400" />
                             <span className={`font-semibold ${statusColors[lead.status]?.split(' ')[1] || 'text-gray-700'}`}>{lead.status}</span>
                         </div>
@@ -145,7 +145,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                     {isAdmin && (
                         <button
                             onClick={() => setDeletingLead(true)}
-                            className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
+                            className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
                             title="Delete Lead"
                         >
                             <HiTrash size={22} />
@@ -161,14 +161,14 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
 
                     {/* Key Metrics Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-linear-to-br from-indigo-500 to-indigo-600 p-5 rounded-2xl text-white shadow-lg shadow-indigo-100">
+                        <div className="bg-linear-to-br from-indigo-500 to-indigo-600 p-5 rounded-lg text-white shadow-lg shadow-indigo-100">
                             <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">Deal Value</p>
                             <div className="flex items-center gap-2">
                                 <HiCurrencyRupee size={24} className="text-indigo-200" />
                                 <span className="text-2xl font-black">₹{(lead.value || 0).toLocaleString()}</span>
                             </div>
                         </div>
-                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
                             <div>
                                 <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Property Interest</p>
                                 <div className="flex items-center gap-2 text-gray-900">
@@ -177,7 +177,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
                             {lead.followUpDate && (
                                 <div className="text-right">
                                     <p className="text-gray-400 text-[10px] font-bold uppercase mb-1">Next Follow-up</p>
@@ -190,14 +190,14 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                     </div>
 
                     {/* Contact Information */}
-                    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                    <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
                         <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-100 flex items-center gap-2">
                             <HiIdentification className="text-indigo-500" />
                             <h3 className="font-bold text-gray-900">Contact Details</h3>
                         </div>
                         <div className="grid grid-cols-1">
                             <div className="p-6 flex items-center gap-4 group">
-                                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-110 transition-transform">
+                                <div className="p-3 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
                                     <HiPhone size={20} />
                                 </div>
                                 <div>
@@ -208,7 +208,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                 </div>
                             </div>
                             <div className="p-6 flex items-center gap-4 group">
-                                <div className="p-3 bg-purple-50 text-purple-600 rounded-xl group-hover:scale-110 transition-transform">
+                                <div className="p-3 bg-purple-50 text-purple-600 rounded-lg group-hover:scale-110 transition-transform">
                                     <HiMail size={20} />
                                 </div>
                                 <div>
@@ -242,13 +242,13 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                 value={newNote}
                                 onChange={(e) => setNewNote(e.target.value)}
                                 placeholder="Write an update or call summary..."
-                                className="w-full h-24 p-4 pb-12 text-black rounded-2xl border-2 border-gray-100 focus:border-indigo-500 focus:ring-0 transition-all text-sm resize-none bg-gray-50/30"
+                                className="w-full h-24 p-4 pb-12 text-black rounded-lg border-2 border-gray-100 focus:border-indigo-500 focus:ring-0 transition-all text-sm resize-none bg-gray-50/30"
                             />
                             <div className="absolute bottom-3 right-3">
                                 <button
                                     onClick={handleAddNote}
                                     disabled={savingNote || !newNote.trim()}
-                                    className="px-5 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 font-bold text-sm shadow-md shadow-indigo-100 transition-all active:scale-95"
+                                    className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-bold text-sm shadow-md shadow-indigo-100 transition-all active:scale-95"
                                 >
                                     {savingNote ? 'Posting...' : 'Post Note'}
                                 </button>
@@ -268,7 +268,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                         {/* Dot */}
                                         <div className={`absolute -left-[29px] top-1.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ring-4 ring-white ${activity.title !== 'Note Added' ? 'bg-indigo-500' : 'bg-amber-500'}`} />
 
-                                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                                             <div className="flex items-center justify-between mb-2">
                                                 <p className="text-xs font-black uppercase tracking-wider text-indigo-600">{activity.title}</p>
                                                 <p className="text-[10px] font-bold text-gray-400">{new Date(activity.createdAt).toLocaleString(undefined, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}</p>
@@ -286,7 +286,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                     </div>
                                 ))
                             ) : (
-                                <div className="py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-gray-400">
+                                <div className="py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-gray-400">
                                     <HiClock size={32} className="mb-2 opacity-20" />
                                     <p className="text-sm font-bold">No activity history yet.</p>
                                 </div>
@@ -299,7 +299,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                 <div className="lg:col-span-4 space-y-6">
 
                     {/* Assignment Block */}
-                    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                         <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
                             <HiUserCircle className="text-indigo-500" size={20} />
                             Responsibility
@@ -323,7 +323,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                     </div>
 
                     {/* Attachments Sidebar */}
-                    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                         <div className="flex items-center justify-between mb-5">
                             <h3 className="font-bold text-gray-900 flex items-center gap-2">
                                 <HiPaperClip className="text-indigo-500" size={20} />
@@ -360,7 +360,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                     </div>
                                 ))
                             ) : (
-                                <div className="py-8 text-center bg-gray-50 border-2 border-dashed border-gray-100 rounded-xl">
+                                <div className="py-8 text-center bg-gray-50 border-2 border-dashed border-gray-100 rounded-lg">
                                     <HiPaperClip size={24} className="mx-auto text-gray-300 mb-2" />
                                     <p className="text-[10px] font-bold text-gray-400 uppercase">No file attachments</p>
                                 </div>
@@ -376,10 +376,10 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                 <div className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center p-6 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
                     <div className="relative max-w-5xl w-full flex flex-col items-center gap-6" onClick={e => e.stopPropagation()}>
                         <button onClick={() => setPreviewImage(null)} className="absolute -top-12 right-0 text-white/50 hover:text-white transition-colors"><HiX size={32} /></button>
-                        <div className="bg-white p-2 rounded-2xl shadow-2xl overflow-hidden max-h-[70vh] flex">
+                        <div className="bg-white p-2 rounded-lg shadow-2xl overflow-hidden max-h-[70vh] flex">
                             <img src={previewImage.url} alt={previewImage.name} className="object-contain max-h-full" />
                         </div>
-                        <div className="flex items-center justify-between w-full max-w-2xl bg-white/10 p-5 rounded-2xl backdrop-blur-md border border-white/10 text-white">
+                        <div className="flex items-center justify-between w-full max-w-2xl bg-white/10 p-5 rounded-lg backdrop-blur-md border border-white/10 text-white">
                             <div>
                                 <p className="font-bold text-lg">{previewImage.name}</p>
                                 <p className="text-sm text-white/60">Uploaded on {new Date(previewImage.createdAt).toLocaleDateString()}</p>
@@ -396,7 +396,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
             {deletingDoc && (
                 <div className="fixed inset-0 bg-black/40 z-70 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setDeletingDoc(null)}>
                     <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
-                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-lg flex items-center justify-center mb-6 mx-auto">
                             <HiTrash size={32} />
                         </div>
                         <h3 className="text-xl font-black text-gray-900 text-center mb-2">Remove Attachment?</h3>
@@ -404,8 +404,8 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                             Deleting <span className="font-bold text-gray-900">{deletingDoc.name}</span> will remove it permanently from this lead record.
                         </p>
                         <div className="flex gap-4">
-                            <button onClick={() => setDeletingDoc(null)} className="flex-1 py-4 font-bold text-gray-500 hover:bg-gray-50 rounded-2xl transition-all">Cancel</button>
-                            <button onClick={confirmDeleteDocument} className="flex-1 py-4 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 shadow-lg shadow-red-100 transition-all active:scale-95">Yes, Delete</button>
+                            <button onClick={() => setDeletingDoc(null)} className="flex-1 py-4 font-bold text-gray-500 hover:bg-gray-50 rounded-lg transition-all">Cancel</button>
+                            <button onClick={confirmDeleteDocument} className="flex-1 py-4 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 shadow-lg shadow-red-100 transition-all active:scale-95">Yes, Delete</button>
                         </div>
                     </div>
                 </div>
@@ -414,20 +414,20 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
             {/* Confirm Delete Lead */}
             {deletingLead && (
                 <div className="fixed inset-0 bg-black/60 z-70 flex items-center justify-center p-4 backdrop-blur-md" onClick={() => setDeletingLead(false)}>
-                    <div className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-                        <div className="w-20 h-20 bg-red-100 text-red-600 rounded-3xl flex items-center justify-center mb-8 mx-auto ring-8 ring-red-50">
+                    <div className="bg-white rounded-lg p-10 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="w-20 h-20 bg-red-100 text-red-600 rounded-lg flex items-center justify-center mb-8 mx-auto ring-8 ring-red-50">
                             <HiTrash size={40} />
                         </div>
-                        <h3 className="text-2xl font-black text-gray-900 text-center mb-4">Delete Lead Folder?</h3>
+                        <h3 className="text-2xl font-black text-gray-900 text-center mb-4">Delete Lead?</h3>
                         <p className="text-gray-500 text-center mb-6 leading-relaxed">
                             You are about to permanently delete <span className="font-bold text-gray-900">{lead.name}</span>. This will destroy all associated records, activities, and documents.
                         </p>
-                        <div className="bg-red-50 p-4 rounded-2xl mb-8 border border-red-100">
+                        <div className="bg-red-50 p-4 rounded-lg mb-8 border border-red-100">
                             <p className="text-red-700 text-xs font-bold border-l-4 border-red-500 pl-3">This action is irreversible and will be logged.</p>
                         </div>
                         <div className="flex gap-4">
-                            <button onClick={() => setDeletingLead(false)} className="flex-1 py-4 font-bold text-gray-500 hover:bg-gray-50 rounded-2xl transition-all">Go Back</button>
-                            <button onClick={confirmDeleteLead} className="flex-1 py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 shadow-xl shadow-red-200 transition-all animate-pulse">Confirm Delete</button>
+                            <button onClick={() => setDeletingLead(false)} className="flex-1 py-4 font-bold text-gray-500 hover:bg-gray-50 rounded-lg transition-all">Go Back</button>
+                            <button onClick={confirmDeleteLead} className="flex-1 py-4 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 shadow-xl shadow-red-200 transition-all animate-pulse">Confirm Delete</button>
                         </div>
                     </div>
                 </div>

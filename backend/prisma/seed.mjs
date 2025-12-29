@@ -20,6 +20,11 @@ async function main() {
   console.log('🌱 Seeding leads with email notifications...');
 
   const users = await prisma.user.findMany({
+    where:{
+      email: {
+        contains: "satyarth@kronusinfra.org"
+      }
+    },
     select: { id: true, name: true, email: true },
   });
 
@@ -62,12 +67,12 @@ async function main() {
     });
 
     // Send email to assignee
-    try {
-      await sendLeadAssignmentEmail(assignedTo.email, assignedTo.name, lead.name, lead.id);
-      console.log(`📧 Notification sent to ${assignedTo.name} for lead: ${lead.name}`);
-    } catch (error) {
-      console.error(`❌ Failed to send email to ${assignedTo.name}:`, error.message);
-    }
+    // try {
+    //   await sendLeadAssignmentEmail(assignedTo.email, assignedTo.name, lead.name, lead.id);
+    //   console.log(`📧 Notification sent to ${assignedTo.name} for lead: ${lead.name}`);
+    // } catch (error) {
+    //   console.error(`❌ Failed to send email to ${assignedTo.name}:`, error.message);
+    // }
   }
 
   console.log(`✅ Seeded ${LEAD_COUNT} leads with notifications`);

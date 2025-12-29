@@ -13,7 +13,7 @@ export default function EmployeePerformance({ data }) {
             <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Agent Performance Matrix</h3>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Tracking real-time conversion and loss efficiency</p>
         </div>
-        <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">Team Analytics</span>
+        <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100">Team Analytics</span>
       </div>
 
       <div className="grid grid-cols-1 gap-4">

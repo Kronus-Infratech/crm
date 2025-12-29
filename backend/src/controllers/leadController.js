@@ -568,6 +568,15 @@ const getLeadStats = async (req, res, next) => {
     let monthlyTrends = [];
     let valueBreakdown = { won: 0, lost: 0, pipeline: 0 };
 
+    const allLeadsPromise = prisma.lead.findMany({
+      where,
+      select: {
+        status: true,
+        value: true,
+        createdAt: true,
+      }
+    });
+
     if (isManager) {
       const [users, allLeads] = await Promise.all([
         prisma.user.findMany({
@@ -587,17 +596,10 @@ const getLeadStats = async (req, res, next) => {
             }
           }
         }),
-        prisma.lead.findMany({
-          where,
-          select: {
-            status: true,
-            value: true,
-            createdAt: true,
-          }
-        })
+        allLeadsPromise
       ]);
 
-      // Calculate Performance per User
+      // Calculate Performance per User (Team Metrics)
       performance = users.map(user => {
         const totalAssigned = user.assignedLeads.length;
         const wonLeads = user.assignedLeads.filter(l => l.status === 'WON').length;
@@ -619,32 +621,16 @@ const getLeadStats = async (req, res, next) => {
         };
       }).sort((a, b) => b.totalLeads - a.totalLeads);
 
-      // Calculate Monthly Trends (Last 6 Months)
-      const months = [];
-      for (let i = 5; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        months.push(date.toLocaleString('default', { month: 'short' }));
-      }
-
-      const trendMap = months.reduce((acc, month) => {
-        acc[month] = 0;
-        return acc;
-      }, {});
-
-      allLeads.forEach(lead => {
-        const month = new Date(lead.createdAt).toLocaleString('default', { month: 'short' });
-        if (trendMap[month] !== undefined) {
-          trendMap[month]++;
-        }
-
-        // Value Breakdown
-        if (lead.status === 'WON') valueBreakdown.won += (lead.value || 0);
-        else if (lead.status === 'LOST') valueBreakdown.lost += (lead.value || 0);
-        else valueBreakdown.pipeline += (lead.value || 0);
-      });
-
-      monthlyTrends = Object.entries(trendMap).map(([month, count]) => ({ month, count }));
+      // Process Trends and Breakdown for the leads in scope
+      const { trends, breakdown } = processLeadAnalytics(allLeads);
+      monthlyTrends = trends;
+      valueBreakdown = breakdown;
+    } else {
+      // For Salesmen, just trends and breakdown for their own leads
+      const allLeads = await allLeadsPromise;
+      const { trends, breakdown } = processLeadAnalytics(allLeads);
+      monthlyTrends = trends;
+      valueBreakdown = breakdown;
     }
 
     res.status(HTTP_STATUS.OK).json({
@@ -657,12 +643,45 @@ const getLeadStats = async (req, res, next) => {
         leadsBySource: sourceStats,
         performance: performance.length > 0 ? performance : undefined,
         monthlyTrends: monthlyTrends.length > 0 ? monthlyTrends : undefined,
-        valueBreakdown: isManager ? valueBreakdown : undefined
+        valueBreakdown: valueBreakdown
       },
     });
   } catch (error) {
     next(error);
   }
+};
+
+// Helper to process analytics from a lead list
+const processLeadAnalytics = (leads) => {
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    months.push(date.toLocaleString('default', { month: 'short' }));
+  }
+
+  const trendMap = months.reduce((acc, month) => {
+    acc[month] = 0;
+    return acc;
+  }, {});
+
+  const breakdown = { won: 0, lost: 0, pipeline: 0 };
+
+  leads.forEach(lead => {
+    const month = new Date(lead.createdAt).toLocaleString('default', { month: 'short' });
+    if (trendMap[month] !== undefined) {
+      trendMap[month]++;
+    }
+
+    // Value Breakdown
+    if (lead.status === 'WON') breakdown.won += (lead.value || 0);
+    else if (lead.status === 'LOST') breakdown.lost += (lead.value || 0);
+    else breakdown.pipeline += (lead.value || 0);
+  });
+
+  const trends = Object.entries(trendMap).map(([month, count]) => ({ month, count }));
+  
+  return { trends, breakdown };
 };
 
 /**

@@ -241,7 +241,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
       {/* Attachments Section */}
       <section className="space-y-4 pt-2">
         <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">Project Documents</h4>
-        <div className="relative group border-2 border-dashed border-gray-100 rounded-2xl p-8 text-center hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer overflow-hidden">
+        <div className="relative group border-2 border-dashed border-gray-100 rounded-lg p-8 text-center hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer overflow-hidden">
           <input
             type="file"
             multiple
@@ -250,7 +250,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
             accept="image/*,.pdf"
           />
           <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 bg-white rounded-lg shadow-sm flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
                 <HiCloudUpload size={28} />
             </div>
             <div>
@@ -264,7 +264,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         {selectedFiles.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
             {selectedFiles.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl shadow-sm group">
+              <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm group">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <div className="w-10 h-10 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-lg text-xs font-black">
                     {file.type.includes('image') ? <HiPhotograph size={20}/> : <HiDocumentText size={20}/>}
@@ -298,9 +298,9 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         <Button 
             type="submit" 
             disabled={loading || uploading}
-            className="bg-indigo-600! hover:bg-indigo-700! px-10! py-4! text-base font-black shadow-xl shadow-indigo-100 rounded-2xl!"
+            className="bg-indigo-600! hover:bg-indigo-700! px-10! py-4! text-base font-black shadow-xl shadow-indigo-100 rounded-lg!"
         >
-          {loading || uploading ? "Processing..." : initialData ? "Save Changes" : "Create Folder"}
+          {loading || uploading ? "Processing..." : initialData ? "Save Changes" : "Create Lead"}
         </Button>
       </div>
     </form>

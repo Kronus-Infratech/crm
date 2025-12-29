@@ -35,15 +35,19 @@ export default function DashboardPage() {
 
     const fetchDashboardData = async () => {
       try {
-        const [userStatsRes, leadStatsRes, recentLeadsRes] = await Promise.all([
-          api.get("/users/stats"),
+        const userRoles = JSON.parse(Cookies.get("user") || "{}").roles || [];
+        const isManager = userRoles.includes('ADMIN') || userRoles.includes('MANAGER') || userRoles.includes('DIRECTOR') || userRoles.includes('EXECUTIVE');
+
+        // Fetch stats concurrently with safety
+        const [userStatsRes, leadStatsRes, recentLeadsRes] = await Promise.allSettled([
+          isManager ? api.get("/users/stats") : Promise.resolve({ data: { data: { activeUsers: 0 } } }),
           api.get("/leads/stats"),
           api.get("/leads", { params: { limit: 5, sortOrder: "desc", sortBy: "createdAt" } })
         ]);
 
-        const userStats = userStatsRes.data.data;
-        const leadStats = leadStatsRes.data.data;
-        const recentLeadsData = recentLeadsRes.data.data.leads;
+        const userStats = userStatsRes.status === 'fulfilled' ? userStatsRes.value.data.data : { activeUsers: 0 };
+        const leadStats = leadStatsRes.status === 'fulfilled' ? leadStatsRes.value.data.data : { totalLeads: 0, totalValue: 0, leadsByStatus: {}, leadsBySource: {}, performance: [], monthlyTrends: [], valueBreakdown: { won: 0, lost: 0, pipeline: 0 } };
+        const recentLeadsData = recentLeadsRes.status === 'fulfilled' ? recentLeadsRes.value.data.data.leads : [];
 
         const wonLeads = leadStats.leadsByStatus?.WON || 0;
         const totalLeads = leadStats.totalLeads || 1;
