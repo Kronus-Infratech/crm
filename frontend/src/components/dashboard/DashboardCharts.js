@@ -183,25 +183,44 @@ export function PerformanceRadar({ performanceData }) {
         return <div className="h-64 flex items-center justify-center text-gray-400 text-sm italic">No performance data</div>;
     }
 
-    // Slice to top 3-4 performers for clarity
     const topPerformers = performanceData.slice(0, 3);
+    const metricsConfig = [
+        { key: 'closeRate', label: 'Close Rate', format: (val) => `${val}%` },
+        { key: 'efficiency', label: 'Efficiency', getValue: (u) => 100 - parseFloat(u.loseRate), format: (val) => `${val}%` },
+        { key: 'pipelineValue', label: 'Pipeline Val', format: (val) => `₹${val.toLocaleString()}` },
+        { key: 'totalLeads', label: 'Total Leads', format: (val) => val },
+        { key: 'wonLeads', label: 'Won Leads', format: (val) => val },
+    ];
+
+    // 1. Extract raw metrics and calculate stats per metric
+    const stats = metricsConfig.map(metric => {
+        const values = topPerformers.map(u => metric.getValue ? metric.getValue(u) : parseFloat(u[metric.key]));
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        const stdDev = Math.sqrt(values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length) || 1;
+        return { ...metric, mean, stdDev, rawValues: values };
+    });
+
+    // 2. Build datasets with Z-score scaling (Target: 50 center, 15 scale)
+    const datasets = topPerformers.map((user, uIdx) => ({
+        label: user.name,
+        data: stats.map((s, sIdx) => {
+            const raw = s.rawValues[uIdx];
+            // Z-score formula: (x - μ) / σ
+            // Scaling to 0-100 range: 50 + (z * 15)
+            const z = (raw - s.mean) / s.stdDev;
+            return Math.max(10, Math.min(95, 50 + (z * 15)));
+        }),
+        backgroundColor: COLORS[uIdx].replace('0.8', '0.2'),
+        borderColor: COLORS[uIdx],
+        borderWidth: 2,
+        pointBackgroundColor: COLORS[uIdx],
+        // Attach raw values for tooltip access
+        rawValues: stats.map(s => s.rawValues[uIdx]),
+    }));
 
     const chartData = {
-        labels: ['Close Rate', 'Efficiency', 'Pipeline Value', 'Total Leads', 'Won Leads'],
-        datasets: topPerformers.map((user, idx) => ({
-            label: user.name,
-            data: [
-                parseFloat(user.closeRate),
-                100 - parseFloat(user.loseRate), // High efficiency if lose rate is low
-                (user.pipelineValue / 1000000) * 10, // Normalized for radar
-                (user.totalLeads / 50) * 100, // Normalized
-                (user.wonLeads / 20) * 100, // Normalized
-            ],
-            backgroundColor: COLORS[idx].replace('0.8', '0.2'),
-            borderColor: COLORS[idx],
-            borderWidth: 2,
-            pointBackgroundColor: COLORS[idx],
-        })),
+        labels: metricsConfig.map(m => m.label),
+        datasets
     };
 
     const options = {
@@ -217,7 +236,18 @@ export function PerformanceRadar({ performanceData }) {
             }
         },
         plugins: {
-            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } },
+            tooltip: {
+                callbacks: {
+                    label: function (context) {
+                        const dataset = context.dataset;
+                        const idx = context.dataIndex;
+                        const metric = metricsConfig[idx];
+                        const rawValue = dataset.rawValues[idx];
+                        return `${dataset.label}: ${metric.format(rawValue)}`;
+                    }
+                }
+            }
         }
     };
 
