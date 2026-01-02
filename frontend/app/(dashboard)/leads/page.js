@@ -13,6 +13,7 @@ import Modal from "@/src/components/ui/Modal";
 import Select from "@/src/components/ui/Select";
 import LeadForm from "@/src/components/leads/LeadForm";
 import LeadDetail from "@/src/components/leads/LeadDetail";
+import { formatNumber } from "@/src/utils/formatters";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -298,7 +299,7 @@ export default function LeadsPage() {
                                             <StatusBadge status={lead.status} />
                                         </td>
                                         <td className="px-4 py-4 font-semibold text-gray-900">
-                                            ₹{(lead.value || 0).toLocaleString()}
+                                            ₹{formatNumber(lead.value)}
                                         </td>
                                         <td className="px-4 py-4 text-gray-600">
                                             {lead.followUpDate ? (

@@ -15,6 +15,7 @@ import {
     RadialLinearScale,
 } from 'chart.js';
 import { Doughnut, Bar, Line, Radar } from 'react-chartjs-2';
+import { formatNumber } from "@/src/utils/formatters";
 
 // Register ChartJS modules
 ChartJS.register(
@@ -187,7 +188,7 @@ export function PerformanceRadar({ performanceData }) {
     const metricsConfig = [
         { key: 'closeRate', label: 'Close Rate', format: (val) => `${val}%` },
         { key: 'efficiency', label: 'Efficiency', getValue: (u) => 100 - parseFloat(u.loseRate), format: (val) => `${val}%` },
-        { key: 'pipelineValue', label: 'Pipeline Val', format: (val) => `₹${val.toLocaleString()}` },
+        { key: 'pipelineValue', label: 'Pipeline Val', format: (val) => `₹${formatNumber(val)}` },
         { key: 'totalLeads', label: 'Total Leads', format: (val) => val },
         { key: 'wonLeads', label: 'Won Leads', format: (val) => val },
     ];

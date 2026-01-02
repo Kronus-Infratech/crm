@@ -2,6 +2,7 @@
 
 import Card from "@/src/components/ui/Card";
 import { HiTrendingUp, HiTrendingDown, HiUsers, HiCurrencyRupee, HiXCircle, HiCheckCircle } from "react-icons/hi";
+import { formatNumber } from "@/src/utils/formatters";
 
 export default function EmployeePerformance({ data }) {
   if (!data || data.length === 0) return null;
@@ -68,7 +69,7 @@ export default function EmployeePerformance({ data }) {
                     {/* <HiCurrencyRupee className="text-indigo-500" /> */} 
                     Pipeline
                   </p>
-                  <p className="text-xl font-black text-gray-900 leading-none">₹{(user.pipelineValue || 0).toLocaleString()}</p>
+                  <p className="text-xl font-black text-gray-900 leading-none">₹{formatNumber(user.pipelineValue)}</p>
                 </div>
 
                 {/* <div className="space-y-1 hidden md:block">

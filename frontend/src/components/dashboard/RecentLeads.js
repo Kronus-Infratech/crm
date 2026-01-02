@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { HiArrowRight } from "react-icons/hi";
 import Card from "@/src/components/ui/Card";
+import { formatNumber } from "@/src/utils/formatters";
 
 export default function RecentLeads({ leads }) {
     if (!leads || leads.length === 0) {
@@ -53,7 +54,7 @@ export default function RecentLeads({ leads }) {
                                     <StatusBadge status={lead.status} />
                                 </td>
                                 <td className="px-8 py-5 text-right font-black text-gray-900 tabular-nums">
-                                    ₹{(lead.value || 0).toLocaleString()}
+                                    ₹{formatNumber(lead.value)}
                                 </td>
                             </tr>
                         ))}

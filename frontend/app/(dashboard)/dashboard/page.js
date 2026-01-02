@@ -10,6 +10,7 @@ import { StatusChart, SourceChart, TrendLineChart, PerformanceRadar } from "@/sr
 import RecentLeads from "@/src/components/dashboard/RecentLeads";
 import EmployeePerformance from "@/src/components/dashboard/EmployeePerformance";
 import Cookies from "js-cookie";
+import { formatNumber } from "@/src/utils/formatters";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -81,7 +82,7 @@ export default function DashboardPage() {
 
   const statCards = [
     { label: "Total Leads", value: stats.totalLeads, icon: <HiLightningBolt />, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Pipeline Value", value: `₹${stats.pipelineValue.toLocaleString()}`, icon: <HiCurrencyRupee />, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Pipeline Value", value: `₹${formatNumber(stats.pipelineValue)}`, icon: <HiCurrencyRupee />, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "Avg. Conversion", value: `${stats.conversionRate}%`, icon: <HiChartPie />, color: "text-orange-600", bg: "bg-orange-50" },
     { label: "Active Agents", value: stats.activeUsers, icon: <HiUserGroup />, color: "text-purple-600", bg: "bg-purple-50" }
   ];
@@ -103,7 +104,7 @@ export default function DashboardPage() {
         <div className="bg-white px-6 py-4 rounded-lg border border-gray-100 shadow-sm flex items-center gap-4">
           <div className="text-right">
             <p className="text-[10px] font-black text-gray-400 uppercase leading-none">Global Revenue</p>
-            <p className="text-xl font-black text-gray-900 mt-1">₹{stats.valueBreakdown.won.toLocaleString()}</p>
+            <p className="text-xl font-black text-gray-900 mt-1">₹{formatNumber(stats.valueBreakdown.won)}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <HiTrendingUp size={20} />

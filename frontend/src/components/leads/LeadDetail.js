@@ -10,6 +10,7 @@ import {
 } from "react-icons/hi";
 import { toast } from "react-hot-toast";
 import Cookies from "js-cookie";
+import { formatNumber } from "@/src/utils/formatters";
 
 export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
     const [lead, setLead] = useState(initialLead);
@@ -173,7 +174,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                             <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">Deal Value</p>
                             <div className="flex items-center gap-2">
                                 <HiCurrencyRupee size={24} className="text-indigo-200" />
-                                <span className="text-2xl font-black">₹{(lead.value || 0).toLocaleString()}</span>
+                                <span className="text-2xl font-black">₹{formatNumber(lead.value)}</span>
                             </div>
                         </div>
                         <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
