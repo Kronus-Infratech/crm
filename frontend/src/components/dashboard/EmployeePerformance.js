@@ -22,13 +22,13 @@ export default function EmployeePerformance({ data }) {
           <Card key={user.userId} className="overflow-hidden hover:shadow-2xl hover:bg-gray-50/30 transition-all border-gray-100 group relative">
             <div className="flex flex-col lg:flex-row items-stretch">
               {/* User Identity Section */}
-              <div className="w-full lg:w-1/4 p-6 bg-gray-50/50 border-b lg:border-b-0 lg:border-r border-gray-100 flex items-center gap-4">
+              <div className="w-full lg:w-1/3 p-6 bg-gray-50/50 border-b lg:border-b-0 lg:border-r border-gray-100 flex items-center gap-4">
                 {/* <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-200 group-hover:rotate-12 transition-transform">
                   {user.name[0].toUpperCase()}
                 </div> */}
                 <div className="min-w-0">
                   <p className="font-black text-gray-900 text-2xl truncate leading-tight">{user.name}</p>
-                  <p className="text-[12px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">Sales Executive</p>
+                  {/* <p className="text-[12px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">{user.designation}</p> */}
                 </div>
               </div>
 
