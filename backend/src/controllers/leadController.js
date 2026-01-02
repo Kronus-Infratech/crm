@@ -293,6 +293,11 @@ const updateLead = async (req, res, next) => {
     // EXTRACT activityNote and documents so they are NOT passed to Prisma update directly
     const { activityNote, documents, ...updateData } = req.body;
 
+    // Handle empty string for unassignment
+    if (updateData.assignedToId === "") {
+      updateData.assignedToId = null;
+    }
+
     // Check if lead exists
     const existingLead = await prisma.lead.findUnique({
       where: { id },
