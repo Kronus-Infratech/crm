@@ -175,20 +175,20 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                 <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Property Interest</p>
                                 <div className="flex items-center gap-2 text-gray-900">
                                     <HiLocationMarker size={20} className="text-indigo-500" />
-                                    <span className="text-lg font-bold truncate max-w-[200px]">{lead.property || "No Property Assigned"}</span>
+                                    <span className="text-lg font-bold">{lead.property || "No Property Assigned"}</span>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
-                            {lead.followUpDate && (
+                        {lead.followUpDate && (
+                            <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
                                 <div className="text-right">
                                     <p className="text-gray-400 text-[10px] font-bold uppercase mb-1">Next Follow-up</p>
                                     <div className="text-indigo-600 font-bold text-sm bg-indigo-50 px-2 py-1 rounded-lg">
                                         {new Date(lead.followUpDate).toLocaleDateString()}
                                     </div>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Contact Information */}

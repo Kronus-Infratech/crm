@@ -35,6 +35,7 @@ export default function LeadsPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
+    const [sourceFilter, setSourceFilter] = useState("");
 
     const [sortBy, setSortBy] = useState("createdAt");
     const [sortOrder, setSortOrder] = useState("desc");
@@ -115,6 +116,7 @@ export default function LeadsPage() {
                 limit: 10,
                 search: debouncedSearch,
                 status: statusFilter || undefined,
+                source: sourceFilter || undefined,
                 sortBy: sortBy,
                 sortOrder: sortOrder
             };
@@ -128,11 +130,15 @@ export default function LeadsPage() {
         } finally {
             setLoading(false);
         }
-    }, [page, debouncedSearch, statusFilter, sortBy, sortOrder]);
+    }, [page, debouncedSearch, statusFilter, sourceFilter, sortBy, sortOrder]);
 
     useEffect(() => {
         fetchLeads();
     }, [fetchLeads]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch, statusFilter, sourceFilter]);
 
     // Handlers
     const handleSort = (field) => {
@@ -219,6 +225,27 @@ export default function LeadsPage() {
                         ]}
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
+                    />
+                </div>
+                <div className="w-full md:w-1/4">
+                    <Select
+                        placeholder="Filter by Source"
+                        className="py-2.5!"
+                        options={[
+                            { label: "Website", value: "WEBSITE" },
+                            { label: "Referral", value: "REFERRAL" },
+                            { label: "Instagram", value: "INSTAGRAM" },
+                            { label: "Youtube", value: "YOUTUBE" },
+                            { label: "Email", value: "EMAIL" },
+                            { label: "WhatsApp", value: "WHATSAPP" },
+                            { label: "99 Acres", value: "NINETY_NINE_ACRES" },
+                            { label: "MagicBricks", value: "MAGICBRICKS" },
+                            { label: "OLX", value: "OLX" },
+                            { label: "Cold Outreach", value: "COLD_OUTREACH" },
+                            { label: "Walk In", value: "WALK_IN" },
+                        ]}
+                        value={sourceFilter}
+                        onChange={(e) => setSourceFilter(e.target.value)}
                     />
                 </div>
             </div>

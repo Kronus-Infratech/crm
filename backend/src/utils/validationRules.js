@@ -110,7 +110,7 @@ const createLeadValidation = [
     .withMessage('Property is required'),
   body('source')
     .optional()
-    .isIn(['WEBSITE', 'REFERRAL', 'INSTAGRAM', 'YOUTUBE', 'EMAIL', 'WHATSAPP', 'NINETY_NINE_ACRES', 'MAGICBRICKS', 'OLX', 'COLD_OUTREACH'])
+    .isIn(['WEBSITE', 'REFERRAL', 'INSTAGRAM', 'YOUTUBE', 'EMAIL', 'WHATSAPP', 'NINETY_NINE_ACRES', 'MAGICBRICKS', 'OLX', 'COLD_OUTREACH', "WALK_IN"])
     .withMessage('Invalid lead source'),
   body('status')
     .optional()

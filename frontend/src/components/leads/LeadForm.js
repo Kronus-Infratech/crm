@@ -19,7 +19,7 @@ const schema = z.object({
   property: z.string().min(1, "Property is required"),
   status: z.enum(["NEW", "CONTACTED", "INTERESTED", "NOT_INTERESTED", "SITE_VISIT", "NEGOTIATION", "DOCUMENTATION", "WON", "LOST"]),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]),
-  source: z.enum(["WEBSITE", "REFERRAL", "INSTAGRAM", "YOUTUBE", "EMAIL", "WHATSAPP", "NINETY_NINE_ACRES", "MAGICBRICKS", "OLX", "COLD_OUTREACH"]).optional(),
+  source: z.enum(["WEBSITE", "REFERRAL", "INSTAGRAM", "YOUTUBE", "EMAIL", "WHATSAPP", "NINETY_NINE_ACRES", "MAGICBRICKS", "OLX", "COLD_OUTREACH", "WALK_IN"]).optional(),
   value: z.number().min(0, "Value must be positive").optional(),
   followUpDate: z.string().optional(),
   assignedToId: z.string().optional(),
