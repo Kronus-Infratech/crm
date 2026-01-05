@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const prisma = require('../config/database');
 const { sendFollowUpReminderEmail } = require('../utils/emailUtils');
+const magicBricksService = require('./magicBricksService');
 
 /**
  * Initialize all scheduled tasks
@@ -20,6 +21,12 @@ const initCronJobs = () => {
     await processFollowUpReminders('today');
   }, {
     timezone: "Asia/Kolkata"
+  });
+
+  // 3. Every hour: Sync MagicBricks leads
+  cron.schedule('0 * * * *', async () => {
+    console.log('Running hourly cron: Syncing MagicBricks leads...');
+    await magicBricksService.syncLeads();
   });
 };
 
