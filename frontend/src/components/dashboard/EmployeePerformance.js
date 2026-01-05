@@ -11,8 +11,8 @@ export default function EmployeePerformance({ data }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
-            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Agent Performance Matrix</h3>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Tracking real-time conversion and loss efficiency</p>
+          <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Agent Performance Matrix</h3>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-l-2 border-indigo-500 pl-2">Tracking real-time conversion and loss efficiency</p>
         </div>
         <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100">Team Analytics</span>
       </div>
@@ -65,8 +65,18 @@ export default function EmployeePerformance({ data }) {
                 </div>
 
                 <div className="space-y-1">
+                  <p className="text-[12px] font-black uppercase tracking-widest flex items-center gap-1.5 text-amber-500">
+                    Rating
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xl font-black text-gray-900">{user.avgRating}</p>
+                    <span className="text-lg text-amber-400">★</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
                   <p className="text-[12px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                    {/* <HiCurrencyRupee className="text-indigo-500" /> */} 
+                    {/* <HiCurrencyRupee className="text-indigo-500" /> */}
                     Pipeline
                   </p>
                   <p className="text-xl font-black text-gray-900 leading-none">₹{formatNumber(user.pipelineValue)}</p>
@@ -83,11 +93,11 @@ export default function EmployeePerformance({ data }) {
                 </div> */}
               </div>
             </div>
-            
+
             {/* Efficiency Visualizer */}
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-50 overflow-hidden">
-              <div 
-                className={`h-full transition-all duration-1000 ${parseFloat(user.closeRate) > parseFloat(user.loseRate) ? 'bg-emerald-500' : 'bg-red-500 '}`} 
+              <div
+                className={`h-full transition-all duration-1000 ${parseFloat(user.closeRate) > parseFloat(user.loseRate) ? 'bg-emerald-500' : 'bg-red-500 '}`}
                 style={{ width: `${Math.max(10, Math.min(100, (parseFloat(user.closeRate) / (parseFloat(user.closeRate) + parseFloat(user.loseRate) + 1)) * 100))}%` }}
               />
             </div>

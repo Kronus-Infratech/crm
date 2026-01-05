@@ -39,8 +39,9 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const token = Cookies.get("token");
         const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/forgot-password") || pathname.startsWith("/reset-password");
+        const isPublicPage = isAuthPage || pathname.startsWith("/feedback");
 
-        if (!loading && !token && !isAuthPage) {
+        if (!loading && !token && !isPublicPage) {
             router.push("/login");
         }
 

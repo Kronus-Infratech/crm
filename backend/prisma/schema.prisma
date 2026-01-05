@@ -57,6 +57,12 @@ model Lead {
   
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+
+  // Feedback fields
+  feedbackToken      String?
+  feedbackSubmitted  Boolean     @default(false)
+  feedbackRating     Int?
+  feedbackComment    String?
   
   @@map("leads")
 }

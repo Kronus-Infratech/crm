@@ -228,10 +228,86 @@ const sendFollowUpReminderEmail = async (agentEmail, agentName, leads, timeConte
   });
 };
 
+/**
+ * Send welcome email to new lead
+ */
+const sendLeadWelcomeEmail = async (email, name) => {
+  const content = `
+    <div class="badge" style="background: #e0e7ff; color: #4338ca;">Welcome</div>
+    <h1>Welcome to Kronus Infratech!</h1>
+    <p>Hi ${name},</p>
+    <p>Thank you for your interest in Kronus Infratech & Consultants. We are thrilled to have you with us.</p>
+    <p>Our team is reviewing your requirements and will get back to you shortly.</p>
+    
+    <div class="card">
+      <p style="margin: 0; font-weight: 600; color: #1e293b;">What Happens Next?</p>
+      <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #475569;">
+        <li>Review of your inquiry</li>
+        <li>Assignment to a dedicated consultant</li>
+        <li>Personalized property recommendations</li>
+      </ul>
+    </div>
+
+    <p>If you have any immediate questions, feel free to reply to this email.</p>
+  `;
+
+  await sendEmail({
+    email,
+    subject: 'Welcome to Kronus Infratech',
+    html: baseTemplate(content),
+    text: `Hi ${name}, Welcome to Kronus Infratech! We have received your inquiry and will be in touch shortly.`,
+  });
+};
+
+/**
+ * Send feedback email to closed lead
+ */
+const sendLeadFeedbackEmail = async (email, name, status, token) => {
+  const isWon = status === 'WON';
+  const subject = isWon ? 'Congratulations on Your New Property!' : 'We Value Your Feedback';
+  const feedbackLink = `${process.env.FRONTEND_URL}/feedback/${token}`;
+
+  let bodyContent = '';
+
+  if (isWon) {
+    bodyContent = `
+      <p>Congratulations on finalizing your property with Kronus Infratech! It was a pleasure serving you.</p>
+      <p>We hope you are satisfied with our services. We would love to hear about your experience.</p>
+    `;
+  } else {
+    bodyContent = `
+      <p>We noticed that we couldn't proceed with your requirement at this time.</p>
+      <p>We surely missed an opportunity to serve you better. We would appreciate your feedback on how we can improve.</p>
+    `;
+  }
+
+  const content = `
+    <div class="badge" style="background: ${isWon ? '#dcfce7' : '#f1f5f9'}; color: ${isWon ? '#15803d' : '#64748b'};">${isWon ? 'Success' : 'Feedback'}</div>
+    <h1>${isWon ? 'Congratulations!' : 'Your Feedback Matters'}</h1>
+    <p>Hi ${name},</p>
+    ${bodyContent}
+    
+    <div style="text-align: center;">
+      <a href="${feedbackLink}" class="button">Share Your Feedback</a>
+    </div>
+    
+    <p>Thank you for choosing Kronus Infratech.</p>
+  `;
+
+  await sendEmail({
+    email,
+    subject: subject,
+    html: baseTemplate(content),
+    text: `Hi ${name}, ${isWon ? 'Congratulations on your new property!' : 'We missed an opportunity to serve you better.'} Please share your feedback here: ${feedbackLink}`,
+  });
+};
+
 module.exports = {
   sendEmail,
   sendPasswordResetEmail,
   sendWelcomeEmail,
   sendLeadAssignmentEmail,
   sendFollowUpReminderEmail,
+  sendLeadWelcomeEmail,
+  sendLeadFeedbackEmail,
 };

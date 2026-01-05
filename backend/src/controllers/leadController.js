@@ -1,6 +1,7 @@
 const prisma = require('../config/database');
+const crypto = require('crypto');
 const { HTTP_STATUS, ROLES } = require('../config/constants');
-const { sendLeadAssignmentEmail } = require('../utils/emailUtils');
+const { sendLeadAssignmentEmail, sendLeadWelcomeEmail, sendLeadFeedbackEmail } = require('../utils/emailUtils');
 
 /**
  * @desc    Get all leads (with pagination, search, and filters)
@@ -272,6 +273,12 @@ const createLead = async (req, res, next) => {
       ).catch(err => console.error('Failed to send assignment email:', err));
     }
 
+    // Send welcome email to lead if email is present
+    if (lead.email) {
+      sendLeadWelcomeEmail(lead.email, lead.name)
+        .catch(err => console.error('Failed to send welcome email:', err));
+    }
+
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
       message: 'Lead created successfully',
@@ -372,6 +379,16 @@ const updateLead = async (req, res, next) => {
       changes.push(`Assigned to ${assignedUser.name}`);
     }
 
+    // Generate feedback token if status changes to WON or LOST
+    if (
+      updateData.status &&
+      (updateData.status === 'WON' || updateData.status === 'LOST') &&
+      updateData.status !== existingLead.status
+    ) {
+      updateData.feedbackToken = crypto.randomUUID();
+      updateData.feedbackSubmitted = false;
+    }
+
     // Update lead in Database
     const lead = await prisma.lead.update({
       where: { id },
@@ -431,6 +448,17 @@ const updateLead = async (req, res, next) => {
           lead.name,
           lead.id
         ).catch(err => console.error('Failed to send assignment email:', err));
+      }
+
+      // If status changed to WON or LOST, send feedback email
+      if (
+        updateData.status &&
+        (updateData.status === 'WON' || updateData.status === 'LOST') &&
+        updateData.status !== existingLead.status &&
+        lead.email
+      ) {
+        sendLeadFeedbackEmail(lead.email, lead.name, updateData.status, lead.feedbackToken)
+          .catch(err => console.error('Failed to send feedback email:', err));
       }
     }
 
@@ -597,7 +625,8 @@ const getLeadStats = async (req, res, next) => {
                 status: true,
                 value: true,
                 createdAt: true,
-              }
+                feedbackRating: true
+              },
             }
           }
         }),
@@ -614,6 +643,11 @@ const getLeadStats = async (req, res, next) => {
         const closeRate = totalAssigned > 0 ? ((wonLeads / totalAssigned) * 100).toFixed(1) : "0.0";
         const loseRate = totalAssigned > 0 ? ((lostLeads / totalAssigned) * 100).toFixed(1) : "0.0";
 
+          
+        const ratedLeads = user.assignedLeads.filter(l => l.feedbackRating !== null);
+        const totalRating = ratedLeads.reduce((sum, l) => sum + l.feedbackRating, 0);
+        const avgRating = ratedLeads.length > 0 ? (totalRating / ratedLeads.length).toFixed(1) : "N/A";
+
         return {
           userId: user.id,
           name: user.name,
@@ -622,7 +656,8 @@ const getLeadStats = async (req, res, next) => {
           lostLeads,
           closeRate,
           loseRate,
-          pipelineValue
+          pipelineValue,
+          avgRating
         };
       }).sort((a, b) => b.totalLeads - a.totalLeads);
 

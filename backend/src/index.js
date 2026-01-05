@@ -13,6 +13,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const leadRoutes = require('./routes/leadRoutes');
 const externalRoutes = require('./routes/externalRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
 const { initCronJobs } = require('./services/cronService');
 
 // Initialize express app
@@ -57,6 +58,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/external', externalRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -69,6 +71,7 @@ app.get('/', (req, res) => {
       users: '/api/users',
       leads: '/api/leads',
       external: '/api/external',
+      feedback: '/api/feedback',
     },
   });
 });
