@@ -34,7 +34,7 @@ async function main() {
 
   const leadSources = [
     'WEBSITE', 'REFERRAL', 'INSTAGRAM', 'YOUTUBE', 'EMAIL', 'WHATSAPP',
-    'NINETY_NINE_ACRES', 'MAGICBRICKS', 'OLX', 'COLD_OUTREACH',
+    'NINETY_NINE_ACRES', 'MAGICBRICKS', 'OLX', 'COLD_OUTREACH', 'WALK_IN'
   ];
 
   const leadStatuses = [

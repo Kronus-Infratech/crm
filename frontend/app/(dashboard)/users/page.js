@@ -13,6 +13,7 @@ import Modal from "@/src/components/ui/Modal";
 import Input from "@/src/components/ui/Input";
 import Select from "@/src/components/ui/Select";
 import UserForm from "@/src/components/users/UserForm";
+import { formatDateTime } from "@/src/utils/formatters";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -354,7 +355,7 @@ function OnlineDot({ lastLoginAt }) {
     return (
         <span
             className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}
-            title={isOnline ? "Online" : `Last seen: ${lastLogin.toLocaleString()}`}
+            title={isOnline ? "Online" : `Last seen: ${formatDateTime(lastLogin)}`}
         ></span>
     );
 }

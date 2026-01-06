@@ -2,6 +2,7 @@ const prisma = require('../config/database');
 const crypto = require('crypto');
 const { HTTP_STATUS, ROLES } = require('../config/constants');
 const { sendLeadAssignmentEmail, sendLeadWelcomeEmail, sendLeadFeedbackEmail } = require('../utils/emailUtils');
+const { formatDate } = require('../utils/dateUtils');
 
 /**
  * @desc    Get all leads (with pagination, search, and filters)
@@ -356,8 +357,8 @@ const updateLead = async (req, res, next) => {
 
         // Format dates for better logs
         if (key === 'followUpDate') {
-          oldVal = existingLead[key] ? new Date(existingLead[key]).toLocaleDateString() : 'Empty';
-          newVal = updateData[key] ? new Date(updateData[key]).toLocaleDateString() : 'Empty';
+          oldVal = existingLead[key] ? formatDate(existingLead[key]) : 'Empty';
+          newVal = updateData[key] ? formatDate(updateData[key]) : 'Empty';
         }
 
         changes.push(`${trackedFields[key]} changed from "${oldVal}" to "${newVal}"`);
@@ -643,7 +644,7 @@ const getLeadStats = async (req, res, next) => {
         const closeRate = totalAssigned > 0 ? ((wonLeads / totalAssigned) * 100).toFixed(1) : "0.0";
         const loseRate = totalAssigned > 0 ? ((lostLeads / totalAssigned) * 100).toFixed(1) : "0.0";
 
-          
+
         const ratedLeads = user.assignedLeads.filter(l => l.feedbackRating !== null);
         const totalRating = ratedLeads.reduce((sum, l) => sum + l.feedbackRating, 0);
         const avgRating = ratedLeads.length > 0 ? (totalRating / ratedLeads.length).toFixed(1) : "N/A";
@@ -697,7 +698,7 @@ const processLeadAnalytics = (leads) => {
   for (let i = 5; i >= 0; i--) {
     const date = new Date();
     date.setMonth(date.getMonth() - i);
-    months.push(date.toLocaleString('default', { month: 'short' }));
+    months.push(date.toLocaleString('en-US', { month: 'short' }));
   }
 
   const trendMap = months.reduce((acc, month) => {
@@ -708,7 +709,7 @@ const processLeadAnalytics = (leads) => {
   const breakdown = { won: 0, lost: 0, pipeline: 0 };
 
   leads.forEach(lead => {
-    const month = new Date(lead.createdAt).toLocaleString('default', { month: 'short' });
+    const month = new Date(lead.createdAt).toLocaleString('en-US', { month: 'short' });
     if (trendMap[month] !== undefined) {
       trendMap[month]++;
     }
@@ -941,7 +942,7 @@ const createMagicBricksLead = async (req, res, next) => {
     // Flexible payload handling. 
     // We look for common field names.
     const body = req.body;
-    
+
     const name = body.name || body.username || body.contactName;
     const phone = body.phone || body.mobile || body.contactNumber || body.phoneNumber;
     const email = body.email || body.contactEmail;

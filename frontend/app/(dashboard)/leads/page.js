@@ -13,7 +13,7 @@ import Modal from "@/src/components/ui/Modal";
 import Select from "@/src/components/ui/Select";
 import LeadForm from "@/src/components/leads/LeadForm";
 import LeadDetail from "@/src/components/leads/LeadDetail";
-import { formatNumber } from "@/src/utils/formatters";
+import { formatNumber, formatDate } from "@/src/utils/formatters";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -331,7 +331,7 @@ export default function LeadsPage() {
                                         <td className="px-4 py-4 text-gray-600">
                                             {lead.followUpDate ? (
                                                 <div className="flex flex-col">
-                                                    <span>{new Date(lead.followUpDate).toLocaleDateString()}</span>
+                                                    <span>{formatDate(lead.followUpDate)}</span>
                                                     {new Date(lead.followUpDate) < new Date() && lead.status !== 'WON' && lead.status !== 'LOST' && (
                                                         <span className="text-[10px] text-red-500 font-bold uppercase">Overdue</span>
                                                     )}
@@ -342,7 +342,7 @@ export default function LeadsPage() {
                                             {lead.assignedTo ? lead.assignedTo.name : <span className="text-gray-400 italic">Unassigned</span>}
                                         </td>
                                         <td className="px-4 py-4 text-gray-600">
-                                            {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "-"}
+                                            {formatDate(lead.createdAt)}
                                         </td>
                                         <td className="px-4 py-4 text-right flex justify-end gap-2">
                                             {isLeadClosed(lead.status) ? (
