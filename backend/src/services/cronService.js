@@ -23,9 +23,9 @@ const initCronJobs = () => {
     timezone: "Asia/Kolkata"
   });
 
-  // 3. Every hour: Sync MagicBricks leads
-  cron.schedule('0 * * * *', async () => {
-    console.log('Running hourly cron: Syncing MagicBricks leads...');
+  // 3. Every 15 minutes: Sync MagicBricks leads
+  cron.schedule('*/15 * * * *', async () => {
+    console.log('Running 15 minutes cron: Syncing MagicBricks leads...');
     await magicBricksService.syncLeads();
   });
 };
