@@ -931,6 +931,79 @@ const createExternalLead = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Create lead from external source (MagicBricks)
+ * @route   POST /api/external/leads/magicbricks
+ * @access  External (API Key)
+ */
+const createMagicBricksLead = async (req, res, next) => {
+  try {
+    // Flexible payload handling. 
+    // We look for common field names.
+    const body = req.body;
+    
+    const name = body.name || body.username || body.contactName;
+    const phone = body.phone || body.mobile || body.contactNumber || body.phoneNumber;
+    const email = body.email || body.contactEmail;
+    const property = body.property || body.project || body.society || body.locality || 'MagicBricks Lead';
+    const value = body.value || body.budget || body.price;
+    const description = body.description || body.message || body.notes;
+
+    if (!name || !phone) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'Name and Phone are mandatory fields',
+      });
+    }
+
+    // Find a default system user (first admin)
+    const systemUser = await prisma.user.findFirst({
+      where: { roles: { has: ROLES.ADMIN } },
+    });
+
+    if (!systemUser) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'System configuration error: No admin user found',
+      });
+    }
+
+    // Create the lead
+    const lead = await prisma.lead.create({
+      data: {
+        name,
+        email: email || null,
+        phone,
+        property,
+        value: value ? parseFloat(value) : null,
+        source: 'MAGICBRICKS',
+        status: 'NEW',
+        priority: 'MEDIUM',
+        createdById: systemUser.id,
+      },
+    });
+
+    // Log the activity
+    await prisma.activity.create({
+      data: {
+        type: 'NOTE',
+        title: 'External Lead Ingested',
+        description: `Lead automatically created from MagicBricks. ${description || ''}`,
+        userId: systemUser.id,
+        leadId: lead.id,
+      },
+    });
+
+    res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: lead,
+      message: 'Lead received successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getLeads,
   getLeadById,
@@ -941,4 +1014,5 @@ module.exports = {
   assignLead,
   deleteDocument,
   createExternalLead,
+  createMagicBricksLead,
 };

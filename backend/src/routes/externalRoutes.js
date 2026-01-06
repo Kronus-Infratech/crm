@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createExternalLead } = require('../controllers/leadController');
+const { createExternalLead, createMagicBricksLead } = require('../controllers/leadController');
 const { verifyApiKey } = require('../middleware/externalAuth');
 
 /**
@@ -9,5 +9,12 @@ const { verifyApiKey } = require('../middleware/externalAuth');
  * @access  External (API Key)
  */
 router.post('/leads/99acres', verifyApiKey, createExternalLead);
+
+/**
+ * @route   POST /api/external/leads/magicbricks
+ * @desc    Endpoint for MagicBricks to push new leads
+ * @access  External (API Key)
+ */
+router.post('/leads/magicbricks', verifyApiKey, createMagicBricksLead);
 
 module.exports = router;
