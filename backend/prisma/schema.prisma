@@ -163,3 +163,70 @@ model Document {
   
   @@map("documents")
 }
+
+model Project {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  location    String?
+  description String?
+  
+  inventory   InventoryItem[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("projects")
+}
+
+model InventoryItem {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Basic Details
+  plotNumber        String
+  size              String?  // e.g. "200 sqyd"
+  ratePerSqYard     Float?
+  totalPrice        Float?
+  facing            String?
+  roadWidth         String?
+  
+  // Payment Details
+  paymentTime       String?
+  paymentCondition  String?
+  circleRate        Float?
+  
+  // Status & Ownership
+  status            InventoryStatus @default(AVAILABLE)
+  ownerName         String?
+  ownerContact      String?
+  block             String?
+  
+  // Financials
+  askingPrice       Float?
+  
+  // Extra Details
+  reference         String?
+  amenities         String?
+  maintenanceCharges Float?
+  clubCharges       Float?
+  cannesCharges     Float? // As requested by user
+  description       String? // "Details" from CSV
+  
+  // Sold Details
+  soldTo            String?
+  soldDate          DateTime?
+  
+  // Relations
+  projectId         String   @db.ObjectId
+  project           Project  @relation(fields: [projectId], references: [id])
+  
+  listingDate       DateTime @default(now()) // "Date" from CSV
+  updatedAt         DateTime @updatedAt
+  
+  @@map("inventory_items")
+}
+
+enum InventoryStatus {
+  AVAILABLE
+  BLOCKED
+  SOLD
+}

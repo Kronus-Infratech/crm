@@ -1,0 +1,283 @@
+const prisma = require('../config/database');
+const { HTTP_STATUS } = require('../config/constants');
+
+/**
+ * @desc    Get all projects (Property Areas)
+ * @route   GET /api/inventory/projects
+ * @access  Private
+ */
+const getProjects = async (req, res, next) => {
+  try {
+    const projects = await prisma.project.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: { inventory: true }
+        }
+      }
+    });
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: projects
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Create a new project
+ * @route   POST /api/inventory/projects
+ * @access  Private (Admin/Manager)
+ */
+const createProject = async (req, res, next) => {
+  try {
+    const { name, location, description } = req.body;
+
+    if (!name) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'Project name is required'
+      });
+    }
+
+    const project = await prisma.project.create({
+      data: {
+        name,
+        location,
+        description
+      }
+    });
+
+    res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: project,
+      message: 'Project created successfully'
+    });
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'Project with this name already exists'
+      });
+    }
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update a project
+ * @route   PUT /api/inventory/projects/:id
+ * @access  Private (Admin/Manager)
+ */
+const updateProject = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, location, description } = req.body;
+
+    const project = await prisma.project.update({
+      where: { id },
+      data: { name, location, description }
+    });
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: project,
+      message: 'Project updated successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Delete a project
+ * @route   DELETE /api/inventory/projects/:id
+ * @access  Private (Admin Only)
+ */
+const deleteProject = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Check if project has inventory items
+    const inventoryCount = await prisma.inventoryItem.count({
+      where: { projectId: id }
+    });
+
+    if (inventoryCount > 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'Cannot delete project with existing inventory items. Delete or move items first.'
+      });
+    }
+
+    await prisma.project.delete({
+      where: { id }
+    });
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: 'Project deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get inventory items (filterable by project)
+ * @route   GET /api/inventory/items
+ * @access  Private
+ */
+const getInventoryItems = async (req, res, next) => {
+  try {
+    const { projectId, status, search } = req.query;
+
+    const where = {};
+
+    if (projectId) where.projectId = projectId;
+    if (status) where.status = status;
+    
+    if (search) {
+      where.OR = [
+        { plotNumber: { contains: search, mode: 'insensitive' } },
+        { ownerName: { contains: search, mode: 'insensitive' } },
+        { block: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    const items = await prisma.inventoryItem.findMany({
+      where,
+      orderBy: { plotNumber: 'asc' }, // Or alphabetical
+      include: {
+        project: {
+          select: { name: true }
+        }
+      }
+    });
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: items
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Create new inventory item
+ * @route   POST /api/inventory/items
+ * @access  Private (Admin/Manager)
+ */
+const createInventoryItem = async (req, res, next) => {
+  try {
+    const data = req.body;
+
+    // Basic validation
+    if (!data.projectId || !data.plotNumber) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'Project ID and Plot Number are required'
+      });
+    }
+
+    const newItem = await prisma.inventoryItem.create({
+      data: {
+        ...data,
+        // Ensure numeric fields are actually floats if passed as strings
+        ratePerSqYard: data.ratePerSqYard ? parseFloat(data.ratePerSqYard) : null,
+        totalPrice: data.totalPrice ? parseFloat(data.totalPrice) : null,
+        circleRate: data.circleRate ? parseFloat(data.circleRate) : null,
+        askingPrice: data.askingPrice ? parseFloat(data.askingPrice) : null,
+        maintenanceCharges: data.maintenanceCharges ? parseFloat(data.maintenanceCharges) : null,
+        clubCharges: data.clubCharges ? parseFloat(data.clubCharges) : null,
+        cannesCharges: data.cannesCharges ? parseFloat(data.cannesCharges) : null,
+        
+        // Ensure status enum is valid, default handled by schema if missing
+        status: data.status || undefined
+      }
+    });
+
+    res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: newItem,
+      message: 'Inventory item added successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update inventory item
+ * @route   PUT /api/inventory/items/:id
+ * @access  Private (Admin/Manager)
+ */
+const updateInventoryItem = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+
+    // Handle sold logic if status changing to SOLD
+    if (data.status === 'SOLD' && !data.soldDate) {
+      data.soldDate = new Date();
+    }
+
+    const updatedItem = await prisma.inventoryItem.update({
+      where: { id },
+      data: {
+        ...data,
+        ratePerSqYard: data.ratePerSqYard ? parseFloat(data.ratePerSqYard) : undefined,
+        totalPrice: data.totalPrice ? parseFloat(data.totalPrice) : undefined,
+        circleRate: data.circleRate ? parseFloat(data.circleRate) : undefined,
+        askingPrice: data.askingPrice ? parseFloat(data.askingPrice) : undefined,
+        maintenanceCharges: data.maintenanceCharges ? parseFloat(data.maintenanceCharges) : undefined,
+        clubCharges: data.clubCharges ? parseFloat(data.clubCharges) : undefined,
+        cannesCharges: data.cannesCharges ? parseFloat(data.cannesCharges) : undefined
+      }
+    });
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updatedItem,
+      message: 'Inventory updated successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Delete inventory item
+ * @route   DELETE /api/inventory/items/:id
+ * @access  Private (AdminOnly)
+ */
+const deleteInventoryItem = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    await prisma.inventoryItem.delete({
+      where: { id }
+    });
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: 'Item deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getProjects,
+  createProject,
+  getInventoryItems,
+  createInventoryItem,
+  updateInventoryItem,
+  deleteInventoryItem,
+  updateProject,
+  deleteProject
+};

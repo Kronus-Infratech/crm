@@ -27,8 +27,10 @@ const schema = z.object({
 
 export default function LeadForm({ initialData, onSubmit, loading }) {
   const [users, setUsers] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [isCustomProperty, setIsCustomProperty] = useState(false);
 
   const handleFileSelect = (e) => {
     if (e.target.files) {
@@ -88,8 +90,21 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
       } catch (err) {
         console.error("Failed to fetch users", err);
       }
-    }
+    };
+    
+    const fetchInventory = async () => {
+      try {
+        const res = await api.get('/inventory/items?status=AVAILABLE');
+        if (res.data.success) {
+          setInventoryItems(res.data.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch inventory", err);
+      }
+    };
+    
     fetchUsers();
+    fetchInventory();
   }, []);
 
   useEffect(() => {
@@ -105,6 +120,17 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         followUpDate: initialData.followUpDate ? new Date(initialData.followUpDate).toISOString().split('T')[0] : ""
       };
       reset(formData);
+      
+      // Auto-detect if property is custom
+      if (initialData.property && inventoryItems.length > 0) {
+        const matchesInventory = inventoryItems.some(item => {
+          const inventoryValue = `${item.project?.name || 'Unknown'} - Plot ${item.plotNumber}`;
+          return inventoryValue === initialData.property;
+        });
+        if (!matchesInventory) {
+          setIsCustomProperty(true);
+        }
+      }
     } else {
       reset({
         status: "NEW",
@@ -113,8 +139,9 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         value: 0,
         assignedToId: ""
       });
+      setIsCustomProperty(false);
     }
-  }, [initialData, reset]);
+  }, [initialData, reset, inventoryItems]);
 
   const userOptions = users.map(u => ({
     label: `${u.name} (${u.roles[0]})`,
@@ -152,13 +179,38 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
             error={errors.email?.message}
             {...register("email")}
           />
-          <Input
-            label="Interested Property"
-            placeholder="e.g. Kronus Heights, 3BHK"
-            className="text-black!"
-            error={errors.property?.message}
-            {...register("property")}
-          />
+          <div className="relative group">
+            {isCustomProperty ? (
+              <Input
+                label="Interested Property"
+                placeholder="e.g. Kronus Heights, 3BHK"
+                className="text-black!"
+                error={errors.property?.message}
+                {...register("property")}
+              />
+            ) : (
+              <Select
+                label="Interested Property"
+                className="text-black!"
+                options={[
+                  { label: "-- Select from Inventory --", value: "" },
+                  ...inventoryItems.map(item => ({
+                    label: `${item.project?.name || 'Unknown'} - Plot ${item.plotNumber} (${item.size || 'N/A'})`,
+                    value: `${item.project?.name || 'Unknown'} - Plot ${item.plotNumber}`
+                  }))
+                ]}
+                error={errors.property?.message}
+                {...register("property")}
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => setIsCustomProperty(!isCustomProperty)}
+              className="absolute right-0 top-0 text-[10px] uppercase font-black tracking-widest text-indigo-500 hover:text-indigo-700 bg-indigo-50 px-2 py-1 rounded"
+            >
+              {isCustomProperty ? "Select from Inventory" : "Use Custom Text"}
+            </button>
+          </div>
         </div>
       </section>
 
