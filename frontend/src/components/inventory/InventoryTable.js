@@ -1,9 +1,18 @@
 "use client";
 
-import { HiPencil, HiTrash, HiCheckCircle, HiXCircle, HiPause, HiEye } from "react-icons/hi";
+import { HiPencil, HiTrash, HiCheckCircle, HiXCircle, HiPause, HiEye, HiChevronUp, HiChevronDown } from "react-icons/hi";
 import { formatNumber } from "@/src/utils/formatters";
 
-export default function InventoryTable({ items, onEdit, onDelete, onView }) {
+export default function InventoryTable({
+  items,
+  onEdit,
+  onDelete,
+  onView,
+  isAllView = false,
+  sortBy,
+  sortOrder,
+  onSort
+}) {
   if (!items || items.length === 0) {
     return (
       <div className="p-12 text-center border-2 border-dashed border-gray-200 rounded-lg text-gray-500">
@@ -12,40 +21,67 @@ export default function InventoryTable({ items, onEdit, onDelete, onView }) {
     );
   }
 
+  const SortHeader = ({ label, field, align = "left" }) => {
+    const isSorted = sortBy === field;
+    return (
+      <th
+        className={`px-4 py-3 cursor-pointer hover:bg-gray-100 transition-colors ${align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left"}`}
+        onClick={() => onSort && onSort(field)}
+      >
+        <div className={`flex items-center gap-1 ${align === "right" ? "justify-end" : align === "center" ? "justify-center" : "justify-start"}`}>
+          {label}
+          {isSorted ? (
+            sortOrder === "asc" ? <HiChevronUp className="text-indigo-500" /> : <HiChevronDown className="text-indigo-500" />
+          ) : (
+            <div className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity">
+              <HiChevronUp className="text-gray-300" />
+            </div>
+          )}
+        </div>
+      </th>
+    );
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs whitespace-nowrap">
           <thead className="bg-gray-50 border-b border-gray-100 uppercase font-black text-gray-400">
             <tr>
-              <th className="px-4 py-3 min-w-[80px]">Plot No.</th>
-              <th className="px-4 py-3">Block</th>
+              <SortHeader label="Plot No." field="plotNumber" />
+              {isAllView && <SortHeader label="Project" field="projectId" />}
+              <SortHeader label="Block" field="block" />
               <th className="px-4 py-3">Size</th>
               <th className="px-4 py-3">Dimens.</th>
-              <th className="px-4 py-3 text-right">Rate (/sqyd)</th>
-              <th className="px-4 py-3 text-right">Total Price</th>
-              <th className="px-4 py-3 text-center">Status</th>
-              <th className="px-4 py-3">Owner</th>
+              <SortHeader label="Rate (/sqyd)" field="ratePerSqYard" align="right" />
+              <SortHeader label="Total Price" field="totalPrice" align="right" />
+              <SortHeader label="Status" field="status" align="center" />
+              <SortHeader label="Owner" field="ownerName" />
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {items.map((item) => (
-              <tr 
-                key={item.id} 
+              <tr
+                key={item.id}
                 className="hover:bg-gray-50 transition-colors cursor-pointer group"
                 onClick={() => onView(item)}
               >
                 <td className="px-4 py-3 font-bold text-gray-900 sticky left-0 bg-white group-hover:bg-gray-50 z-10 border-r border-gray-50">
                   {item.plotNumber}
                 </td>
+                {isAllView && (
+                  <td className="px-4 py-3 font-medium text-indigo-600">
+                    {item.project?.name || "-"}
+                  </td>
+                )}
                 <td className="px-4 py-3 font-medium text-gray-600">
                   {item.block || "-"}
                 </td>
                 <td className="px-4 py-3 text-gray-600">
                   {item.size || "-"}
                 </td>
-                 <td className="px-4 py-3 text-gray-600">
+                <td className="px-4 py-3 text-gray-600">
                   {item.facing ? `${item.facing} / ${item.roadWidth || '?'}ft` : "-"}
                 </td>
                 <td className="px-4 py-3 text-right font-medium text-gray-900">

@@ -9,6 +9,7 @@ import Select from "@/src/components/ui/Select";
 import Button from "@/src/components/ui/Button";
 
 const schema = z.object({
+    projectId: z.string().min(1, "Project/Area is required"),
     plotNumber: z.string().min(1, "Plot Number is required"),
     block: z.string().optional(),
     size: z.string().optional(),
@@ -43,7 +44,7 @@ const schema = z.object({
     soldDate: z.string().optional()
 });
 
-export default function InventoryForm({ initialData, onSubmit, loading, selectedProject }) {
+export default function InventoryForm({ initialData, onSubmit, loading, selectedProject, projects = [] }) {
     const {
         register,
         handleSubmit,
@@ -56,7 +57,8 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
         defaultValues: {
             status: "AVAILABLE",
             ratePerSqYard: 0,
-            totalPrice: 0
+            totalPrice: 0,
+            projectId: selectedProject || ""
         }
     });
 
@@ -70,21 +72,19 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
             });
         } else {
             // Reset to clean state if adding new
-            reset({ status: "AVAILABLE" });
+            reset({
+                status: "AVAILABLE",
+                projectId: selectedProject || ""
+            });
         }
-    }, [initialData, reset]);
+    }, [initialData, reset, selectedProject]);
 
     // Auto-calc total price if rate and size (numeric) are present
     // This is a bit tricky as size is a string "200 sqyd". 
     // We'll leave it manual for now unless user asks.
 
     const handleFormSubmit = (data) => {
-        // Attach project ID is mostly handled by parent or backend? 
-        // Actually we need to pass projectId if it's new
-        onSubmit({
-            ...data,
-            projectId: selectedProject
-        });
+        onSubmit(data);
     };
 
     return (
@@ -93,6 +93,17 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
             {/* Basic Details */}
             <section className="space-y-4">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2 border-b border-gray-100 pb-1">Property Details</h4>
+
+                {(!selectedProject || initialData) && (
+                    <Select
+                        label="Property Area"
+                        options={projects.map(p => ({ label: p.name, value: p.id }))}
+                        error={errors.projectId?.message}
+                        disabled={!!initialData} // Don't allow changing project for existing items
+                        {...register("projectId")}
+                    />
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Input
                         label="Plot Number"

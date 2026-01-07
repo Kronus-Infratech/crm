@@ -132,34 +132,57 @@ const deleteProject = async (req, res, next) => {
  */
 const getInventoryItems = async (req, res, next) => {
   try {
-    const { projectId, status, search } = req.query;
+    const {
+      projectId,
+      status,
+      search,
+      sortBy = 'plotNumber',
+      sortOrder = 'asc',
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
 
     const where = {};
 
-    if (projectId) where.projectId = projectId;
-    if (status) where.status = status;
-    
+    if (projectId && projectId !== 'ALL') where.projectId = projectId;
+    if (status && status !== 'ALL') where.status = status;
+
     if (search) {
       where.OR = [
         { plotNumber: { contains: search, mode: 'insensitive' } },
         { ownerName: { contains: search, mode: 'insensitive' } },
-        { block: { contains: search, mode: 'insensitive' } }
+        { block: { contains: search, mode: 'insensitive' } },
+        { project: { name: { contains: search, mode: 'insensitive' } } }
       ];
     }
 
-    const items = await prisma.inventoryItem.findMany({
-      where,
-      orderBy: { plotNumber: 'asc' }, // Or alphabetical
-      include: {
-        project: {
-          select: { name: true }
+    const [total, items] = await prisma.$transaction([
+      prisma.inventoryItem.count({ where }),
+      prisma.inventoryItem.findMany({
+        where,
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take,
+        include: {
+          project: {
+            select: { name: true }
+          }
         }
-      }
-    });
+      })
+    ]);
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
-      data: items
+      data: items,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / take)
+      }
     });
   } catch (error) {
     next(error);
@@ -194,7 +217,7 @@ const createInventoryItem = async (req, res, next) => {
         maintenanceCharges: data.maintenanceCharges ? parseFloat(data.maintenanceCharges) : null,
         clubCharges: data.clubCharges ? parseFloat(data.clubCharges) : null,
         cannesCharges: data.cannesCharges ? parseFloat(data.cannesCharges) : null,
-        
+
         // Ensure status enum is valid, default handled by schema if missing
         status: data.status || undefined
       }
@@ -257,7 +280,7 @@ const updateInventoryItem = async (req, res, next) => {
 const deleteInventoryItem = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
+
     await prisma.inventoryItem.delete({
       where: { id }
     });
