@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiHome, HiUsers, HiCurrencyRupee, HiCog, HiLogout, HiMenuAlt2, HiOfficeBuilding } from "react-icons/hi";
+import { HiHome, HiUsers, HiCurrencyRupee, HiCog, HiLogout, HiMenuAlt2, HiOfficeBuilding, HiSparkles } from "react-icons/hi";
 import clsx from "clsx";
 import { useAuth } from "@/src/contexts/AuthContext";
 
@@ -22,6 +22,7 @@ export default function DashboardLayout({ children }) {
         { name: "Dashboard", href: "/dashboard", icon: HiHome },
         { name: "Leads", href: "/leads", icon: HiCurrencyRupee },
         { name: "Inventory", href: "/inventory", icon: HiOfficeBuilding },
+        { name: "AI Insights", href: "/ai", icon: HiSparkles },
         { name: "Users", href: "/users", icon: HiUsers, role: "ADMIN" }, // Only for admins
         { name: "Settings", href: "/settings", icon: HiCog },
     ];

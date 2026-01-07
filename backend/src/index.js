@@ -15,6 +15,7 @@ const leadRoutes = require('./routes/leadRoutes');
 const externalRoutes = require('./routes/externalRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 const { initCronJobs } = require('./services/cronService');
 
 // Initialize express app
@@ -61,6 +62,7 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/external', externalRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -75,6 +77,7 @@ app.get('/', (req, res) => {
       external: '/api/external',
       feedback: '/api/feedback',
       inventory: '/api/inventory',
+      ai: '/api/ai',
     },
   });
 });
