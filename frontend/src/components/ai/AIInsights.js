@@ -5,6 +5,8 @@ import { HiPaperAirplane, HiSparkles, HiUser, HiRefresh, HiLightBulb } from "rea
 import api from "@/src/services/api";
 import clsx from "clsx";
 import toast from "react-hot-toast";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function AIInsights() {
     const [messages, setMessages] = useState([
@@ -84,13 +86,27 @@ export default function AIInsights() {
                         </div>
 
                         <div className={clsx(
-                            "max-w-[85%] md:max-w-[70%] p-4 rounded-2xl text-sm leading-relaxed",
+                            "max-w-[92%] md:max-w-[80%] p-3 md:p-4 rounded-2xl text-[13px] md:text-sm leading-relaxed",
                             msg.role === "user"
                                 ? "bg-indigo-600 text-white rounded-tr-none shadow-md"
                                 : "bg-white text-gray-800 border border-gray-100 rounded-tl-none shadow-sm"
                         )}>
-                            <div className="prose prose-sm max-w-none whitespace-pre-wrap">
-                                {msg.parts[0].text}
+                            <div className={clsx(
+                                "markdown-container",
+                                msg.role === "user" ? "user-markdown" : "model-markdown"
+                            )}>
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                        table: ({ node, ...props }) => (
+                                            <div className="overflow-x-auto my-4 -mx-1 px-1">
+                                                <table {...props} className="min-w-full border-collapse border border-gray-100 rounded-lg overflow-hidden" />
+                                            </div>
+                                        )
+                                    }}
+                                >
+                                    {msg.parts[0].text}
+                                </ReactMarkdown>
                             </div>
                         </div>
                     </div>

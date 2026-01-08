@@ -52,7 +52,7 @@ const toolHandlers = {
                 source: true,
                 status: true,
                 property: true,
-                budget: true,
+                value: true,
                 createdAt: true
             }
         });
@@ -68,7 +68,7 @@ const toolHandlers = {
             prisma.project.findMany({
                 select: {
                     name: true,
-                    _count: { select: { items: true } }
+                    _count: { select: { inventory: true } }
                 }
             })
         ]);
@@ -97,15 +97,39 @@ const toolHandlers = {
     }
 };
 
+const systemInstruction = `
+    ### ROLE & OBJECTIVE
+    You are the dedicated AI Data Analyst for CRM of Kronus Infratech and Consultants. Your goal is to transform raw business data into actionable intelligence. Do NOT simply list numbers—analyze them to help agents close deals and managers optimize performance. Your tone is professional, proactive, and analytical.
+
+    ### TOOL USAGE PROTOCOL
+    1. **Always Verify:** Trigger tools first. Never guess data.
+    2. **Pattern Recognition:** After fetching data, automatically look for:
+       - **High-Velocity Sources:** Which lead sources (e.g., MagicBricks) are currently most active?
+       - **Demand Gaps:** Which properties have high lead interest but low stock?
+       - **Follow-up Bottlenecks:** Identify leads that haven't been contacted or are stuck in a status for too long.
+
+    ### RESPONSE STRUCTURE
+    1. **Direct Answer:** Start with a brief, high-level answer to the user's question.
+    2. **Structured Data:** Use **Markdown Tables** for all lists of leads or properties.
+    3. **AI Intelligence (Critical Insights):** This is the most important part. Below the data, provide 2-3 bullet points of "AI Intelligence":
+       - **Trends:** e.g., "Interest in **Project Green Valley** is surging among high-budget leads."
+       - **Alerts:** e.g., "5 leads from **99acres** have been in 'Interested' status for over 48 hours without a follow-up."
+       - **Opportunities:** e.g., "Source **Instagram** is providing lower-budget leads, but they are converting 30% faster."
+
+    ### FORMATTING RULES
+    - Use **Bold** for metrics, property names, and lead sources.
+    - Use Markdown Tables for data.
+    - Keep responses concise but information-rich.
+`;
+
 const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-pro",
+    model: "gemini-2.0-flash",
     tools: tools,
+    systemInstruction: systemInstruction
 });
 
 const generateInsight = async (userMessage, history = []) => {
     try {
-        // Gemini requires history to start with a 'user' message.
-        // If our history starts with the model's welcome message, we should remove it.
         let cleanHistory = [...history];
         if (cleanHistory.length > 0 && cleanHistory[0].role === 'model') {
             cleanHistory.shift();
@@ -118,43 +142,60 @@ const generateInsight = async (userMessage, history = []) => {
             },
         });
 
+        console.log(`[AI] Processing request: "${userMessage}"`);
         let result = await chat.sendMessage(userMessage);
         let response = result.response;
 
-        // Handle function calls manually for better control
-        const calls = response.functionCalls();
+        let calls = response.functionCalls();
+        console.log(`[AI] Initial function calls:`, calls ? calls.length : 0);
 
-        if (calls && calls.length > 0) {
+        let callCount = 0;
+        while (calls && calls.length > 0 && callCount < 5) {
+            callCount++;
             const toolResults = {};
 
             for (const call of calls) {
                 const handler = toolHandlers[call.name];
                 if (handler) {
-                    console.log(`AI Calling Tool: ${call.name}`);
+                    console.log(`[AI] Executing tool: ${call.name} with:`, call.args);
                     try {
-                        toolResults[call.name] = await handler(call.args);
+                        const data = await handler(call.args);
+                        toolResults[call.name] = data;
+                        console.log(`[AI] Tool ${call.name} returned data.`);
                     } catch (toolError) {
-                        console.error(`Tool Execution Error (${call.name}):`, toolError);
-                        toolResults[call.name] = { error: "Failed to fetch data from database." };
+                        console.error(`[AI] Tool Error (${call.name}):`, toolError);
+                        toolResults[call.name] = { error: "Database retrieval failed." };
                     }
+                } else {
+                    console.warn(`[AI] Model called unknown tool: ${call.name}`);
                 }
             }
 
-            // Send tool results back to Gemini to finalize the response
-            const finalResult = await chat.sendMessage(Object.keys(toolResults).map(name => ({
+            const parts = Object.keys(toolResults).map(name => ({
                 functionResponse: {
                     name: name,
                     response: { content: toolResults[name] }
                 }
-            })));
+            }));
 
-            return finalResult.response.text();
+            const finalResult = await chat.sendMessage(parts);
+            response = finalResult.response;
+            calls = response.functionCalls();
+            console.log(`[AI] Next function calls:`, calls ? calls.length : 0);
         }
 
-        return response.text();
+        const finalOutput = response.text();
+        console.log(`[AI] Completed with ${callCount} tool passes.`);
+        return finalOutput;
     } catch (error) {
         console.error("Gemini API Error:", error);
-        throw error;
+        if (error.message?.includes("429")) {
+            return "I'm currently receiving too many requests. Please wait a moment and try again.";
+        }
+        if (error.message?.includes("404")) {
+            return "The AI service is currently unavailable. Please try again later or contact support.";
+        }
+        return "I'm sorry, I'm having trouble connecting to my intelligence engine. Please try again in a moment.";
     }
 };
 
