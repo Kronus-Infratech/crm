@@ -35,6 +35,19 @@ const tools = [
                     type: "OBJECT",
                     properties: {}
                 }
+            },
+            {
+                name: "getAvailableInventory",
+                description: "Fetch all currently available properties and plots to find potential matches for leads.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        limit: {
+                            type: "NUMBER",
+                            description: "Number of inventory items to fetch (default 20, max 100)."
+                        }
+                    }
+                }
             }
         ]
     }
@@ -94,6 +107,19 @@ const toolHandlers = {
         });
 
         return { totalLast30Days: leads.length };
+    },
+
+    getAvailableInventory: async ({ limit = 20 }) => {
+        const inventory = await prisma.inventoryItem.findMany({
+            where: { status: "AVAILABLE" },
+            take: Math.min(limit, 100),
+            include: {
+                project: {
+                    select: { name: true, location: true }
+                }
+            }
+        });
+        return inventory;
     }
 };
 
@@ -104,17 +130,17 @@ const systemInstruction = `
     ### TOOL USAGE PROTOCOL
     1. **Always Verify:** Trigger tools first. Never guess data.
     2. **Pattern Recognition:** After fetching data, automatically look for:
-       - **High-Velocity Sources:** Which lead sources (e.g., MagicBricks) are currently most active?
+       - **Low-Velocity Sources:** Which lead sources (e.g., MagicBricks) are currently most active?
        - **Demand Gaps:** Which properties have high lead interest but low stock?
-       - **Follow-up Bottlenecks:** Identify leads that haven't been contacted or are stuck in a status for too long.
+       - **Smart Matching (NEW):** When users ask for "matches" or "potential deals," call **getLatestLeads** and **getAvailableInventory**. Manually compare lead budgets (value) against property prices (totalPrice) and property interests against project names.
 
     ### RESPONSE STRUCTURE
     1. **Direct Answer:** Start with a brief, high-level answer to the user's question.
     2. **Structured Data:** Use **Markdown Tables** for all lists of leads or properties.
-    3. **AI Intelligence (Critical Insights):** This is the most important part. Below the data, provide 2-3 bullet points of "AI Intelligence":
-       - **Trends:** e.g., "Interest in **Project Green Valley** is surging among high-budget leads."
-       - **Alerts:** e.g., "5 leads from **99acres** have been in 'Interested' status for over 48 hours without a follow-up."
-       - **Opportunities:** e.g., "Source **Instagram** is providing lower-budget leads, but they are converting 30% faster."
+    3. **Smart Matches (💡 Potential Deals):** If matching was requested, provide a table mapping Leads to specific Inventory Items based on:
+       - **Budget Fit:** Lead budget (value) >= Property price (totalPrice).
+       - **Interest Match:** Lead's interested property/project matching the inventory project name.
+    4. **AI Intelligence (💡 Critical Insights):** Provide 2-3 bullet points of trends, alerts, or opportunities.
 
     ### FORMATTING RULES
     - Use **Bold** for metrics, property names, and lead sources.
