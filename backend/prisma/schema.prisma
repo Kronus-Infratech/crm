@@ -31,6 +31,7 @@ model User {
   createdLeads      Lead[]   @relation("LeadCreator")
   assignedLeads     Lead[]   @relation("LeadAssignee")
   activities        Activity[]
+  transactions      Transaction[]
   
   @@map("users")
 }
@@ -55,6 +56,10 @@ model Lead {
   activities      Activity[]
   documents       Document[]
   
+  // Linking to Inventory
+  inventoryItemId String?     @db.ObjectId
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -63,6 +68,10 @@ model Lead {
   feedbackSubmitted  Boolean     @default(false)
   feedbackRating     Int?
   feedbackComment    String?
+
+  // Finance Fields
+  financeStatus      FinanceStatus @default(PENDING)
+  financeNotes       String?
   
   @@map("leads")
 }
@@ -164,6 +173,35 @@ model Document {
   @@map("documents")
 }
 
+model Transaction {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  type        TransactionType
+  amount      Float
+  date        DateTime @default(now())
+  source      String
+  description String?
+  
+  // Relations
+  handledById String   @db.ObjectId
+  handledBy   User     @relation(fields: [handledById], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("transactions")
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum FinanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Project {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
@@ -208,8 +246,8 @@ model InventoryItem {
   amenities         String?
   maintenanceCharges Float?
   clubCharges       Float?
-  cannesCharges     Float? // As requested by user
-  description       String? // "Details" from CSV
+  cannesCharges     Float? 
+  description       String? 
   
   // Sold Details
   soldTo            String?
@@ -218,8 +256,9 @@ model InventoryItem {
   // Relations
   projectId         String   @db.ObjectId
   project           Project  @relation(fields: [projectId], references: [id])
+  leads             Lead[]
   
-  listingDate       DateTime @default(now()) // "Date" from CSV
+  listingDate       DateTime @default(now()) 
   updatedAt         DateTime @updatedAt
   
   @@map("inventory_items")

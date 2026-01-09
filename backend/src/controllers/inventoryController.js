@@ -169,6 +169,9 @@ const getInventoryItems = async (req, res, next) => {
         include: {
           project: {
             select: { name: true }
+          },
+          _count: {
+            select: { leads: true }
           }
         }
       })
@@ -294,6 +297,54 @@ const deleteInventoryItem = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Get single inventory item by ID
+ * @route   GET /api/inventory/items/:id
+ * @access  Private
+ */
+const getInventoryItemById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const item = await prisma.inventoryItem.findUnique({
+      where: { id },
+      include: {
+        project: {
+          select: { name: true, location: true }
+        },
+        leads: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            value: true,
+            status: true,
+            assignedTo: { select: { name: true } }
+          }
+        },
+        _count: {
+          select: { leads: true }
+        }
+      }
+    });
+
+    if (!item) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: 'Inventory item not found'
+      });
+    }
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: item
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getProjects,
   createProject,
@@ -302,5 +353,6 @@ module.exports = {
   updateInventoryItem,
   deleteInventoryItem,
   updateProject,
-  deleteProject
+  deleteProject,
+  getInventoryItemById
 };

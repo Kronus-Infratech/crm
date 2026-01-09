@@ -2,6 +2,7 @@
 
 import { HiPencil, HiTrash, HiCheckCircle, HiXCircle, HiPause, HiEye, HiChevronUp, HiChevronDown } from "react-icons/hi";
 import { formatNumber } from "@/src/utils/formatters";
+import clsx from "clsx";
 
 export default function InventoryTable({
   items,
@@ -11,8 +12,18 @@ export default function InventoryTable({
   isAllView = false,
   sortBy,
   sortOrder,
-  onSort
+  onSort,
+  isLoading = false
 }) {
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden p-12 flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-500 font-medium italic animate-pulse">Fetching inventory data...</p>
+      </div>
+    );
+  }
+
   if (!items || items.length === 0) {
     return (
       <div className="p-12 text-center border-2 border-dashed border-gray-200 rounded-lg text-gray-500">
@@ -43,7 +54,7 @@ export default function InventoryTable({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden relative">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs whitespace-nowrap">
           <thead className="bg-gray-50 border-b border-gray-100 uppercase font-black text-gray-400">
@@ -56,6 +67,7 @@ export default function InventoryTable({
               <SortHeader label="Rate (/sqyd)" field="ratePerSqYard" align="right" />
               <SortHeader label="Total Price" field="totalPrice" align="right" />
               <SortHeader label="Status" field="status" align="center" />
+              <th className="px-4 py-3 text-center">Connected Leads</th>
               <SortHeader label="Owner" field="ownerName" />
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
@@ -92,6 +104,14 @@ export default function InventoryTable({
                 </td>
                 <td className="px-4 py-3 text-center">
                   <StatusBadge status={item.status} />
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <span className={clsx(
+                    "px-2 py-1 rounded-full text-[10px] font-bold",
+                    item._count?.leads > 0 ? "bg-indigo-50 text-indigo-700 border border-indigo-100" : "bg-gray-50 text-gray-400 border border-gray-100"
+                  )}>
+                    {item._count?.leads || 0} Leads
+                  </span>
                 </td>
                 <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate" title={item.ownerName}>
                   {item.ownerName || "-"}

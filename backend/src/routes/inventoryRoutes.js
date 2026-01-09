@@ -8,7 +8,8 @@ const {
     updateInventoryItem,
     deleteInventoryItem,
     updateProject,
-    deleteProject
+    deleteProject,
+    getInventoryItemById
 } = require('../controllers/inventoryController');
 const { protect, authorize } = require('../middleware/auth');
 const { ROLES } = require('../config/constants');
@@ -28,6 +29,7 @@ router.route('/items')
     .post(protect, authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.DIRECTOR, ROLES.EXECUTIVE), createInventoryItem);
 
 router.route('/items/:id')
+    .get(protect, getInventoryItemById)
     .put(protect, authorize(ROLES.ADMIN, ROLES.MANAGER, ROLES.DIRECTOR, ROLES.EXECUTIVE), updateInventoryItem)
     .delete(protect, authorize(ROLES.ADMIN, ROLES.DIRECTOR), deleteInventoryItem);
 

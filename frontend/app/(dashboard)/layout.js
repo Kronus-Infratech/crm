@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiHome, HiUsers, HiCurrencyRupee, HiCog, HiLogout, HiMenuAlt2, HiOfficeBuilding, HiSparkles } from "react-icons/hi";
+import { HiHome, HiUsers, HiBriefcase, HiCurrencyRupee, HiCog, HiLogout, HiMenuAlt2, HiOfficeBuilding, HiChip } from "react-icons/hi";
 import clsx from "clsx";
 import { useAuth } from "@/src/contexts/AuthContext";
 
@@ -20,10 +20,11 @@ export default function DashboardLayout({ children }) {
 
     const menuItems = [
         { name: "Dashboard", href: "/dashboard", icon: HiHome },
-        { name: "Leads", href: "/leads", icon: HiCurrencyRupee },
+        { name: "Leads", href: "/leads", icon: HiBriefcase },
         { name: "Inventory", href: "/inventory", icon: HiOfficeBuilding },
-        { name: "AI Insights", href: "/ai", icon: HiSparkles },
-        { name: "Users", href: "/users", icon: HiUsers, role: "ADMIN" }, // Only for admins
+        { name: "Finance", href: "/finance", icon: HiCurrencyRupee, allowedRoles: ["ADMIN", "EXECUTIVE", "DIRECTOR"] },
+        { name: "AI Insights", href: "/ai", icon: HiChip },
+        { name: "Users", href: "/users", icon: HiUsers, allowedRoles: ["ADMIN", "DIRECTOR", "EXECUTIVE"] },
         { name: "Settings", href: "/settings", icon: HiCog },
     ];
 
@@ -78,7 +79,9 @@ export default function DashboardLayout({ children }) {
                 <nav className="flex-1 py-6 px-3 space-y-2">
                     {menuItems.map((item) => {
                         const userRoles = user.roles || [];
-                        if (item.role && !userRoles.includes(item.role) && !userRoles.includes('ADMIN')) return null;
+                        const hasPermission = !item.allowedRoles || item.allowedRoles.some(role => userRoles.includes(role));
+                        
+                        if (!hasPermission) return null;
 
                         const isActive = pathname === item.href;
                         return (

@@ -15,6 +15,7 @@ const leadRoutes = require('./routes/leadRoutes');
 const externalRoutes = require('./routes/externalRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
+const financeRoutes = require('./routes/financeRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const { initCronJobs } = require('./services/cronService');
 
@@ -62,6 +63,7 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/external', externalRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/finance', financeRoutes);
 app.use('/api/ai', aiRoutes);
 
 // Root route
@@ -77,6 +79,7 @@ app.get('/', (req, res) => {
       external: '/api/external',
       feedback: '/api/feedback',
       inventory: '/api/inventory',
+      finance: '/api/finance',
       ai: '/api/ai',
     },
   });

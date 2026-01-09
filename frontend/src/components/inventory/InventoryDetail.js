@@ -1,9 +1,32 @@
-"use client";
-
+import { useState, useEffect } from "react";
+import api from "@/src/services/api";
 import { formatNumber, formatDate } from "@/src/utils/formatters";
-import { HiUser, HiPhone, HiCalendar, HiCurrencyRupee, HiLocationMarker, HiTag, HiInformationCircle } from "react-icons/hi";
+import { HiUser, HiPhone, HiCalendar, HiCurrencyRupee, HiLocationMarker, HiTag, HiInformationCircle, HiExternalLink } from "react-icons/hi";
+import Link from "next/link";
 
-export default function InventoryDetail({ item }) {
+export default function InventoryDetail({ item: initialItem }) {
+  const [item, setItem] = useState(initialItem);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchFullDetails = async () => {
+      if (!initialItem?.id) return;
+      setLoading(true);
+      try {
+        const res = await api.get(`/inventory/items/${initialItem.id}`);
+        if (res.data.success) {
+          setItem(res.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch inventory details", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFullDetails();
+  }, [initialItem?.id]);
+
   if (!item) return null;
 
   const detailRows = [
@@ -65,6 +88,12 @@ export default function InventoryDetail({ item }) {
 
   return (
     <div className="space-y-8 p-1">
+      {loading && (
+        <div className="absolute inset-0 bg-white/50 z-20 flex items-center justify-center backdrop-blur-sm rounded-xl">
+           <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
         <div>
           <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Selected Property</p>
@@ -79,6 +108,40 @@ export default function InventoryDetail({ item }) {
       </div>
 
       <Section title="Property Details" rows={detailRows} />
+      
+      {/* Connected Leads Section */}
+      <div className="space-y-3">
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 border-b border-gray-100 pb-1">Connected Leads</h4>
+        {item.leads && item.leads.length > 0 ? (
+          <div className="grid grid-cols-1 gap-2">
+            {item.leads.map(lead => (
+              <div key={lead.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg hover:border-indigo-200 transition-all shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-xs">
+                    {lead.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 leading-none">{lead.name}</p>
+                    <p className="text-[10px] text-gray-400 mt-1">{lead.phone} • {lead.status}</p>
+                  </div>
+                </div>
+                <div className="text-right flex items-center gap-3">
+                    <div className="hidden sm:block">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Budget</p>
+                        <p className="text-xs font-black text-emerald-600">₹{formatNumber(lead.value || 0)}</p>
+                    </div>
+                    <Link href={`/leads?id=${lead.id}`} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                        <HiExternalLink size={18} />
+                    </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 italic">No leads associated with this property yet.</p>
+        )}
+      </div>
+
       <Section title="Pricing & Value" rows={pricingRows} />
       <Section title="Ownership & Contacts" rows={ownerRows} />
       <Section title="Additional Charges" rows={chargesRows} />

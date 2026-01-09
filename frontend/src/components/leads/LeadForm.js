@@ -23,6 +23,7 @@ const schema = z.object({
   value: z.number().min(0, "Value must be positive").optional(),
   followUpDate: z.string().optional(),
   assignedToId: z.string().optional(),
+  inventoryItemId: z.string().optional().or(z.literal("")).or(z.null()),
 });
 
 export default function LeadForm({ initialData, onSubmit, loading }) {
@@ -137,7 +138,8 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         priority: "MEDIUM",
         source: "WEBSITE",
         value: 0,
-        assignedToId: ""
+        assignedToId: "",
+        inventoryItemId: ""
       });
       setIsCustomProperty(false);
     }
@@ -192,15 +194,24 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
               <Select
                 label="Interested Property"
                 className="text-black!"
-                options={[
-                  { label: "-- Select from Inventory --", value: "" },
-                  ...inventoryItems.map(item => ({
-                    label: `${item.project?.name || 'Unknown'} - Plot ${item.plotNumber} (${item.size || 'N/A'})`,
-                    value: `${item.project?.name || 'Unknown'} - Plot ${item.plotNumber}`
-                  }))
-                ]}
-                error={errors.property?.message}
-                {...register("property")}
+                placeholder="-- Select from Inventory --"
+                options={inventoryItems.map(item => ({
+                  label: `${item.project?.name || 'Unknown'} - Plot ${item.plotNumber} (${item.size || 'N/A'})`,
+                  value: item.id
+                }))}
+                error={errors.inventoryItemId?.message || errors.property?.message}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setValue("inventoryItemId", val);
+                  if (val) {
+                    const selected = inventoryItems.find(i => i.id === val);
+                    const propName = `${selected.project?.name || 'Unknown'} - Plot ${selected.plotNumber}`;
+                    setValue("property", propName);
+                  } else {
+                    setValue("property", "");
+                  }
+                }}
+                defaultValue={initialData?.inventoryItemId || ""}
               />
             )}
             <button

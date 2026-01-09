@@ -349,51 +349,46 @@ export default function InventoryPage() {
             </div>
 
             {/* Inventory List */}
-            {loading && items.length === 0 ? (
-                <div className="flex items-center justify-center h-64">
-                    <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    <InventoryTable
-                        items={items}
-                        isAllView={activeProjectId === "ALL"}
-                        onView={openItemDetail}
-                        onEdit={openItemEdit}
-                        onDelete={handleDeleteItem}
-                        sortBy={sortBy}
-                        sortOrder={sortOrder}
-                        onSort={handleSort}
-                    />
+            <div className="space-y-4">
+                <InventoryTable
+                    items={items}
+                    isAllView={activeProjectId === "ALL"}
+                    onView={openItemDetail}
+                    onEdit={openItemEdit}
+                    onDelete={handleDeleteItem}
+                    sortBy={sortBy}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    isLoading={loading}
+                />
 
-                    {/* Pagination */}
-                    {pagination.totalPages > 1 && (
-                        <div className="flex items-center justify-between pt-2">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                                Page {pagination.page} of {pagination.totalPages}
-                            </p>
-                            <div className="flex gap-2">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={pagination.page <= 1}
-                                    onClick={() => handlePageChange(pagination.page - 1)}
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={pagination.page >= pagination.totalPages}
-                                    onClick={() => handlePageChange(pagination.page + 1)}
-                                >
-                                    Next
-                                </Button>
-                            </div>
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between pt-2">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            Page {pagination.page} of {pagination.totalPages}
+                        </p>
+                        <div className="flex gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={pagination.page <= 1}
+                                onClick={() => handlePageChange(pagination.page - 1)}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={pagination.page >= pagination.totalPages}
+                                onClick={() => handlePageChange(pagination.page + 1)}
+                            >
+                                Next
+                            </Button>
                         </div>
-                    )}
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
 
             {/* Modals */}
             <Modal

@@ -81,6 +81,9 @@ const getLeads = async (req, res, next) => {
               email: true,
             },
           },
+          inventoryItem: {
+            include: { project: { select: { name: true } } }
+          },
           _count: {
             select: {
               activities: true,
@@ -90,6 +93,15 @@ const getLeads = async (req, res, next) => {
       }),
       prisma.lead.count({ where }),
     ]);
+
+    // Filter financeNotes for non-authorized roles
+    const authorizedRoles = [ROLES.ADMIN, ROLES.EXECUTIVE, ROLES.DIRECTOR];
+    const userRoles = req.user.roles || [];
+    const isAuthorized = userRoles.some(role => authorizedRoles.includes(role));
+
+    if (!isAuthorized) {
+      leads.forEach(l => delete l.financeNotes);
+    }
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
@@ -147,6 +159,9 @@ const getLeadById = async (req, res, next) => {
           },
         },
         documents: true, // Fetch attached documents
+        inventoryItem: {
+          include: { project: { select: { name: true } } }
+        }
       },
     });
 
@@ -155,6 +170,15 @@ const getLeadById = async (req, res, next) => {
         success: false,
         message: 'Lead not found',
       });
+    }
+
+    // Filter financeNotes for non-authorized roles
+    const authorizedRoles = [ROLES.ADMIN, ROLES.EXECUTIVE, ROLES.DIRECTOR];
+    const userRoles = req.user.roles || [];
+    const isAuthorized = userRoles.some(role => authorizedRoles.includes(role));
+
+    if (!isAuthorized) {
+      delete lead.financeNotes;
     }
 
     // Check access permission
@@ -196,6 +220,7 @@ const createLead = async (req, res, next) => {
       value,
       followUpDate,
       assignedToId,
+      inventoryItemId,
       documents = [] // Expecting array of { name, url, type, size }
     } = req.body;
 
@@ -226,6 +251,7 @@ const createLead = async (req, res, next) => {
         followUpDate: followUpDate ? new Date(followUpDate) : null,
         createdById: req.user.id,
         assignedToId: assignedToId || null,
+        inventoryItemId: inventoryItemId || null,
         documents: {
           create: documents.map(doc => ({
             name: doc.name,
@@ -300,6 +326,15 @@ const updateLead = async (req, res, next) => {
     const { id } = req.params;
     // EXTRACT activityNote and documents so they are NOT passed to Prisma update directly
     const { activityNote, documents, ...updateData } = req.body;
+
+    // Filter financeNotes if passed in body by non-authorized roles
+    const authorizedRoles = [ROLES.ADMIN, ROLES.EXECUTIVE, ROLES.DIRECTOR];
+    const userRoles = req.user.roles || [];
+    const isAuthorized = userRoles.some(role => authorizedRoles.includes(role));
+
+    if (!isAuthorized && updateData.financeNotes !== undefined) {
+      delete updateData.financeNotes;
+    }
 
     // Handle empty string for unassignment
     if (updateData.assignedToId === "") {
@@ -388,6 +423,20 @@ const updateLead = async (req, res, next) => {
     ) {
       updateData.feedbackToken = crypto.randomUUID();
       updateData.feedbackSubmitted = false;
+    }
+
+    // Handle finance approval flow
+    if (updateData.status === 'WON' && existingLead.status !== 'WON') {
+      updateData.financeStatus = 'PENDING';
+      // Auto-log activity for finance review
+      updateData.activities = {
+        create: {
+          type: 'NOTE',
+          title: 'Sent for Finance Approval',
+          description: `Lead status changed to WON. Awaiting financial verification and final approval.`,
+          userId: req.user.id
+        }
+      };
     }
 
     // Update lead in Database

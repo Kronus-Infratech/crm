@@ -11,6 +11,7 @@ import {
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { formatNumber, formatDate, formatDateTime } from "@/src/utils/formatters";
+import clsx from "clsx";
 
 export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
     const { user } = useAuth();
@@ -192,6 +193,44 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                 </div>
                             </div>
                         </div>
+                        {isAdmin && lead.financeStatus && (
+                            <div className="bg-amber-50 p-5 rounded-lg border border-amber-100 shadow-sm col-span-full">
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-amber-700 text-[10px] font-black uppercase tracking-widest">Finance Perspective</p>
+                                    <span className={clsx(
+                                        "px-2 py-0.5 rounded text-[10px] font-black uppercase border",
+                                        lead.financeStatus === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                                        lead.financeStatus === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-700 border-amber-200'
+                                    )}>
+                                        {lead.financeStatus}
+                                    </span>
+                                </div>
+                                <div className="space-y-3">
+                                    <textarea
+                                        value={lead.financeNotes || ""}
+                                        onChange={(e) => setLead({ ...lead, financeNotes: e.target.value })}
+                                        className="w-full text-black bg-white/50 border-amber-200 rounded-lg p-3 text-sm italic focus:ring-amber-500 focus:border-amber-500"
+                                        placeholder="Add finance instructions or feedback..."
+                                        rows="2"
+                                    />
+                                    <div className="flex justify-end">
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    await api.put(`/leads/${lead.id}`, { financeNotes: lead.financeNotes });
+                                                    toast.success("Finance notes updated");
+                                                } catch (err) {
+                                                    toast.error("Failed to update notes");
+                                                }
+                                            }}
+                                            className="px-3 py-1 bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded hover:bg-amber-700 transition-all"
+                                        >
+                                            Update Notes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         {lead.followUpDate && (
                             <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
                                 <div className="text-right">
