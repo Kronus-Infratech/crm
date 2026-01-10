@@ -85,7 +85,7 @@ export default function DashboardLayout({ children }) {
 
                         const isActive = pathname === item.href;
                         return (
-                            <Link key={item.name} href={item.href}>
+                            <Link key={item.name} href={item.href} onClick={() => setTimeout(() => setSidebarOpen(false), 200)}>
                                 <div className={clsx(
                                     "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
                                     isActive ? "bg-brand-primary/10 text-brand-primary font-medium" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
