@@ -6,7 +6,7 @@ import Heading from "@/src/components/ui/Heading";
 import {
     HiMail, HiPhone, HiCalendar, HiCurrencyRupee, HiLocationMarker,
     HiUserCircle, HiTag, HiClock, HiPaperClip, HiTrash, HiX, HiExternalLink,
-    HiIdentification, HiChartBar, HiDownload
+    HiIdentification, HiChartBar, HiDownload, HiGift, HiHeart
 } from "react-icons/hi";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/src/contexts/AuthContext";
@@ -178,10 +178,12 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                     {/* Key Metrics Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-linear-to-br from-indigo-500 to-indigo-600 p-5 rounded-lg text-white shadow-lg shadow-indigo-100">
-                            <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">Deal Value</p>
+                            <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">Budget Range</p>
                             <div className="flex items-center gap-2">
                                 <HiCurrencyRupee size={24} className="text-indigo-200" />
-                                <span className="text-2xl font-black">₹{formatNumber(lead.value)}</span>
+                                <span className="text-2xl font-black">
+                                    ₹{formatNumber(lead.budgetFrom)} - ₹{formatNumber(lead.budgetTo)}
+                                </span>
                             </div>
                         </div>
                         <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
@@ -200,7 +202,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                     <span className={clsx(
                                         "px-2 py-0.5 rounded text-[10px] font-black uppercase border",
                                         lead.financeStatus === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
-                                        lead.financeStatus === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-700 border-amber-200'
+                                            lead.financeStatus === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-700 border-amber-200'
                                     )}>
                                         {lead.financeStatus}
                                     </span>
@@ -276,6 +278,28 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                     )}
                                 </div>
                             </div>
+                            {lead.dob && (
+                                <div className="p-6 flex items-center gap-4 group border-t border-gray-50">
+                                    <div className="p-3 bg-pink-50 text-pink-600 rounded-lg group-hover:scale-110 transition-transform">
+                                        <HiGift size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase mb-0.5">Date of Birth</p>
+                                        <p className="text-base font-bold text-gray-900">{formatDate(lead.dob)}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {lead.anniversaryDate && (
+                                <div className="p-6 flex items-center gap-4 group border-t border-gray-50">
+                                    <div className="p-3 bg-red-50 text-red-600 rounded-lg group-hover:scale-110 transition-transform">
+                                        <HiHeart size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase mb-0.5">Anniversary Date</p>
+                                        <p className="text-base font-bold text-gray-900">{formatDate(lead.anniversaryDate)}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 

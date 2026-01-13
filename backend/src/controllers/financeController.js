@@ -206,7 +206,7 @@ const handleApproval = async (req, res, next) => {
         await prisma.transaction.create({
           data: {
             type: 'CREDIT',
-            amount: lead.value || 0,
+            amount: lead.budgetTo || 0,
             source: `Sale: ${lead.name}`,
             description: `Plot ${lead.inventoryItem?.plotNumber || ''} sold via Lead ${lead.id}`,
             handledById: req.user.id

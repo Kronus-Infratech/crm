@@ -217,8 +217,11 @@ const createLead = async (req, res, next) => {
       source,
       status,
       priority,
-      value,
+      budgetFrom,
+      budgetTo,
       followUpDate,
+      dob,
+      anniversaryDate,
       assignedToId,
       inventoryItemId,
       documents = [] // Expecting array of { name, url, type, size }
@@ -247,8 +250,11 @@ const createLead = async (req, res, next) => {
         source: source || 'WEBSITE',
         status: status || 'NEW',
         priority: priority || 'MEDIUM',
-        value: value || null,
+        budgetFrom: budgetFrom || null,
+        budgetTo: budgetTo || null,
         followUpDate: followUpDate ? new Date(followUpDate) : null,
+        dob: dob ? new Date(dob) : null,
+        anniversaryDate: anniversaryDate ? new Date(anniversaryDate) : null,
         createdById: req.user.id,
         assignedToId: assignedToId || null,
         inventoryItemId: inventoryItemId || null,
@@ -375,13 +381,22 @@ const updateLead = async (req, res, next) => {
       phone: 'Phone',
       status: 'Status',
       priority: 'Priority',
-      value: 'Value',
+      budgetFrom: 'Min Budget',
+      budgetTo: 'Max Budget',
       property: 'Property',
-      followUpDate: 'Follow-up Date'
+      followUpDate: 'Follow-up Date',
+      dob: 'Date of Birth',
+      anniversaryDate: 'Anniversary Date'
     };
 
     if (updateData.followUpDate) {
       updateData.followUpDate = new Date(updateData.followUpDate);
+    }
+    if (updateData.dob) {
+      updateData.dob = new Date(updateData.dob);
+    }
+    if (updateData.anniversaryDate) {
+      updateData.anniversaryDate = new Date(updateData.anniversaryDate);
     }
 
     Object.keys(updateData).forEach(key => {
@@ -391,7 +406,7 @@ const updateLead = async (req, res, next) => {
         let newVal = updateData[key];
 
         // Format dates for better logs
-        if (key === 'followUpDate') {
+        if (key === 'followUpDate' || key === 'dob' || key === 'anniversaryDate') {
           oldVal = existingLead[key] ? formatDate(existingLead[key]) : 'Empty';
           newVal = updateData[key] ? formatDate(updateData[key]) : 'Empty';
         }
@@ -625,7 +640,7 @@ const getLeadStats = async (req, res, next) => {
       }),
       prisma.lead.aggregate({
         _sum: {
-          value: true,
+          budgetTo: true,
         },
         where,
       }),
@@ -655,7 +670,8 @@ const getLeadStats = async (req, res, next) => {
       where,
       select: {
         status: true,
-        value: true,
+        budgetFrom: true,
+        budgetTo: true,
         createdAt: true,
       }
     });
@@ -673,7 +689,8 @@ const getLeadStats = async (req, res, next) => {
             assignedLeads: {
               select: {
                 status: true,
-                value: true,
+                budgetFrom: true,
+                budgetTo: true,
                 createdAt: true,
                 feedbackRating: true
               },
@@ -688,7 +705,7 @@ const getLeadStats = async (req, res, next) => {
         const totalAssigned = user.assignedLeads.length;
         const wonLeads = user.assignedLeads.filter(l => l.status === 'WON').length;
         const lostLeads = user.assignedLeads.filter(l => l.status === 'LOST').length;
-        const pipelineValue = user.assignedLeads.reduce((sum, l) => sum + (l.value || 0), 0);
+        const pipelineValue = user.assignedLeads.reduce((sum, l) => sum + (l.budgetTo || 0), 0);
 
         const closeRate = totalAssigned > 0 ? ((wonLeads / totalAssigned) * 100).toFixed(1) : "0.0";
         const loseRate = totalAssigned > 0 ? ((lostLeads / totalAssigned) * 100).toFixed(1) : "0.0";
@@ -727,7 +744,7 @@ const getLeadStats = async (req, res, next) => {
       success: true,
       data: {
         totalLeads,
-        totalValue: totalEstimatedValue._sum.value || 0,
+        totalValue: totalEstimatedValue._sum.budgetTo || 0,
         leadsByStatus: statusStats,
         leadsByPriority: priorityStats,
         leadsBySource: sourceStats,
@@ -763,10 +780,10 @@ const processLeadAnalytics = (leads) => {
       trendMap[month]++;
     }
 
-    // Value Breakdown
-    if (lead.status === 'WON') breakdown.won += (lead.value || 0);
-    else if (lead.status === 'LOST') breakdown.lost += (lead.value || 0);
-    else breakdown.pipeline += (lead.value || 0);
+    // Value Breakdown (Using Max Budget for Pipeline View)
+    if (lead.status === 'WON') breakdown.won += (lead.budgetTo || 0);
+    else if (lead.status === 'LOST') breakdown.lost += (lead.budgetTo || 0);
+    else breakdown.pipeline += (lead.budgetTo || 0);
   });
 
   const trends = Object.entries(trendMap).map(([month, count]) => ({ month, count }));
@@ -1025,7 +1042,8 @@ const createMagicBricksLead = async (req, res, next) => {
         email: email || null,
         phone,
         property,
-        value: value ? parseFloat(value) : null,
+        budgetFrom: value ? parseFloat(value) : null,
+        budgetTo: value ? parseFloat(value) : null,
         source: 'MAGICBRICKS',
         status: 'NEW',
         priority: 'MEDIUM',

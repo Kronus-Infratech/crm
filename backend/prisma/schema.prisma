@@ -45,8 +45,11 @@ model Lead {
   source          LeadSource  @default(WEBSITE)
   status          LeadStatus  @default(NEW)
   priority        Priority    @default(MEDIUM)
-  value           Float?
+  budgetFrom      Float?
+  budgetTo        Float?
   followUpDate    DateTime?
+  dob             DateTime?
+  anniversaryDate DateTime?
   
   // Relations
   createdById     String      @db.ObjectId

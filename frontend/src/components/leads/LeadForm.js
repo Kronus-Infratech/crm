@@ -20,8 +20,11 @@ const schema = z.object({
   status: z.enum(["NEW", "CONTACTED", "INTERESTED", "NOT_INTERESTED", "SITE_VISIT", "NEGOTIATION", "DOCUMENTATION", "WON", "LOST"]),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]),
   source: z.enum(["WEBSITE", "REFERRAL", "INSTAGRAM", "YOUTUBE", "EMAIL", "WHATSAPP", "NINETY_NINE_ACRES", "MAGICBRICKS", "OLX", "COLD_OUTREACH", "WALK_IN"]).optional(),
-  value: z.number().min(0, "Value must be positive").optional(),
+  budgetFrom: z.number().min(0, "Min budget must be positive").optional(),
+  budgetTo: z.number().min(0, "Max budget must be positive").optional(),
   followUpDate: z.string().optional(),
+  dob: z.string().optional(),
+  anniversaryDate: z.string().optional(),
   assignedToId: z.string().optional(),
   inventoryItemId: z.string().optional().or(z.literal("")).or(z.null()),
 });
@@ -92,7 +95,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         console.error("Failed to fetch users", err);
       }
     };
-    
+
     const fetchInventory = async () => {
       try {
         const res = await api.get('/inventory/items?status=AVAILABLE');
@@ -103,7 +106,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         console.error("Failed to fetch inventory", err);
       }
     };
-    
+
     fetchUsers();
     fetchInventory();
   }, []);
@@ -118,10 +121,12 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
       const formData = {
         ...initialData,
         assignedToId: assignedId,
-        followUpDate: initialData.followUpDate ? new Date(initialData.followUpDate).toISOString().split('T')[0] : ""
+        followUpDate: initialData.followUpDate ? new Date(initialData.followUpDate).toISOString().split('T')[0] : "",
+        dob: initialData.dob ? new Date(initialData.dob).toISOString().split('T')[0] : "",
+        anniversaryDate: initialData.anniversaryDate ? new Date(initialData.anniversaryDate).toISOString().split('T')[0] : ""
       };
       reset(formData);
-      
+
       // Auto-detect if property is custom
       if (initialData.property && inventoryItems.length > 0) {
         const matchesInventory = inventoryItems.some(item => {
@@ -137,9 +142,12 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         status: "NEW",
         priority: "MEDIUM",
         source: "WEBSITE",
-        value: 0,
+        budgetFrom: 0,
+        budgetTo: 0,
         assignedToId: "",
-        inventoryItemId: ""
+        inventoryItemId: "",
+        dob: "",
+        anniversaryDate: ""
       });
       setIsCustomProperty(false);
     }
@@ -181,7 +189,23 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
             error={errors.email?.message}
             {...register("email")}
           />
-          <div className="relative group">
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Date of Birth (Optional)"
+              type="date"
+              className="text-black!"
+              error={errors.dob?.message}
+              {...register("dob")}
+            />
+            <Input
+              label="Anniversary (Optional)"
+              type="date"
+              className="text-black!"
+              error={errors.anniversaryDate?.message}
+              {...register("anniversaryDate")}
+            />
+          </div>
+          <div className="relative group col-span-full">
             {isCustomProperty ? (
               <Input
                 label="Interested Property"
@@ -277,13 +301,20 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
           <Input
-            label="Property Value (₹)"
+            label="Min Budget (₹)"
             type="number"
             className="text-black!"
-            error={errors.value?.message}
-            {...register("value", { valueAsNumber: true })}
+            error={errors.budgetFrom?.message}
+            {...register("budgetFrom", { valueAsNumber: true })}
+          />
+          <Input
+            label="Max Budget (₹)"
+            type="number"
+            className="text-black!"
+            error={errors.budgetTo?.message}
+            {...register("budgetTo", { valueAsNumber: true })}
           />
           <Input
             label="Next Follow-up"

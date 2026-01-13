@@ -325,8 +325,8 @@ export default function LeadsPage() {
                                         <td className="px-4 py-4">
                                             <StatusBadge status={lead.status} />
                                         </td>
-                                        <td className="px-4 py-4 font-semibold text-gray-900">
-                                            ₹{formatNumber(lead.value)}
+                                        <td className="px-4 py-4 font-semibold text-gray-900 whitespace-nowrap">
+                                            ₹{formatNumber(lead.budgetFrom)} - ₹{formatNumber(lead.budgetTo)}
                                         </td>
                                         <td className="px-4 py-4 text-gray-600">
                                             {lead.followUpDate ? (
