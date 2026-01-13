@@ -19,6 +19,7 @@ model User {
   roles             Role[]   @default([SALESMAN])
   isActive          Boolean  @default(true)
   lastLoginAt       DateTime?
+  lastAssignedAt    DateTime?
   profileImage      String?
   department        String?
   designation       String?

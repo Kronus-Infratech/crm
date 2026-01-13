@@ -974,6 +974,7 @@ const createExternalLead = async (req, res, next) => {
         status: 'NEW',
         priority: 'MEDIUM',
         createdById: systemUser.id,
+        assignedToId: assignedUserId,
       },
     });
 
@@ -1035,6 +1036,43 @@ const createMagicBricksLead = async (req, res, next) => {
       });
     }
 
+    // --- Round Robin Auto-Assignment Logic ---
+    let assignedUserId = null;
+    let assignedUserName = null;
+    let assignedUserEmail = null;
+
+    try {
+      // Find all active salesmen
+      const salesmen = await prisma.user.findMany({
+        where: {
+          roles: { has: 'SALESMAN' },
+          isActive: true
+        },
+        orderBy: {
+          lastAssignedAt: 'asc' // The one who hasn't been assigned for the longest time comes first (or nulls)
+        }
+      });
+
+      if (salesmen.length > 0) {
+        const selectedSalesman = salesmen[0]; // Pick the first one
+        assignedUserId = selectedSalesman.id;
+        assignedUserName = selectedSalesman.name;
+        assignedUserEmail = selectedSalesman.email;
+
+        // Update timestamp to move them to back of the queue
+        await prisma.user.update({
+          where: { id: assignedUserId },
+          data: { lastAssignedAt: new Date() }
+        });
+        
+        console.log(`Auto-assigned lead to: ${assignedUserName} (${assignedUserId})`);
+      } else {
+        console.warn('No active salesmen found for auto-assignment.');
+      }
+    } catch (assignError) {
+      console.error("Auto-assignment failed:", assignError);
+    }
+
     // Create the lead
     const lead = await prisma.lead.create({
       data: {
@@ -1048,7 +1086,17 @@ const createMagicBricksLead = async (req, res, next) => {
         status: 'NEW',
         priority: 'MEDIUM',
         createdById: systemUser.id,
+        assignedToId: assignedUserId, // Assign found salesman
       },
+      include: {
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
     });
 
     // Log the activity
@@ -1061,6 +1109,28 @@ const createMagicBricksLead = async (req, res, next) => {
         leadId: lead.id,
       },
     });
+
+    if (assignedUserId && assignedUserEmail) {
+      // Log assignment activity
+      await prisma.activity.create({
+        data: {
+          type: 'NOTE',
+          title: 'Auto-Assigned (Round Robin)',
+          description: `Lead auto-assigned to ${assignedUserName}`,
+          userId: systemUser.id,
+          leadId: lead.id
+        }
+      });
+      
+      // Send Email Notification
+      const { sendLeadAssignmentEmail } = require('../utils/emailService');
+      sendLeadAssignmentEmail(
+        assignedUserEmail,
+        assignedUserName,
+        lead.name,
+        lead.id
+      ).catch(err => console.error('Failed to send auto-assignment email:', err));
+    }
 
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
