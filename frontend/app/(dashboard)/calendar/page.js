@@ -128,7 +128,7 @@ export default function CalendarPage() {
 
         // Paddings for start of month
         for (let i = 0; i < startDay; i++) {
-            days.push(<div key={`blank-${i}`} className="h-32 border-b border-r bg-gray-50/50" />);
+            days.push(<div key={`blank-${i}`} className="h-20 sm:h-24 md:h-32 bg-gray-50/10 border-b border-r border-gray-100" />);
         }
 
         for (let d = 1; d <= totalDays; d++) {
@@ -145,33 +145,57 @@ export default function CalendarPage() {
                     key={d}
                     onClick={() => handleDateClick(date)}
                     className={clsx(
-                        "h-32 border-b border-r p-2 transition-colors hover:bg-gray-50 cursor-pointer relative",
-                        isToday && "bg-brand-primary/5"
+                        "h-20 sm:h-24 md:h-32 border-b border-r border-gray-100 p-1 md:p-3 transition-all hover:bg-gray-50/80 cursor-pointer relative group",
+                        isToday && "bg-brand-primary/3"
                     )}
                 >
-                    <span className={clsx(
-                        "text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full mb-1",
-                        isToday ? "bg-brand-primary text-white" : "text-gray-500"
-                    )}>
-                        {d}
-                    </span>
+                    <div className="flex flex-col h-full">
+                        <span className={clsx(
+                            "text-xs md:text-sm font-bold w-6 h-6 md:w-9 md:h-9 mb-4 flex items-center justify-center rounded-xl transition-all",
+                            isToday ? "bg-brand-primary text-white shadow-xl shadow-brand-primary/30" : "text-gray-400 group-hover:text-brand-primary group-hover:bg-brand-primary/5"
+                        )}>
+                            {d}
+                        </span>
 
-                    <div className="space-y-1 overflow-y-auto max-h-[80px] scrollbar-hide">
-                        {dateEvents.map((event, idx) => (
-                            <div
-                                key={idx}
-                                onClick={(e) => handleEventClick(e, event)}
-                                className={clsx(
-                                    "px-2 py-1 text-[10px] font-bold rounded-md truncate border-l-4",
-                                    event.type === 'FOLLOW_UP' ? "bg-amber-100 text-amber-700 border-amber-500" :
-                                        event.type === 'SITE_VISIT' ? "bg-teal-100 text-teal-700 border-teal-500" :
-                                            event.type === 'MEETING' ? "bg-purple-100 text-purple-700 border-purple-500" :
-                                                "bg-blue-100 text-blue-700 border-blue-500"
-                                )}
-                            >
-                                {event.title}
-                            </div>
-                        ))}
+                        {/* Desktop: Event Pills */}
+                        <div className="hidden md:block mt-auto space-y-1 overflow-hidden">
+                            {dateEvents.slice(0, 2).map((event, idx) => (
+                                <div
+                                    key={idx}
+                                    onClick={(e) => handleEventClick(e, event)}
+                                    className={clsx(
+                                        "px-2 py-1 text-[10px] font-bold rounded-lg truncate border-l-4",
+                                        event.type === 'FOLLOW_UP' ? "bg-amber-100 text-amber-700 border-amber-500" :
+                                            event.type === 'SITE_VISIT' ? "bg-teal-100 text-teal-700 border-teal-500" :
+                                                event.type === 'MEETING' ? "bg-purple-100 text-purple-700 border-purple-500" :
+                                                    "bg-blue-100 text-blue-700 border-blue-500"
+                                    )}
+                                >
+                                    {event.title}
+                                </div>
+                            ))}
+                            {dateEvents.length > 2 && (
+                                <div className="text-[10px] text-brand-primary font-black px-1">
+                                    + {dateEvents.length - 2} more
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Mobile: Compact Lines */}
+                        <div className="flex md:hidden mt-auto flex-wrap gap-0.5 max-h-[12px] overflow-hidden">
+                            {dateEvents.slice(0, 3).map((event, idx) => (
+                                <div
+                                    key={idx}
+                                    className={clsx(
+                                        "h-1 px-1.5 flex-1 rounded-full",
+                                        event.type === 'FOLLOW_UP' ? "bg-amber-500" :
+                                            event.type === 'SITE_VISIT' ? "bg-teal-500" :
+                                                event.type === 'MEETING' ? "bg-purple-500" :
+                                                    "bg-blue-500"
+                                    )}
+                                />
+                            ))}
+                        </div>
                     </div>
                 </div>
             );
@@ -186,61 +210,71 @@ export default function CalendarPage() {
     ];
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <Heading level={1}>Team Calendar</Heading>
-                    <p className="text-gray-500 mt-1">Schedule follow-ups and manage your appointments.</p>
+        <div className="max-w-7xl mx-auto space-y-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-2">
+                    <span className="text-xs font-black uppercase tracking-[0.4em] text-brand-primary">Team Sync</span>
+                    <Heading level={1} className="text-4xl">Calendar</Heading>
+                    <p className="text-gray-400">Streamline your follow-ups and onsite visits.</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch gap-3">
                     {isAdmin && (
-                        <div className="w-48">
+                        <div className="w-full sm:w-56">
                             <Select
                                 value={selectedUser}
                                 onChange={(e) => setSelectedUser(e.target.value)}
                                 options={[
-                                    { label: "All Team Events", value: "all" },
+                                    { label: "All Members", value: "all" },
                                     ...(Array.isArray(users) ? users.map(u => ({ label: u.name, value: u.id })) : [])
                                 ]}
                             />
                         </div>
                     )}
-                    <Button variant="primary" icon={HiPlus} onClick={() => { setSelectedEvent(null); setSelectedDate(new Date()); setModalOpen(true); }}>
-                        New Event
+                    <Button variant="primary" size="lg" icon={HiPlus} className="shadow-2xl shadow-brand-primary/20" onClick={() => { setSelectedEvent(null); setSelectedDate(new Date()); setModalOpen(true); }}>
+                        New Schedule
                     </Button>
                 </div>
             </div>
 
-            <Card className="p-0 overflow-hidden border-none shadow-xl shadow-black/3">
-                <div className="bg-[#4a4a4a] text-white p-6 flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        <h2 className="text-2xl font-black uppercase tracking-tighter">
-                            {monthNames[currentDate.getMonth()]} <span className="text-[#fbb03b]">{currentDate.getFullYear()}</span>
-                        </h2>
-                        <div className="flex items-center bg-white/10 rounded-xl p-1">
-                            <button onClick={handlePrevMonth} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                                <HiChevronLeft size={20} />
+            <Card className="p-0 overflow-hidden border border-gray-100 shadow-2xl shadow-black/5 bg-white rounded-3xl">
+                <div className="bg-white p-2 flex flex-col lg:flex-row lg:items-center justify-between gap-8 border-b border-gray-100">
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col">
+                            <h2 className="text-3xl font-black text-gray-900 tracking-tighter">
+                                {monthNames[currentDate.getMonth()]} <span className="text-gray-200">/ {currentDate.getFullYear()}</span>
+                            </h2>
+                        </div>
+                        <div className="flex items-center gap-1 bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
+                            <button onClick={handlePrevMonth} className="p-2.5 hover:bg-white hover:shadow-md rounded-xl transition-all">
+                                <HiChevronLeft size={22} className="text-gray-700" />
                             </button>
-                            <button onClick={() => setCurrentDate(new Date())} className="px-4 py-1 text-xs font-black uppercase tracking-widest hover:bg-white/10 rounded-lg transition-colors">
+                            <button onClick={() => setCurrentDate(new Date())} className="px-6 py-1.5 text-xs font-black uppercase tracking-widest text-gray-700 hover:text-brand-primary transition-colors">
                                 Today
                             </button>
-                            <button onClick={handleNextMonth} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                                <HiChevronRight size={20} />
+                            <button onClick={handleNextMonth} className="p-2.5 hover:bg-white hover:shadow-md rounded-xl transition-all">
+                                <HiChevronRight size={22} className="text-gray-700" />
                             </button>
                         </div>
                     </div>
 
-                    <div className="hidden lg:flex items-center gap-4 text-[10px] font-black uppercase tracking-widest">
-                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-blue-500" /> General</div>
-                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-amber-500" /> Follow-ups</div>
-                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-purple-500" /> Meetings</div>
-                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-teal-500" /> Site Visits</div>
+                    <div className="flex flex-wrap items-center gap-6 p-4 md:p-0 bg-gray-50/50 md:bg-transparent rounded-2xl">
+                        {[
+                            { color: "bg-blue-500", label: "General" },
+                            { color: "bg-amber-500", label: "Follow-ups" },
+                            { color: "bg-purple-500", label: "Meetings" },
+                            { color: "bg-teal-500", label: "Site Visits" }
+                        ].map(item => (
+                            <div key={item.label} className="flex items-center gap-2">
+                                <span className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{item.label}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-7 bg-white">
-                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
-                        <div key={day} className="py-3 text-center border-b border-r text-[11px] font-black uppercase tracking-[0.2em] text-[#4a4a4a] bg-gray-50/50">
+                <div className="grid grid-cols-7 border-collapse">
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => (
+                        <div key={i} className="py-5 text-center border-b border-r border-gray-100 text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-300">
                             {day}
                         </div>
                     ))}
