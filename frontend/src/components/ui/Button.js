@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { isValidElement } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 
@@ -14,11 +15,13 @@ export default function Button({
   type = "button",
   disabled = false,
   loading = false,
+  isLoading = false,
   icon,
   ...props
 }) {
+  const isActuallyLoading = loading || isLoading;
   const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
-  
+
   const variants = {
     primary: "bg-brand-primary hover:bg-brand-primary/90 text-white focus:ring-brand-primary/50 shadow-lg shadow-brand-primary/30",
     secondary: "bg-brand-secondary hover:bg-brand-secondary/90 text-white focus:ring-brand-secondary/50",
@@ -36,8 +39,8 @@ export default function Button({
 
   return (
     <motion.button
-      whileHover={{ scale: disabled || loading ? 1 : 1.02 }}
-      whileTap={{ scale: disabled || loading ? 1 : 0.98 }}
+      whileHover={{ scale: disabled || isActuallyLoading ? 1 : 1.02 }}
+      whileTap={{ scale: disabled || isActuallyLoading ? 1 : 0.98 }}
       type={type}
       className={clsx(
         baseStyles,
@@ -47,18 +50,23 @@ export default function Button({
         className
       )}
       onClick={onClick}
-      disabled={disabled || loading}
+      disabled={disabled || isActuallyLoading}
       {...props}
     >
-      {loading ? (
+      {isActuallyLoading ? (
         <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            <span>{children}</span>
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <span>{children}</span>
         </div>
       ) : (
         <div className="flex items-center gap-2">
-            {icon && <span>{icon}</span>}
-            {children}
+          {icon && (
+            isValidElement(icon) ? icon : (() => {
+              const Icon = icon;
+              return <Icon size={20} />;
+            })()
+          )}
+          {children}
         </div>
       )}
     </motion.button>

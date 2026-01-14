@@ -17,6 +17,7 @@ const feedbackRoutes = require('./routes/feedbackRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const financeRoutes = require('./routes/financeRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const eventRoutes = require('./routes/eventRoutes');
 const { initCronJobs } = require('./services/cronService');
 
 // Initialize express app
@@ -65,6 +66,7 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/events', eventRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -81,6 +83,7 @@ app.get('/', (req, res) => {
       inventory: '/api/inventory',
       finance: '/api/finance',
       ai: '/api/ai',
+      events: '/api/events',
     },
   });
 });

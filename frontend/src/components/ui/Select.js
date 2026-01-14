@@ -1,12 +1,13 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, isValidElement } from "react";
 import clsx from "clsx";
 
 const Select = forwardRef(({
     label,
     error,
     options = [],
+    icon: Icon,
     className,
     containerClassName,
     placeholder = "Select an option",
@@ -23,7 +24,8 @@ const Select = forwardRef(({
                 <select
                     ref={ref}
                     className={clsx(
-                        "w-full px-4 py-3 text-black rounded-lg border bg-white focus:outline-none focus:ring-2 transition-all appearance-none cursor-pointer",
+                        "w-full py-3 text-black rounded-lg border bg-white focus:outline-none focus:ring-2 transition-all appearance-none cursor-pointer",
+                        Icon ? "pl-12 pr-10" : "px-4",
                         error
                             ? "border-brand-red focus:ring-brand-red/50 text-brand-red"
                             : "border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20",
@@ -38,6 +40,11 @@ const Select = forwardRef(({
                         </option>
                     ))}
                 </select>
+                {Icon && (
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                        {isValidElement(Icon) ? Icon : <Icon size={20} />}
+                    </div>
+                )}
                 {/* Custom arrow icon */}
                 <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">

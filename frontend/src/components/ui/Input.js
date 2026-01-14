@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { forwardRef, useState } from "react";
+import { forwardRef, useState, isValidElement } from "react";
 import { motion } from "framer-motion";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 
@@ -9,6 +9,7 @@ const Input = forwardRef(({
   label,
   error,
   type = "text",
+  icon: Icon,
   className,
   containerClassName,
   ...props
@@ -34,7 +35,8 @@ const Input = forwardRef(({
           type={inputType}
           autoComplete={isPassword ? "off" : props.autoComplete}
           className={clsx(
-            "w-full px-4 py-3 text-black rounded-lg border bg-white focus:outline-none focus:ring-2 transition-all",
+            "w-full py-3 text-black rounded-lg border bg-white focus:outline-none focus:ring-2 transition-all",
+            Icon ? "pl-12 pr-4" : "px-4",
             error
               ? "border-brand-red focus:ring-brand-red/50 text-brand-red"
               : "border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20",
@@ -43,6 +45,11 @@ const Input = forwardRef(({
           )}
           {...props}
         />
+        {Icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+            {isValidElement(Icon) ? Icon : <Icon size={20} />}
+          </div>
+        )}
         {isPassword && (
           <button
             type="button"
