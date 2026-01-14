@@ -342,10 +342,12 @@ const updateLead = async (req, res, next) => {
       delete updateData.financeNotes;
     }
 
-    // Handle empty string for unassignment
-    if (updateData.assignedToId === "") {
-      updateData.assignedToId = null;
-    }
+    // Handle empty strings for IDs and Dates before comparing changes
+    ['assignedToId', 'inventoryItemId', 'dob', 'anniversaryDate', 'followUpDate', 'budgetFrom', 'budgetTo'].forEach(field => {
+      if (updateData[field] === "") {
+        updateData[field] = null;
+      }
+    });
 
     // Check if lead exists
     const existingLead = await prisma.lead.findUnique({
@@ -389,13 +391,13 @@ const updateLead = async (req, res, next) => {
       anniversaryDate: 'Anniversary Date'
     };
 
-    if (updateData.followUpDate) {
+    if (updateData.followUpDate && updateData.followUpDate !== null) {
       updateData.followUpDate = new Date(updateData.followUpDate);
     }
-    if (updateData.dob) {
+    if (updateData.dob && updateData.dob !== null) {
       updateData.dob = new Date(updateData.dob);
     }
-    if (updateData.anniversaryDate) {
+    if (updateData.anniversaryDate && updateData.anniversaryDate !== null) {
       updateData.anniversaryDate = new Date(updateData.anniversaryDate);
     }
 
@@ -1064,7 +1066,7 @@ const createMagicBricksLead = async (req, res, next) => {
           where: { id: assignedUserId },
           data: { lastAssignedAt: new Date() }
         });
-        
+
         console.log(`Auto-assigned lead to: ${assignedUserName} (${assignedUserId})`);
       } else {
         console.warn('No active salesmen found for auto-assignment.');
@@ -1121,7 +1123,7 @@ const createMagicBricksLead = async (req, res, next) => {
           leadId: lead.id
         }
       });
-      
+
       // Send Email Notification
       const { sendLeadAssignmentEmail } = require('../utils/emailService');
       sendLeadAssignmentEmail(
