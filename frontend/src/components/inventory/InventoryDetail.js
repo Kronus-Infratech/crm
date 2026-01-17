@@ -90,7 +90,7 @@ export default function InventoryDetail({ item: initialItem }) {
     <div className="space-y-8 p-1">
       {loading && (
         <div className="absolute inset-0 bg-white/50 z-20 flex items-center justify-center backdrop-blur-sm rounded-xl">
-           <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
 
@@ -99,16 +99,15 @@ export default function InventoryDetail({ item: initialItem }) {
           <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Selected Property</p>
           <h3 className="text-xl font-black text-gray-900">{item.project?.name || 'Inventory Item'}</h3>
         </div>
-        <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-          item.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-          item.status === 'SOLD' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-        }`}>
+        <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${item.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+            item.status === 'SOLD' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+          }`}>
           {item.status}
         </div>
       </div>
 
       <Section title="Property Details" rows={detailRows} />
-      
+
       {/* Connected Leads Section */}
       <div className="space-y-3">
         <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 border-b border-gray-100 pb-1">Connected Leads</h4>
@@ -126,13 +125,13 @@ export default function InventoryDetail({ item: initialItem }) {
                   </div>
                 </div>
                 <div className="text-right flex items-center gap-3">
-                    <div className="hidden sm:block">
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Budget</p>
-                        <p className="text-xs font-black text-emerald-600">₹{formatNumber(lead.value || 0)}</p>
-                    </div>
-                    <Link href={`/leads?id=${lead.id}`} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
-                        <HiExternalLink size={18} />
-                    </Link>
+                  <div className="hidden sm:block">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase">Budget</p>
+                    <p className="text-xs font-black text-emerald-600">₹{formatNumber(lead.budgetTo || lead.budgetFrom || 0)}</p>
+                  </div>
+                  <Link href={`/leads?id=${lead.id}`} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                    <HiExternalLink size={18} />
+                  </Link>
                 </div>
               </div>
             ))}
@@ -149,10 +148,10 @@ export default function InventoryDetail({ item: initialItem }) {
 
       {item.amenities && (
         <div className="space-y-2">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 border-b border-gray-100 pb-1">Amenities & Remarks</h4>
-            <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 italic">
-                {item.amenities}
-            </p>
+          <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 border-b border-gray-100 pb-1">Amenities & Remarks</h4>
+          <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 italic">
+            {item.amenities}
+          </p>
         </div>
       )}
     </div>

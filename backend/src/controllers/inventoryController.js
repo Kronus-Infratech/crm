@@ -318,7 +318,8 @@ const getInventoryItemById = async (req, res, next) => {
             name: true,
             phone: true,
             email: true,
-            value: true,
+            budgetFrom: true,
+            budgetTo: true,
             status: true,
             assignedTo: { select: { name: true } }
           }

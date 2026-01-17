@@ -245,7 +245,7 @@ export default function FinancePage() {
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="text-xs font-bold text-gray-400 uppercase">Value</p>
-                                                        <p className="text-2xl font-black text-emerald-600">₹{formatNumber(lead.value)}</p>
+                                                        <p className="text-2xl font-black text-emerald-600">₹{formatNumber(lead.budgetTo || lead.budgetFrom || 0)}</p>
                                                     </div>
                                                 </div>
 

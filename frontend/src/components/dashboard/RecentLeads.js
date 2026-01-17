@@ -54,7 +54,7 @@ export default function RecentLeads({ leads }) {
                                     <StatusBadge status={lead.status} />
                                 </td>
                                 <td className="px-8 py-5 text-right font-black text-gray-900 tabular-nums">
-                                    ₹{formatNumber(lead.value)}
+                                    ₹{formatNumber(lead.budgetTo || lead.budgetFrom || 0)}
                                 </td>
                             </tr>
                         ))}

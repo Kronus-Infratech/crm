@@ -65,7 +65,8 @@ const toolHandlers = {
                 source: true,
                 status: true,
                 property: true,
-                value: true,
+                budgetFrom: true,
+                budgetTo: true,
                 createdAt: true
             }
         });
@@ -132,13 +133,13 @@ const systemInstruction = `
     2. **Pattern Recognition:** After fetching data, automatically look for:
        - **Low-Velocity Sources:** Which lead sources (e.g., MagicBricks) are currently most active?
        - **Demand Gaps:** Which properties have high lead interest but low stock?
-       - **Smart Matching (NEW):** When users ask for "matches" or "potential deals," call **getLatestLeads** and **getAvailableInventory**. Manually compare lead budgets (value) against property prices (totalPrice) and property interests against project names.
+       - **Smart Matching (NEW):** When users ask for "matches" or "potential deals," call **getLatestLeads** and **getAvailableInventory**. Manually compare lead budgets (budgetFrom/budgetTo) against property prices (totalPrice) and property interests against project names.
 
     ### RESPONSE STRUCTURE
     1. **Direct Answer:** Start with a brief, high-level answer to the user's question.
     2. **Structured Data:** Use **Markdown Tables** for all lists of leads or properties.
     3. **Smart Matches (💡 Potential Deals):** If matching was requested, provide a table mapping Leads to specific Inventory Items based on:
-       - **Budget Fit:** Lead budget (value) >= Property price (totalPrice).
+       - **Budget Fit:** Lead budget (budgetFrom/budgetTo) >= Property price (totalPrice).
        - **Interest Match:** Lead's interested property/project matching the inventory project name.
     4. **AI Intelligence (💡 Critical Insights):** Provide 2-3 bullet points of trends, alerts, or opportunities.
 

@@ -59,7 +59,8 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
       status: "NEW",
       priority: "MEDIUM",
       source: "WEBSITE",
-      value: 0,
+      budgetFrom: 0,
+      budgetTo: 0,
       assignedToId: ""
     }
   });
