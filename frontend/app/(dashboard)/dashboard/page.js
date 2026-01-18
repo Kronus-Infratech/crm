@@ -45,7 +45,7 @@ export default function DashboardPage() {
         const leadStats = leadStatsRes.status === 'fulfilled' ? leadStatsRes.value.data.data : { totalLeads: 0, totalValue: 0, leadsByStatus: {}, leadsBySource: {}, performance: [], monthlyTrends: [], valueBreakdown: { won: 0, lost: 0, pipeline: 0 } };
         const recentLeadsData = recentLeadsRes.status === 'fulfilled' ? recentLeadsRes.value.data.data.leads : [];
 
-        const wonLeads = leadStats.leadsByStatus?.WON || 0;
+        const wonLeads = leadStats.leadsByStatus?.CONVERTED || 0;
         const totalLeads = leadStats.totalLeads || 1;
         const conversionRate = ((wonLeads / totalLeads) * 100).toFixed(1);
 

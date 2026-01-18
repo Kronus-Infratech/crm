@@ -351,7 +351,7 @@ const sendLeadWelcomeEmail = async (email, name) => {
  * Send feedback email to closed lead
  */
 const sendLeadFeedbackEmail = async (email, name, status, token) => {
-  const isWon = status === 'WON';
+  const isWon = status === 'CONVERTED';
   const subject = isWon ? 'Congratulations on Your New Property!' : 'We Value Your Feedback';
   const feedbackLink = `${process.env.FRONTEND_URL}/feedback/${token}`;
 

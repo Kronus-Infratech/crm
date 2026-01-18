@@ -98,7 +98,7 @@ const getPendingApprovals = async (req, res, next) => {
   try {
     const leads = await prisma.lead.findMany({
       where: {
-        status: 'WON',
+        status: 'CONVERTED',
         financeStatus: 'PENDING'
       },
       include: {

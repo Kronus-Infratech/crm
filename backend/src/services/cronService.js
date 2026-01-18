@@ -48,7 +48,7 @@ const processFollowUpReminders = async (type) => {
           lte: endOfDay,
         },
         assignedToId: { not: null },
-        status: { notIn: ['WON', 'LOST'] }, // Only active leads
+        status: { notIn: ['CONVERTED', 'NOT_CONVERTED'] }, // Only active leads
       },
       include: {
         assignedTo: true,

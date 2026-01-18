@@ -105,7 +105,7 @@ export default function LeadsPage() {
     };
 
     // Helper to check if lead is closed
-    const isLeadClosed = (status) => ['WON', 'LOST'].includes(status);
+    const isLeadClosed = (status) => ['CONVERTED', 'NOT_CONVERTED'].includes(status);
 
 
     const fetchLeads = useCallback(async () => {
@@ -220,8 +220,8 @@ export default function LeadsPage() {
                             { label: "Site Visit", value: "SITE_VISIT" },
                             { label: "Negotiation", value: "NEGOTIATION" },
                             { label: "Documentation", value: "DOCUMENTATION" },
-                            { label: "Won", value: "WON" },
-                            { label: "Lost", value: "LOST" },
+                            { label: "Converted", value: "CONVERTED" },
+                            { label: "Not Converted", value: "NOT_CONVERTED" },
                         ]}
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
@@ -332,7 +332,7 @@ export default function LeadsPage() {
                                             {lead.followUpDate ? (
                                                 <div className="flex flex-col">
                                                     <span>{formatDate(lead.followUpDate)}</span>
-                                                    {new Date(lead.followUpDate) < new Date() && lead.status !== 'WON' && lead.status !== 'LOST' && (
+                                                    {new Date(lead.followUpDate) < new Date() && lead.status !== 'CONVERTED' && lead.status !== 'NOT_CONVERTED' && (
                                                         <span className="text-[10px] text-red-500 font-bold uppercase">Overdue</span>
                                                     )}
                                                 </div>
@@ -499,17 +499,17 @@ export default function LeadsPage() {
                     <div className="flex gap-3 justify-end pt-2">
                         <Button
                             className="bg-red-500 text-white hover:bg-red-700 border-red-700"
-                            onClick={() => handleCloseLead('LOST')}
+                            onClick={() => handleCloseLead('NOT_CONVERTED')}
                             disabled={isClosing}
                         >
-                            {isClosing ? "Processing..." : "Mark as LOST"}
+                            {isClosing ? "Processing..." : "Not Converted"}
                         </Button>
                         <Button
                             className="bg-green-600 text-white hover:bg-green-700 focus:ring-green-500"
-                            onClick={() => handleCloseLead('WON')}
+                            onClick={() => handleCloseLead('CONVERTED')}
                             disabled={isClosing}
                         >
-                            {isClosing ? "Processing..." : "Mark as WON"}
+                            {isClosing ? "Processing..." : "Mark Converted"}
                         </Button>
                     </div>
                 </div>
@@ -566,8 +566,8 @@ function StatusBadge({ status }) {
         SITE_VISIT: "bg-purple-100 text-purple-700",
         NEGOTIATION: "bg-orange-100 text-orange-700",
         DOCUMENTATION: "bg-indigo-100 text-indigo-700",
-        WON: "bg-emerald-100 text-emerald-700",
-        LOST: "bg-red-100 text-red-700"
+        CONVERTED: "bg-emerald-100 text-emerald-700",
+        NOT_CONVERTED: "bg-red-100 text-red-700"
     };
 
     return (

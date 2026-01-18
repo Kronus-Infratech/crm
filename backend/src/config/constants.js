@@ -8,7 +8,7 @@ module.exports = {
     FINANCE: 'FINANCE',
     HR: 'HR',
   },
-  
+
   LEAD_STATUS: {
     NEW: 'NEW',
     CONTACTED: 'CONTACTED',
@@ -17,10 +17,10 @@ module.exports = {
     SITE_VISIT: 'SITE_VISIT',
     NEGOTIATION: 'NEGOTIATION',
     DOCUMENTATION: 'DOCUMENTATION',
-    WON: 'WON',
-    LOST: 'LOST',
+    CONVERTED: 'CONVERTED',
+    NOT_CONVERTED: 'NOT_CONVERTED',
   },
-  
+
   LEAD_SOURCE: {
     WEBSITE: 'WEBSITE',
     REFERRAL: 'REFERRAL',
@@ -34,14 +34,14 @@ module.exports = {
     COLD_OUTREACH: 'COLD_OUTREACH',
     WALK_IN: 'WALK_IN',
   },
-  
+
   PRIORITY: {
     LOW: 'LOW',
     MEDIUM: 'MEDIUM',
     HIGH: 'HIGH',
     URGENT: 'URGENT',
   },
-  
+
   ACTIVITY_TYPE: {
     CALL: 'CALL',
     EMAIL: 'EMAIL',
@@ -50,7 +50,7 @@ module.exports = {
     TASK: 'TASK',
     FOLLOW_UP: 'FOLLOW_UP',
   },
-  
+
   HTTP_STATUS: {
     OK: 200,
     CREATED: 201,

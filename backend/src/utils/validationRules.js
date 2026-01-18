@@ -114,7 +114,7 @@ const createLeadValidation = [
     .withMessage('Invalid lead source'),
   body('status')
     .optional()
-    .isIn(['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'SITE_VISIT', 'NEGOTIATION', 'DOCUMENTATION', 'WON', 'LOST'])
+    .isIn(['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'SITE_VISIT', 'NEGOTIATION', 'DOCUMENTATION', 'CONVERTED', 'NOT_CONVERTED'])
     .withMessage('Invalid lead status'),
   body('priority')
     .optional()
@@ -159,7 +159,7 @@ const updateLeadValidation = [
     .withMessage('Invalid lead source'),
   body('status')
     .optional()
-    .isIn(['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'SITE_VISIT', 'NEGOTIATION', 'DOCUMENTATION', 'WON', 'LOST'])
+    .isIn(['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'SITE_VISIT', 'NEGOTIATION', 'DOCUMENTATION', 'CONVERTED', 'NOT_CONVERTED'])
     .withMessage('Invalid lead status'),
   body('priority')
     .optional()

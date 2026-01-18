@@ -432,25 +432,24 @@ const updateLead = async (req, res, next) => {
       changes.push(`Assigned to ${assignedUser.name}`);
     }
 
-    // Generate feedback token if status changes to WON or LOST
+    // Generate feedback token if status changes to CONVERTED or NOT_CONVERTED
     if (
       updateData.status &&
-      (updateData.status === 'WON' || updateData.status === 'LOST') &&
+      (updateData.status === 'CONVERTED' || updateData.status === 'NOT_CONVERTED') &&
       updateData.status !== existingLead.status
     ) {
       updateData.feedbackToken = crypto.randomUUID();
       updateData.feedbackSubmitted = false;
     }
 
-    // Handle finance approval flow
-    if (updateData.status === 'WON' && existingLead.status !== 'WON') {
+    if (updateData.status === 'CONVERTED' && existingLead.status !== 'CONVERTED') {
       updateData.financeStatus = 'PENDING';
       // Auto-log activity for finance review
       updateData.activities = {
         create: {
           type: 'NOTE',
           title: 'Sent for Finance Approval',
-          description: `Lead status changed to WON. Awaiting financial verification and final approval.`,
+          description: `Lead status changed to CONVERTED. Awaiting financial verification and final approval.`,
           userId: req.user.id
         }
       };
@@ -517,10 +516,10 @@ const updateLead = async (req, res, next) => {
         ).catch(err => console.error('Failed to send assignment email:', err));
       }
 
-      // If status changed to WON or LOST, send feedback email
+      // If status changed to CONVERTED or NOT_CONVERTED, send feedback email
       if (
         updateData.status &&
-        (updateData.status === 'WON' || updateData.status === 'LOST') &&
+        (updateData.status === 'CONVERTED' || updateData.status === 'NOT_CONVERTED') &&
         updateData.status !== existingLead.status &&
         lead.email
       ) {
@@ -705,8 +704,8 @@ const getLeadStats = async (req, res, next) => {
       // Calculate Performance per User (Team Metrics)
       performance = users.map(user => {
         const totalAssigned = user.assignedLeads.length;
-        const wonLeads = user.assignedLeads.filter(l => l.status === 'WON').length;
-        const lostLeads = user.assignedLeads.filter(l => l.status === 'LOST').length;
+        const wonLeads = user.assignedLeads.filter(l => l.status === 'CONVERTED').length;
+        const lostLeads = user.assignedLeads.filter(l => l.status === 'NOT_CONVERTED').length;
         const pipelineValue = user.assignedLeads.reduce((sum, l) => sum + (l.budgetTo || 0), 0);
 
         const closeRate = totalAssigned > 0 ? ((wonLeads / totalAssigned) * 100).toFixed(1) : "0.0";
@@ -783,8 +782,8 @@ const processLeadAnalytics = (leads) => {
     }
 
     // Value Breakdown (Using Max Budget for Pipeline View)
-    if (lead.status === 'WON') breakdown.won += (lead.budgetTo || 0);
-    else if (lead.status === 'LOST') breakdown.lost += (lead.budgetTo || 0);
+    if (lead.status === 'CONVERTED') breakdown.won += (lead.budgetTo || 0);
+    else if (lead.status === 'NOT_CONVERTED') breakdown.lost += (lead.budgetTo || 0);
     else breakdown.pipeline += (lead.budgetTo || 0);
   });
 

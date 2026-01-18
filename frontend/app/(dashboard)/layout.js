@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiHome, HiUsers, HiBriefcase, HiCurrencyRupee, HiCog, HiLogout, HiMenuAlt2, HiOfficeBuilding, HiChip, HiCalendar } from "react-icons/hi";
+import { HiHome, HiUsers, HiBriefcase, HiCurrencyRupee, HiCog, HiLogout, HiMenuAlt2, HiOfficeBuilding, HiChip, HiCalendar, HiUserAdd } from "react-icons/hi";
 import clsx from "clsx";
 import { useAuth } from "@/src/contexts/AuthContext";
 
@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }) {
         { name: "HR", href: "/hr", icon: HiUsers, allowedRoles: ["ADMIN", "HR"] },
         { name: "Calendar", href: "/calendar", icon: HiCalendar },
         { name: "AI Insights", href: "/ai", icon: HiChip },
-        { name: "Users", href: "/users", icon: HiUsers, allowedRoles: ["ADMIN", "DIRECTOR", "EXECUTIVE"] },
+        { name: "Users", href: "/users", icon: HiUserAdd, allowedRoles: ["ADMIN", "DIRECTOR", "EXECUTIVE"] },
         { name: "Settings", href: "/settings", icon: HiCog },
     ];
 

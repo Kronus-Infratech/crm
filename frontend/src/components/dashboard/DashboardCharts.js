@@ -190,7 +190,7 @@ export function PerformanceRadar({ performanceData }) {
         { key: 'efficiency', label: 'Efficiency', getValue: (u) => 100 - parseFloat(u.loseRate), format: (val) => `${val}%` },
         { key: 'pipelineValue', label: 'Pipeline Val', format: (val) => `₹${formatNumber(val)}` },
         { key: 'totalLeads', label: 'Total Leads', format: (val) => val },
-        { key: 'wonLeads', label: 'Won Leads', format: (val) => val },
+        { key: 'wonLeads', label: 'Converted Leads', format: (val) => val },
     ];
 
     // 1. Extract raw metrics and calculate stats per metric

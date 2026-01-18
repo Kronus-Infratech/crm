@@ -74,8 +74,8 @@ function StatusBadge({ status }) {
         SITE_VISIT: "bg-purple-100 text-purple-700",
         NEGOTIATION: "bg-orange-100 text-orange-700",
         DOCUMENTATION: "bg-indigo-100 text-indigo-700",
-        WON: "bg-emerald-100 text-emerald-700",
-        LOST: "bg-red-100 text-red-700"
+        CONVERTED: "bg-emerald-100 text-emerald-700",
+        NOT_CONVERTED: "bg-red-100 text-red-700"
     };
 
     return (

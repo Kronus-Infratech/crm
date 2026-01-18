@@ -135,8 +135,8 @@ enum LeadStatus {
   SITE_VISIT
   NEGOTIATION
   DOCUMENTATION
-  WON
-  LOST
+  CONVERTED
+  NOT_CONVERTED
 }
 
 enum Priority {

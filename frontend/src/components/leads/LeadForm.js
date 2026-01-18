@@ -17,7 +17,7 @@ const schema = z.object({
   email: z.string().email("Invalid email address").optional().or(z.literal("")).or(z.null()),
   phone: z.string().regex(/^\+?[\d\s\-()]+$/, "Invalid phone number"),
   property: z.string().min(1, "Property is required"),
-  status: z.enum(["NEW", "CONTACTED", "INTERESTED", "NOT_INTERESTED", "SITE_VISIT", "NEGOTIATION", "DOCUMENTATION", "WON", "LOST"]),
+  status: z.enum(["NEW", "CONTACTED", "INTERESTED", "NOT_INTERESTED", "SITE_VISIT", "NEGOTIATION", "DOCUMENTATION", "CONVERTED", "NOT_CONVERTED"]),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]),
   source: z.enum(["WEBSITE", "REFERRAL", "INSTAGRAM", "YOUTUBE", "EMAIL", "WHATSAPP", "NINETY_NINE_ACRES", "MAGICBRICKS", "OLX", "COLD_OUTREACH", "WALK_IN"]).optional(),
   budgetFrom: z.number().min(0, "Min budget must be positive").optional(),
@@ -282,8 +282,8 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
               { label: "Site Visit Scheduled", value: "SITE_VISIT" },
               { label: "Negotiation", value: "NEGOTIATION" },
               { label: "Documentation", value: "DOCUMENTATION" },
-              { label: "Closed Won", value: "WON" },
-              { label: "Closed Lost", value: "LOST" },
+              { label: "Converted", value: "CONVERTED" },
+              { label: "Not Converted", value: "NOT_CONVERTED" },
             ]}
             error={errors.status?.message}
             {...register("status")}
