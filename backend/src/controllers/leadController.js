@@ -402,18 +402,36 @@ const updateLead = async (req, res, next) => {
     }
 
     Object.keys(updateData).forEach(key => {
-      if (trackedFields[key] && updateData[key] !== existingLead[key] && updateData[key] !== undefined) {
-        // Handle potential nulls for display
-        let oldVal = existingLead[key] || 'Empty';
-        let newVal = updateData[key];
+      if (trackedFields[key] && updateData[key] !== undefined) {
+        let isChanged = false;
+        const newVal = updateData[key];
+        const oldVal = existingLead[key];
 
-        // Format dates for better logs
+        // Special handling for date comparison
         if (key === 'followUpDate' || key === 'dob' || key === 'anniversaryDate') {
-          oldVal = existingLead[key] ? formatDate(existingLead[key]) : 'Empty';
-          newVal = updateData[key] ? formatDate(updateData[key]) : 'Empty';
+          const newTime = newVal instanceof Date ? newVal.getTime() : (newVal ? new Date(newVal).getTime() : null);
+          const oldTime = oldVal instanceof Date ? oldVal.getTime() : (oldVal ? new Date(oldVal).getTime() : null);
+
+          if (newTime !== oldTime) {
+            isChanged = true;
+          }
+        } else if (newVal !== oldVal) {
+          isChanged = true;
         }
 
-        changes.push(`${trackedFields[key]} changed from "${oldVal}" to "${newVal}"`);
+        if (isChanged) {
+          // Handle potential nulls for display
+          let oldDisplay = oldVal || 'Empty';
+          let newDisplay = newVal || 'Empty';
+
+          // Format dates for better logs
+          if (key === 'followUpDate' || key === 'dob' || key === 'anniversaryDate') {
+            oldDisplay = oldVal ? formatDate(oldVal) : 'Empty';
+            newDisplay = newVal ? formatDate(newVal) : 'Empty';
+          }
+
+          changes.push(`${trackedFields[key]} changed from "${oldDisplay}" to "${newDisplay}"`);
+        }
       }
     });
 

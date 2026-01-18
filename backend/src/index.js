@@ -19,6 +19,7 @@ const financeRoutes = require('./routes/financeRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 const { initCronJobs } = require('./services/cronService');
 
 // Initialize express app
@@ -69,6 +70,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/leaves', leaveRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -87,6 +89,7 @@ app.get('/', (req, res) => {
       ai: '/api/ai',
       events: '/api/events',
       leaves: '/api/leaves',
+      upload: '/api/upload',
     },
   });
 });

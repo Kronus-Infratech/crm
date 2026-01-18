@@ -9,7 +9,7 @@ import Select from "@/src/components/ui/Select";
 import Button from "@/src/components/ui/Button";
 import api from "@/src/services/api";
 import { toast } from "react-hot-toast";
-import { uploadFile } from "@/src/services/supabase";
+import { uploadFile } from "@/src/services/r2";
 import { HiCloudUpload, HiX, HiDocumentText, HiPhotograph } from "react-icons/hi";
 
 const schema = z.object({
