@@ -34,6 +34,8 @@ model User {
   activities        Activity[]
   transactions      Transaction[]
   events            Event[]   @relation("UserEvents")
+  leaves            Leave[]   @relation("UserLeaves")
+  approvedLeaves    Leave[]   @relation("ApprovedLeaves")
   
   @@map("users")
 }
@@ -107,6 +109,8 @@ enum Role {
   DIRECTOR
   MANAGER
   SALESMAN
+  FINANCE
+  HR
 }
 
 enum LeadSource {
@@ -296,4 +300,37 @@ model Event {
   updatedAt   DateTime @updatedAt
 
   @@map("events")
+}
+
+model Leave {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String      @db.ObjectId
+  user            User        @relation("UserLeaves", fields: [userId], references: [id])
+  startDate       DateTime
+  endDate         DateTime
+  type            LeaveType   @default(CASUAL)
+  reason          String
+  status          LeaveStatus @default(PENDING)
+  approvedById    String?     @db.ObjectId
+  approvedBy      User?       @relation("ApprovedLeaves", fields: [approvedById], references: [id])
+  rejectionReason String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("leaves")
+}
+
+enum LeaveType {
+  SICK
+  CASUAL
+  EARNED
+  PATERNITY
+  MATERNITY
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

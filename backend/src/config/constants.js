@@ -5,6 +5,8 @@ module.exports = {
     DIRECTOR: 'DIRECTOR',
     MANAGER: 'MANAGER',
     SALESMAN: 'SALESMAN',
+    FINANCE: 'FINANCE',
+    HR: 'HR',
   },
   
   LEAD_STATUS: {

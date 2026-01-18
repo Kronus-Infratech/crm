@@ -15,6 +15,8 @@ import Card from "@/src/components/ui/Card";
 import Input from "@/src/components/ui/Input";
 import Button from "@/src/components/ui/Button";
 import api from "@/src/services/api";
+import LeavesTab from "@/src/components/settings/LeavesTab";
+import { HiBriefcase as HiBriefcaseIcon } from "react-icons/hi";
 
 const profileSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
@@ -43,6 +45,7 @@ export default function SettingsPage() {
     const tabs = [
         { id: "profile", label: "Profile", icon: <HiUser /> },
         { id: "security", label: "Security", icon: <HiShieldCheck /> },
+        { id: "leaves", label: "Leaves", icon: <HiBriefcaseIcon /> },
         // { id: "notifications", label: "Notifications", icon: <HiBell /> }, // Future
     ];
 
@@ -83,6 +86,7 @@ export default function SettingsPage() {
                     >
                         {activeTab === "profile" && <ProfileForm />}
                         {activeTab === "security" && <SecurityForm />}
+                        {activeTab === "leaves" && <LeavesTab />}
                     </motion.div>
                 </div>
             </div>

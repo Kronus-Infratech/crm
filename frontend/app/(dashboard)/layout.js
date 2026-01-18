@@ -22,7 +22,8 @@ export default function DashboardLayout({ children }) {
         { name: "Dashboard", href: "/dashboard", icon: HiHome },
         { name: "Leads", href: "/leads", icon: HiBriefcase },
         { name: "Inventory", href: "/inventory", icon: HiOfficeBuilding },
-        { name: "Finance", href: "/finance", icon: HiCurrencyRupee, allowedRoles: ["ADMIN", "EXECUTIVE", "DIRECTOR"] },
+        { name: "Finance", href: "/finance", icon: HiCurrencyRupee, allowedRoles: ["ADMIN", "EXECUTIVE", "DIRECTOR", "FINANCE"] },
+        { name: "HR", href: "/hr", icon: HiUsers, allowedRoles: ["ADMIN", "HR"] },
         { name: "Calendar", href: "/calendar", icon: HiCalendar },
         { name: "AI Insights", href: "/ai", icon: HiChip },
         { name: "Users", href: "/users", icon: HiUsers, allowedRoles: ["ADMIN", "DIRECTOR", "EXECUTIVE"] },
@@ -81,7 +82,7 @@ export default function DashboardLayout({ children }) {
                     {menuItems.map((item) => {
                         const userRoles = user.roles || [];
                         const hasPermission = !item.allowedRoles || item.allowedRoles.some(role => userRoles.includes(role));
-                        
+
                         if (!hasPermission) return null;
 
                         const isActive = pathname === item.href;
