@@ -185,7 +185,7 @@ export default function LedgerPage({ params }) {
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Loading Running Ledger...</div>;
+    if (loading) return <div className="p-8 text-center text-black">Loading Running Ledger...</div>;
 
     const isClosed = lead.ledgerStatus === 'CLOSED';
     const canEditInfo = (isSales || isAdmin) && !isClosed;
