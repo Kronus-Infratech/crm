@@ -6,12 +6,13 @@ import Heading from "@/src/components/ui/Heading";
 import {
     HiMail, HiPhone, HiCalendar, HiCurrencyRupee, HiLocationMarker,
     HiUserCircle, HiTag, HiClock, HiPaperClip, HiTrash, HiX, HiExternalLink,
-    HiIdentification, HiChartBar, HiDownload, HiGift, HiHeart
+    HiIdentification, HiChartBar, HiDownload, HiGift, HiHeart, HiLockClosed
 } from "react-icons/hi";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { formatNumber, formatDate, formatDateTime } from "@/src/utils/formatters";
 import clsx from "clsx";
+import Link from "next/link";
 
 export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
     const { user } = useAuth();
@@ -127,9 +128,16 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                         </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-gray-500 text-sm">
-                        <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-200 rounded-lg">
-                            <HiTag className="text-gray-400" />
-                            <span className={`font-semibold ${statusColors[lead.status]?.split(' ')[1] || 'text-gray-700'}`}>{lead.status}</span>
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-200 rounded-lg w-fit">
+                                <HiTag className="text-gray-400" />
+                                <span className={`font-semibold ${statusColors[lead.status]?.split(' ')[1] || 'text-gray-700'}`}>{lead.status}</span>
+                            </div>
+                            {lead.status === 'CONVERTED' && lead.ledgerStatus === 'CLOSED' && (
+                                <span className="text-[10px] text-red-600 font-extrabold uppercase tracking-tighter flex items-center ml-1">
+                                    <HiLockClosed className="mr-0.5" /> Ledger Closed
+                                </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-1.5">
                             <HiCalendar className="text-gray-400" />
@@ -157,17 +165,23 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                     </div>
                 )}
 
-                <div className="flex items-center gap-3">
-                    {isAdmin && (
-                        <button
-                            onClick={() => setDeletingLead(true)}
-                            className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
-                            title="Delete Lead"
-                        >
-                            <HiTrash size={22} />
+                {lead.status === 'CONVERTED' && (
+                    <Link href={`/leads/${lead.id}/ledger`}>
+                        <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all shadow-md active:scale-95">
+                            <HiCurrencyRupee size={20} />
+                            View Running Ledger
                         </button>
-                    )}
-                </div>
+                    </Link>
+                )}
+                {isAdmin && (
+                    <button
+                        onClick={() => setDeletingLead(true)}
+                        className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                        title="Delete Lead"
+                    >
+                        <HiTrash size={22} />
+                    </button>
+                )}
             </div>
 
             {/* Main Content Grid */}

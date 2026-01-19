@@ -98,13 +98,26 @@ const getPendingApprovals = async (req, res, next) => {
   try {
     const leads = await prisma.lead.findMany({
       where: {
-        status: 'CONVERTED',
-        financeStatus: 'PENDING'
+        OR: [
+          { ledgerStatus: 'ACTIVE' },
+          {
+            AND: [
+              { status: 'CONVERTED' },
+              { financeStatus: 'PENDING' } // Keep backward compatibility for a bit if needed, but primarily ledgerStatus
+            ]
+          }
+        ]
       },
       include: {
         assignedTo: { select: { name: true } },
         inventoryItem: {
           include: { project: { select: { name: true } } }
+        },
+        paymentLedgerEntries: {
+          where: { status: 'PENDING' }
+        },
+        documentLedgerEntries: {
+          where: { financeApproved: false }
         }
       },
       orderBy: { updatedAt: 'desc' }

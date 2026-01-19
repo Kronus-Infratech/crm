@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import clsx from "clsx";
-import { HiCurrencyRupee, HiCheck, HiX, HiClock, HiFilter, HiPlus } from "react-icons/hi";
+import { HiCurrencyRupee, HiCheck, HiX, HiClock, HiFilter, HiPlus, HiDocumentDuplicate } from "react-icons/hi";
 import { toast } from "react-hot-toast";
+import Link from "next/link";
 import Heading from "@/src/components/ui/Heading";
 import Button from "@/src/components/ui/Button";
 import Modal from "@/src/components/ui/Modal";
@@ -233,66 +234,49 @@ export default function FinancePage() {
                             ) : (
                                 <div className="grid grid-cols-1 gap-4">
                                     {approvals.map((lead) => (
-                                        <div key={lead.id} className="bg-white border-2 border-indigo-50 rounded-xl p-6 shadow-sm hover:border-indigo-200 transition-all flex flex-col md:flex-row gap-6">
-                                            <div className="flex-1 space-y-4 cursor-pointer" onClick={() => {
-                                                setSelectedLead(lead);
-                                                setDetailModalOpen(true);
+                                        <div key={lead.id} className="bg-white border text-black border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row gap-6 items-center">
+                                            <div className="flex-1 space-y-3 cursor-pointer" onClick={() => {
+                                                window.location.href = `/leads/${lead.id}/ledger`;
                                             }}>
                                                 <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <span className="text-[10px] font-black uppercase text-indigo-500 tracking-widest bg-indigo-50 px-2 py-0.5 rounded">NEW SALE</span>
-                                                        <h3 className="text-xl font-black text-gray-900 mt-1">{lead.name}</h3>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${lead.ledgerStatus === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+                                                            }`}>
+                                                            {lead.name.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-lg font-black text-gray-900">{lead.name}</h3>
+                                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-tight">{lead.property}</p>
+                                                        </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-xs font-bold text-gray-400 uppercase">Value</p>
-                                                        <p className="text-2xl font-black text-emerald-600">₹{formatNumber(lead.budgetTo || lead.budgetFrom || 0)}</p>
+                                                        <p className="text-[10px] font-black text-gray-400 uppercase">Credited So Far</p>
+                                                        <p className="text-xl font-black text-emerald-600">₹{formatNumber(lead.totalAmountToCredit || 0)}</p>
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-y border-gray-50 text-sm">
-                                                    <div>
-                                                        <p className="text-xs font-bold text-gray-400 uppercase">Property Interest</p>
-                                                        <p className="font-bold text-gray-800">{lead.property}</p>
+                                                <div className="flex gap-4">
+                                                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                                                        <HiCurrencyRupee className="text-emerald-500" />
+                                                        <span className="text-xs font-bold text-gray-600">
+                                                            {lead.paymentLedgerEntries?.length || 0} Pending Payments
+                                                        </span>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-xs font-bold text-gray-400 uppercase">Assigned Area</p>
-                                                        <p className="font-bold text-indigo-600">{lead.inventoryItem?.project?.name || "Multiple"}</p>
+                                                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                                                        < HiDocumentDuplicate className="text-blue-500" />
+                                                        <span className="text-xs font-bold text-gray-600">
+                                                            {lead.documentLedgerEntries?.length || 0} Pending Docs
+                                                        </span>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-xs font-bold text-gray-400 uppercase">Linked Plot</p>
-                                                        <p className="font-bold text-gray-800">{lead.inventoryItem?.plotNumber || "N/A"}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-bold text-gray-400 uppercase">Salesperson</p>
-                                                        <p className="font-bold text-gray-800">{lead.assignedTo?.name || "System"}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div onClick={(e) => e.stopPropagation()}>
-                                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-2">Finance Notes (Optional)</label>
-                                                    <textarea
-                                                        className="w-full text-black bg-gray-50 border-gray-100 rounded-xl p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                                        placeholder="Add instructions or payment details..."
-                                                        rows="2"
-                                                        value={approvalNote}
-                                                        onChange={(e) => setApprovalNote(e.target.value)}
-                                                    ></textarea>
                                                 </div>
                                             </div>
 
-                                            <div className="flex flex-row md:flex-col gap-3 justify-center border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
-                                                <button
-                                                    onClick={() => handleApprovalAction(lead.id, "APPROVED")}
-                                                    className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-xl font-black text-sm uppercase flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
-                                                >
-                                                    <HiCheck size={20} /> Approve
-                                                </button>
-                                                <button
-                                                    onClick={() => handleApprovalAction(lead.id, "REJECTED")}
-                                                    className="flex-1 px-6 py-3 bg-red-50 text-red-600 rounded-xl font-black text-sm uppercase flex items-center justify-center gap-2 hover:bg-red-100 transition-all border border-red-100"
-                                                >
-                                                    <HiX size={20} /> Reject
-                                                </button>
+                                            <div className="w-full md:w-fit">
+                                                <Link href={`/leads/${lead.id}/ledger`}>
+                                                    <Button className="w-full shadow-lg shadow-indigo-100">
+                                                        Review Running Ledger
+                                                    </Button>
+                                                </Link>
                                             </div>
                                         </div>
                                     ))}
@@ -392,12 +376,12 @@ export default function FinancePage() {
                 size="4xl"
             >
                 {selectedLead && (
-                    <LeadDetail 
-                        lead={selectedLead} 
+                    <LeadDetail
+                        lead={selectedLead}
                         onLeadDeleted={() => {
                             setDetailModalOpen(false);
                             fetchFinanceData();
-                        }} 
+                        }}
                     />
                 )}
             </Modal>

@@ -373,6 +373,14 @@ const updateLead = async (req, res, next) => {
       });
     }
 
+    // Prevent status change if lead ledger is CLOSED
+    if (existingLead.ledgerStatus === 'CLOSED' && updateData.status && updateData.status !== existingLead.status) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'This lead cannot be reopened. Its Running Ledger has been finalized and CLOSED.',
+      });
+    }
+
     // Generate detailed logs by comparing changes
     const changes = [];
 
@@ -448,6 +456,14 @@ const updateLead = async (req, res, next) => {
         });
       }
       changes.push(`Assigned to ${assignedUser.name}`);
+    }
+
+    if (
+      updateData.status &&
+      updateData.status === 'CONVERTED' &&
+      updateData.status !== existingLead.status
+    ) {
+      updateData.ledgerStatus = 'ACTIVE';
     }
 
     // Generate feedback token if status changes to CONVERTED or NOT_CONVERTED

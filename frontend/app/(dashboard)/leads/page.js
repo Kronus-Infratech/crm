@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { HiPlus, HiSearch, HiFilter, HiChevronLeft, HiChevronRight } from "react-icons/hi";
+import { HiPlus, HiSearch, HiLockClosed, HiChevronLeft, HiChevronRight, HiCurrencyRupee } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/src/services/api";
 import { toast } from "react-hot-toast";
@@ -14,6 +14,7 @@ import Select from "@/src/components/ui/Select";
 import LeadForm from "@/src/components/leads/LeadForm";
 import LeadDetail from "@/src/components/leads/LeadDetail";
 import { formatNumber, formatDate } from "@/src/utils/formatters";
+import Link from "next/link";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -323,7 +324,7 @@ export default function LeadsPage() {
                                         <td className="px-4 py-4 text-gray-600">{lead.property || "-"}</td>
                                         <td className="px-4 py-4 text-gray-600 text-xs">{lead.source?.replace(/_/g, ' ') || "-"}</td>
                                         <td className="px-4 py-4">
-                                            <StatusBadge status={lead.status} />
+                                            <StatusBadge status={lead.status} ledgerStatus={lead.ledgerStatus} />
                                         </td>
                                         <td className="px-4 py-4 font-semibold text-gray-900 whitespace-nowrap">
                                             ₹{formatNumber(lead.budgetFrom)} - ₹{formatNumber(lead.budgetTo)}
@@ -345,15 +346,30 @@ export default function LeadsPage() {
                                             {formatDate(lead.createdAt)}
                                         </td>
                                         <td className="px-4 py-4 text-right flex justify-end gap-2">
+                                            {lead.status === 'CONVERTED' && (
+                                                <Link href={`/leads/${lead.id}/ledger`} onClick={(e) => e.stopPropagation()}>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="xs"
+                                                        className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 px-2 py-1 text-xs"
+                                                        icon={<HiCurrencyRupee />}
+                                                    >
+                                                        Ledger
+                                                    </Button>
+                                                </Link>
+                                            )}
                                             {isLeadClosed(lead.status) ? (
                                                 <Button
                                                     variant="primary"
                                                     size="xs"
-                                                    className="bg-green-500 text-white hover:bg-green-600 px-2 py-1 text-xs"
+                                                    className={`px-2 py-1 text-xs ${lead.ledgerStatus === 'CLOSED' ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600'}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleReopenLead(lead);
+                                                        if (lead.ledgerStatus !== 'CLOSED') {
+                                                            handleReopenLead(lead);
+                                                        }
                                                     }}
+                                                    disabled={lead.ledgerStatus === 'CLOSED'}
                                                 >
                                                     Reopen
                                                 </Button>
@@ -557,7 +573,7 @@ export default function LeadsPage() {
     );
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, ledgerStatus }) {
     const styles = {
         NEW: "bg-blue-100 text-blue-700",
         CONTACTED: "bg-cyan-100 text-cyan-700",
@@ -571,8 +587,21 @@ function StatusBadge({ status }) {
     };
 
     return (
-        <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded ${styles[status] || "bg-gray-100 text-gray-700"}`}>
-            {status.replace('_', ' ')}
-        </span>
+        <div className="flex flex-col gap-1">
+            <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded w-fit ${styles[status] || "bg-gray-100 text-gray-700"}`}>
+                {status.replace('_', ' ')}
+            </span>
+            {status === 'CONVERTED' && (
+                ledgerStatus === 'CLOSED' ? (
+                    <span className="text-[9px] text-red-600 font-extrabold uppercase tracking-tighter flex items-center">
+                        <HiLockClosed className="mr-0.5" /> Ledger Closed
+                    </span>
+                ) : (
+                    <span className="text-[9px] text-emerald-600 font-extrabold uppercase tracking-tighter flex items-center">
+                        <HiCurrencyRupee className="mr-0.5" /> Running Ledger Active
+                    </span>
+                )
+            )}
+        </div>
     );
 }

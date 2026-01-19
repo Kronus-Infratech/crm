@@ -37,6 +37,11 @@ model User {
   leaves            Leave[]   @relation("UserLeaves")
   approvedLeaves    Leave[]   @relation("ApprovedLeaves")
   
+  // Ledger Relations
+  paymentLedgerEntries  PaymentLedgerEntry[]
+  uploadedPayments      PaymentLedgerEntry[] @relation("PaymentUploader")
+  uploadedDocuments     DocumentLedgerEntry[] @relation("DocumentUploader")
+  
   @@map("users")
 }
 
@@ -80,6 +85,25 @@ model Lead {
   // Finance Fields
   financeStatus      FinanceStatus @default(PENDING)
   financeNotes       String?
+  
+  // Running Ledger Fields
+  ledgerStatus       LedgerStatus @default(IDLE)
+  paymentTimeline    String?
+  totalAmountToCredit Float?     @default(0.0)
+  
+  // Ledger Closure Tracking
+  paymentLedgerClosedBySalesId    String? @db.ObjectId
+  paymentLedgerClosedByFinanceId  String? @db.ObjectId
+  paymentLedgerClosedAt           DateTime?
+  paymentLedgerClosureNotes       String?
+  
+  documentLedgerClosedBySalesId   String? @db.ObjectId
+  documentLedgerClosedByFinanceId String? @db.ObjectId
+  documentLedgerClosedAt          DateTime?
+  documentLedgerClosureNotes      String?
+
+  paymentLedgerEntries  PaymentLedgerEntry[]
+  documentLedgerEntries DocumentLedgerEntry[]
   
   @@map("leads")
 }
@@ -207,6 +231,74 @@ enum TransactionType {
 }
 
 enum FinanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LedgerStatus {
+  IDLE
+  ACTIVE
+  CLOSED
+}
+
+model PaymentLedgerEntry {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  amount          Float?
+  note            String
+  attachmentUrl   String?
+  attachmentType  String?        // "IMAGE", "PDF"
+  
+  status          VerificationStatus @default(PENDING)
+  verifiedById    String?        @db.ObjectId
+  verifiedBy      User?          @relation(fields: [verifiedById], references: [id])
+  verifiedAt      DateTime?
+  financeNotes    String?
+
+  leadId          String         @db.ObjectId
+  lead            Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  uploaderId      String         @db.ObjectId
+  uploader        User           @relation("PaymentUploader", fields: [uploaderId], references: [id])
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("payment_ledger_entries")
+}
+
+model DocumentLedgerEntry {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  note            String
+  attachmentUrl   String
+  attachmentType  String         // "IMAGE", "PDF"
+  
+  status          VerificationStatus @default(PENDING)
+  // Two-step approval
+  salesApproved   Boolean        @default(false)
+  salesApprovedBy String?        @db.ObjectId
+  salesApprovedAt DateTime?
+  
+  financeApproved Boolean        @default(false)
+  financeApprovedBy String?      @db.ObjectId
+  financeApprovedAt DateTime?
+  
+  salesNotes      String?
+  financeNotes    String?
+
+  leadId          String         @db.ObjectId
+  lead            Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  uploaderId      String         @db.ObjectId
+  uploader        User           @relation("DocumentUploader", fields: [uploaderId], references: [id])
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("document_ledger_entries")
+}
+
+enum VerificationStatus {
   PENDING
   APPROVED
   REJECTED
