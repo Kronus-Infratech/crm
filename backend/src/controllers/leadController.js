@@ -997,6 +997,32 @@ const createExternalLead = async (req, res, next) => {
       });
     }
 
+    // --- Round Robin Auto-Assignment Logic ---
+    let assignedUserId = null;
+    let assignedUserName = null;
+    let assignedUserEmail = null;
+
+    try {
+      const salesmen = await prisma.user.findMany({
+        where: { roles: { has: 'SALESMAN' }, isActive: true },
+        orderBy: { lastAssignedAt: 'asc' }
+      });
+
+      if (salesmen.length > 0) {
+        const selectedSalesman = salesmen[0];
+        assignedUserId = selectedSalesman.id;
+        assignedUserName = selectedSalesman.name;
+        assignedUserEmail = selectedSalesman.email;
+
+        await prisma.user.update({
+          where: { id: assignedUserId },
+          data: { lastAssignedAt: new Date() }
+        });
+      }
+    } catch (assignError) {
+      console.error("Auto-assignment failed for 99 Acres:", assignError);
+    }
+
     // Create the lead
     const lead = await prisma.lead.create({
       data: {
@@ -1024,6 +1050,26 @@ const createExternalLead = async (req, res, next) => {
         leadId: lead.id,
       },
     });
+
+    if (assignedUserId && assignedUserEmail) {
+      await prisma.activity.create({
+        data: {
+          type: 'NOTE',
+          title: 'Auto-Assigned (Round Robin)',
+          description: `Lead auto-assigned to ${assignedUserName}`,
+          userId: systemUser.id,
+          leadId: lead.id
+        }
+      });
+
+      // Send Email Notification
+      sendLeadAssignmentEmail(
+        assignedUserEmail,
+        assignedUserName,
+        lead.name,
+        lead.id
+      ).catch(err => console.error('Failed to send auto-assignment email:', err));
+    }
 
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
@@ -1159,7 +1205,6 @@ const createMagicBricksLead = async (req, res, next) => {
       });
 
       // Send Email Notification
-      const { sendLeadAssignmentEmail } = require('../utils/emailService');
       sendLeadAssignmentEmail(
         assignedUserEmail,
         assignedUserName,
