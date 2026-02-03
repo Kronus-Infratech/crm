@@ -11,10 +11,14 @@ import api from "@/src/services/api";
 
 import InventoryTable from "@/src/components/inventory/InventoryTable";
 import InventoryForm from "@/src/components/inventory/InventoryForm";
-import ProjectForm from "@/src/components/inventory/ProjectForm";
 import InventoryDetail from "@/src/components/inventory/InventoryDetail";
+import ProjectForm from "@/src/components/inventory/ProjectForm";
+import CityForm from "@/src/components/inventory/CityForm";
+import { HiChevronDown } from "react-icons/hi";
 
 export default function InventoryPage() {
+    const [cities, setCities] = useState([]);
+    const [activeCityId, setActiveCityId] = useState("ALL");
     const [projects, setProjects] = useState([]);
     const [activeProjectId, setActiveProjectId] = useState("ALL");
     const [items, setItems] = useState([]);
@@ -37,6 +41,9 @@ export default function InventoryPage() {
     });
 
     // Modals
+    const [isCityModalOpen, setCityModalOpen] = useState(false);
+    const [selectedCity, setSelectedCity] = useState(null);
+
     const [isProjectModalOpen, setProjectModalOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
 
@@ -46,12 +53,26 @@ export default function InventoryPage() {
     const [isDetailModalOpen, setDetailModalOpen] = useState(false);
     const [viewingItem, setViewingItem] = useState(null);
 
+    const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Fetch Projects
+    // Fetch Cities
+    const fetchCities = async () => {
+        try {
+            const res = await api.get("/inventory/cities");
+            if (res.data.success) {
+                setCities(res.data.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch cities", error);
+        }
+    };
+
+    // Fetch Projects (Areas)
     const fetchProjects = async () => {
         try {
-            const res = await api.get("/inventory/projects");
+            const params = activeCityId !== "ALL" ? { cityId: activeCityId } : {};
+            const res = await api.get("/inventory/projects", { params });
             if (res.data.success) {
                 setProjects(res.data.data);
             }
@@ -67,6 +88,7 @@ export default function InventoryPage() {
         try {
             const params = new URLSearchParams({
                 projectId: activeProjectId,
+                cityId: activeCityId,
                 status: statusFilter,
                 search: searchQuery,
                 sortBy,
@@ -93,12 +115,20 @@ export default function InventoryPage() {
     };
 
     useEffect(() => {
-        fetchProjects();
+        fetchCities();
     }, []);
 
     useEffect(() => {
+        fetchProjects();
+        // Reset active project if city changes
+        if (activeCityId === "ALL") {
+            setActiveProjectId("ALL");
+        }
+    }, [activeCityId]);
+
+    useEffect(() => {
         fetchInventory();
-    }, [activeProjectId, searchQuery, statusFilter, sortBy, sortOrder, pagination.page, pagination.limit]);
+    }, [activeCityId, activeProjectId, searchQuery, statusFilter, sortBy, sortOrder, pagination.page, pagination.limit]);
 
     const handleSort = (field) => {
         if (sortBy === field) {
@@ -111,6 +141,51 @@ export default function InventoryPage() {
 
     const handlePageChange = (newPage) => {
         setPagination(prev => ({ ...prev, page: newPage }));
+    };
+
+    // Handlers for Cities
+    const handleCreateCity = async (data) => {
+        setIsSubmitting(true);
+        try {
+            await api.post("/inventory/cities", data);
+            toast.success("City created!");
+            setCityModalOpen(false);
+            fetchCities();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to create city");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleUpdateCity = async (data) => {
+        setIsSubmitting(true);
+        try {
+            await api.put(`/inventory/cities/${selectedCity.id}`, data);
+            toast.success("City updated!");
+            setCityModalOpen(false);
+            setSelectedCity(null);
+            fetchCities();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to update city");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteCity = async (city) => {
+        if (!window.confirm(`Are you sure you want to delete "${city.name}"? This cannot be undone.`)) return;
+
+        try {
+            await api.delete(`/inventory/cities/${city.id}`);
+            toast.success("City deleted.");
+            if (activeCityId === city.id) {
+                setActiveCityId("ALL");
+            }
+            fetchCities();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to delete city. Make sure it's empty.");
+        }
     };
 
 
@@ -202,6 +277,16 @@ export default function InventoryPage() {
     };
 
     // Modal Switchers
+    const openCityEdit = (city) => {
+        setSelectedCity(city);
+        setCityModalOpen(true);
+    };
+
+    const openCityCreate = () => {
+        setSelectedCity(null);
+        setCityModalOpen(true);
+    };
+
     const openProjectEdit = (project) => {
         setSelectedProject(project);
         setProjectModalOpen(true);
@@ -219,7 +304,7 @@ export default function InventoryPage() {
 
     const openItemAdd = () => {
         if (activeProjectId === "ALL" && projects.length === 0) {
-            toast.error("Please create a Property Area first.");
+            toast.error("Please select a Property Area first.");
             return;
         }
         setSelectedItem(null);
@@ -231,6 +316,7 @@ export default function InventoryPage() {
         setDetailModalOpen(true);
     };
 
+    const activeCity = cities.find(c => c.id === activeCityId);
     const activeProject = projects.find(p => p.id === activeProjectId);
 
     return (
@@ -239,61 +325,95 @@ export default function InventoryPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <Heading level={2}>Inventory Management</Heading>
-                    <p className="text-gray-500 mt-1 font-medium">Track your plots, pricing, and availability across areas.</p>
+                    <p className="text-gray-500 mt-1 font-medium">Manage Cities, Areas and Property inventory.</p>
                 </div>
-                <div className="flex gap-3">
-                    <Button variant="outline" onClick={openProjectCreate}>
-                        <HiOfficeBuilding className="mr-2" size={20} /> New Area
+                <div className="relative">
+                    <Button
+                        onClick={() => setIsNewMenuOpen(!isNewMenuOpen)}
+                        className="flex items-center gap-2"
+                    >
+                        <HiPlus size={20} /> New <HiChevronDown size={16} />
                     </Button>
-                    <Button onClick={openItemAdd} disabled={activeProjectId === "ALL" && projects.length === 0}>
-                        <HiPlus className="mr-2" size={20} /> Add Inventory
-                    </Button>
+
+                    {isNewMenuOpen && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setIsNewMenuOpen(false)}
+                            />
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <button
+                                    onClick={() => { openCityCreate(); setIsNewMenuOpen(false); }}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
+                                >
+                                    <HiPlus className="text-gray-400" /> New City
+                                </button>
+                                <button
+                                    onClick={() => { openProjectCreate(); setIsNewMenuOpen(false); }}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
+                                >
+                                    <HiPlus className="text-gray-400" /> New Area
+                                </button>
+                                <div className="h-px bg-gray-100 my-1" />
+                                <button
+                                    onClick={() => { openItemAdd(); setIsNewMenuOpen(false); }}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2 font-medium"
+                                >
+                                    <HiPlus className="text-indigo-600" /> New Inventory
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 
-            {/* Tabs & Area Management */}
+            {/* City Tabs */}
             <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-gray-100 pr-4">
+                <div className="flex items-center border-b border-gray-100 pr-4">
                     <div className="flex overflow-x-auto gap-6">
                         <button
-                            onClick={() => setActiveProjectId("ALL")}
-                            className={`pb-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition-all border-b-2 px-1 ${activeProjectId === "ALL"
+                            onClick={() => {
+                                setActiveCityId("ALL");
+                                setActiveProjectId("ALL");
+                            }}
+                            className={`pb-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition-all border-b-2 px-1 ${activeCityId === "ALL"
                                 ? "border-indigo-600 text-indigo-600"
                                 : "border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200"
                                 }`}
                         >
-                            All Inventory
+                            All Cities
                         </button>
-                        {projects.map(project => (
+                        {cities.map(city => (
                             <button
-                                key={project.id}
+                                key={city.id}
                                 onClick={() => {
-                                    setActiveProjectId(project.id);
+                                    setActiveCityId(city.id);
+                                    setActiveProjectId("ALL");
                                     setPagination(p => ({ ...p, page: 1 }));
                                 }}
-                                className={`pb-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition-all border-b-2 px-1 ${activeProjectId === project.id
+                                className={`pb-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition-all border-b-2 px-1 ${activeCityId === city.id
                                     ? "border-indigo-600 text-indigo-600"
                                     : "border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200"
                                     }`}
                             >
-                                {project.name}
+                                {city.name}
                             </button>
                         ))}
                     </div>
 
-                    {activeProject && (
+                    {activeCity && (
                         <div className="flex items-center gap-1 ml-4 mb-2">
                             <button
-                                onClick={() => openProjectEdit(activeProject)}
+                                onClick={() => openCityEdit(activeCity)}
                                 className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                                title="Edit Area Details"
+                                title="Edit City"
                             >
                                 <HiPencil size={18} />
                             </button>
                             <button
-                                onClick={() => handleDeleteProject(activeProject)}
+                                onClick={() => handleDeleteCity(activeCity)}
                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                title="Delete Area"
+                                title="Delete City"
                             >
                                 <HiTrash size={18} />
                             </button>
@@ -301,10 +421,56 @@ export default function InventoryPage() {
                     )}
                 </div>
 
-                {activeProject?.description && (
-                    <p className="text-sm text-gray-400 italic bg-gray-50/50 p-2 rounded border-l-4 border-indigo-200">
-                        {activeProject.description}
-                    </p>
+                {/* Area Tabs - Only if a city is selected or if we want to show areas within "All Cities"? */}
+                {/* User said City -> Area -> Inventory, so showing areas after a city is selected makes sense. */}
+                {activeCityId !== "ALL" && (
+                    <div className="flex items-center border-b border-gray-100 pr-4 bg-gray-50/50 rounded-lg p-2">
+                        <div className="flex overflow-x-auto gap-4">
+                            <button
+                                onClick={() => setActiveProjectId("ALL")}
+                                className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${activeProjectId === "ALL"
+                                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
+                                    : "text-gray-500 hover:bg-gray-100"
+                                    }`}
+                            >
+                                All Areas
+                            </button>
+                            {projects.map(project => (
+                                <button
+                                    key={project.id}
+                                    onClick={() => {
+                                        setActiveProjectId(project.id);
+                                        setPagination(p => ({ ...p, page: 1 }));
+                                    }}
+                                    className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${activeProjectId === project.id
+                                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
+                                        : "text-gray-500 hover:bg-gray-100"
+                                        }`}
+                                >
+                                    {project.name}
+                                </button>
+                            ))}
+                        </div>
+
+                        {activeProject && (
+                            <div className="flex items-center gap-1 ml-4">
+                                <button
+                                    onClick={() => openProjectEdit(activeProject)}
+                                    className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"
+                                    title="Edit Area Details"
+                                >
+                                    <HiPencil size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteProject(activeProject)}
+                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all"
+                                    title="Delete Area"
+                                >
+                                    <HiTrash size={16} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -392,6 +558,18 @@ export default function InventoryPage() {
 
             {/* Modals */}
             <Modal
+                isOpen={isCityModalOpen}
+                onClose={() => setCityModalOpen(false)}
+                title={selectedCity ? "Edit City" : "Add City"}
+            >
+                <CityForm
+                    initialData={selectedCity}
+                    onSubmit={selectedCity ? handleUpdateCity : handleCreateCity}
+                    loading={isSubmitting}
+                />
+            </Modal>
+
+            <Modal
                 isOpen={isProjectModalOpen}
                 onClose={() => setProjectModalOpen(false)}
                 title={selectedProject ? "Edit Property Area" : "Add Property Area"}
@@ -400,6 +578,7 @@ export default function InventoryPage() {
                     initialData={selectedProject}
                     onSubmit={selectedProject ? handleUpdateProject : handleCreateProject}
                     loading={isSubmitting}
+                    cities={cities}
                 />
             </Modal>
 

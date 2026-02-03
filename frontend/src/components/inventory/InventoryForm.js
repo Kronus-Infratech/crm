@@ -24,6 +24,15 @@ const schema = z.object({
     paymentCondition: z.string().optional(),
     circleRate: z.number().min(0).optional().nullable(),
 
+    transactionType: z.enum(["SALE", "RENT", "LEASE"]),
+    propertyType: z.enum(["RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL", "INSTITUTIONAL", "AGRICULTURAL", "OTHER"]),
+    openSides: z.number().min(0).optional().nullable(),
+    construction: z.boolean().optional(),
+    boundaryWalls: z.boolean().optional(),
+    gatedColony: z.boolean().optional(),
+    corner: z.boolean().optional(),
+    condition: z.enum(["NEW", "RESALE"]),
+
     status: z.enum(["AVAILABLE", "SOLD", "BLOCKED"]),
 
     ownerName: z.string().optional(),
@@ -58,7 +67,15 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
             status: "AVAILABLE",
             ratePerSqYard: 0,
             totalPrice: 0,
-            projectId: selectedProject || ""
+            projectId: selectedProject || "",
+            transactionType: "SALE",
+            propertyType: "RESIDENTIAL",
+            openSides: 1,
+            construction: false,
+            boundaryWalls: false,
+            gatedColony: false,
+            corner: false,
+            condition: "NEW"
         }
     });
 
@@ -143,6 +160,68 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
                         error={errors.status?.message}
                         {...register("status")}
                     />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Select
+                        label="Transaction Type"
+                        options={[
+                            { label: "Sale", value: "SALE" },
+                            { label: "Rent", value: "RENT" },
+                            { label: "Lease", value: "LEASE" },
+                        ]}
+                        error={errors.transactionType?.message}
+                        {...register("transactionType")}
+                    />
+                    <Select
+                        label="Property Type"
+                        options={[
+                            { label: "Residential", value: "RESIDENTIAL" },
+                            { label: "Commercial", value: "COMMERCIAL" },
+                            { label: "Industrial", value: "INDUSTRIAL" },
+                            { label: "Institutional", value: "INSTITUTIONAL" },
+                            { label: "Agricultural", value: "AGRICULTURAL" },
+                            { label: "Other", value: "OTHER" },
+                        ]}
+                        error={errors.propertyType?.message}
+                        {...register("propertyType")}
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Select
+                        label="Condition"
+                        options={[
+                            { label: "New", value: "NEW" },
+                            { label: "Resale", value: "RESALE" },
+                        ]}
+                        error={errors.condition?.message}
+                        {...register("condition")}
+                    />
+                    <Input
+                        label="No. of Open Sides"
+                        type="number"
+                        {...register("openSides", { valueAsNumber: true })}
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-2">
+                    <div className="flex items-center gap-2">
+                        <input type="checkbox" id="construction" {...register("construction")} className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                        <label htmlFor="construction" className="text-sm font-medium text-gray-700">Construction</label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input type="checkbox" id="boundaryWalls" {...register("boundaryWalls")} className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                        <label htmlFor="boundaryWalls" className="text-sm font-medium text-gray-700">Boundary Walls</label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input type="checkbox" id="gatedColony" {...register("gatedColony")} className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                        <label htmlFor="gatedColony" className="text-sm font-medium text-gray-700">Gated Colony</label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input type="checkbox" id="corner" {...register("corner")} className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                        <label htmlFor="corner" className="text-sm font-medium text-gray-700">Corner</label>
+                    </div>
                 </div>
             </section>
 

@@ -304,11 +304,25 @@ enum VerificationStatus {
   REJECTED
 }
 
+model City {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  projects    Project[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("cities")
+}
+
 model Project {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
   location    String?
   description String?
+  
+  cityId      String?  @db.ObjectId
+  city        City?    @relation(fields: [cityId], references: [id])
   
   inventory   InventoryItem[]
   
@@ -329,6 +343,16 @@ model InventoryItem {
   facing            String?
   roadWidth         String?
   
+  // New Features
+  transactionType   PropertyTransactionType @default(SALE)
+  propertyType      PropertyType           @default(RESIDENTIAL)
+  openSides         Int?                   @default(1)
+  construction      Boolean?               @default(false)
+  boundaryWalls     Boolean?               @default(false)
+  gatedColony       Boolean?               @default(false)
+  corner            Boolean?               @default(false)
+  condition         PropertyCondition      @default(NEW)
+
   // Payment Details
   paymentTime       String?
   paymentCondition  String?
@@ -364,6 +388,26 @@ model InventoryItem {
   updatedAt         DateTime @updatedAt
   
   @@map("inventory_items")
+}
+
+enum PropertyTransactionType {
+  SALE
+  RENT
+  LEASE
+}
+
+enum PropertyType {
+  RESIDENTIAL
+  COMMERCIAL
+  INDUSTRIAL
+  INSTITUTIONAL
+  AGRICULTURAL
+  OTHER
+}
+
+enum PropertyCondition {
+  NEW
+  RESALE
 }
 
 enum InventoryStatus {

@@ -8,9 +8,15 @@ const { HTTP_STATUS } = require('../config/constants');
  */
 const getProjects = async (req, res, next) => {
   try {
+    const { cityId } = req.query;
+    const where = {};
+    if (cityId && cityId !== 'ALL') where.cityId = cityId;
+
     const projects = await prisma.project.findMany({
-      orderBy: { createdAt: 'desc' },
+      where,
+      orderBy: { name: 'asc' },
       include: {
+        city: { select: { name: true } },
         _count: {
           select: { inventory: true }
         }
@@ -33,7 +39,7 @@ const getProjects = async (req, res, next) => {
  */
 const createProject = async (req, res, next) => {
   try {
-    const { name, location, description } = req.body;
+    const { name, location, description, cityId } = req.body;
 
     if (!name) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
@@ -46,7 +52,8 @@ const createProject = async (req, res, next) => {
       data: {
         name,
         location,
-        description
+        description,
+        cityId: cityId || null
       }
     });
 
@@ -74,11 +81,11 @@ const createProject = async (req, res, next) => {
 const updateProject = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, location, description } = req.body;
+    const { name, location, description, cityId } = req.body;
 
     const project = await prisma.project.update({
       where: { id },
-      data: { name, location, description }
+      data: { name, location, description, cityId: cityId || undefined }
     });
 
     res.status(HTTP_STATUS.OK).json({
@@ -134,6 +141,7 @@ const getInventoryItems = async (req, res, next) => {
   try {
     const {
       projectId,
+      cityId,
       status,
       search,
       sortBy = 'plotNumber',
@@ -148,6 +156,11 @@ const getInventoryItems = async (req, res, next) => {
     const where = {};
 
     if (projectId && projectId !== 'ALL') where.projectId = projectId;
+    if (cityId && cityId !== 'ALL') {
+      where.project = {
+        cityId: cityId
+      };
+    }
     if (status && status !== 'ALL') where.status = status;
 
     if (search) {
@@ -155,7 +168,8 @@ const getInventoryItems = async (req, res, next) => {
         { plotNumber: { contains: search, mode: 'insensitive' } },
         { ownerName: { contains: search, mode: 'insensitive' } },
         { block: { contains: search, mode: 'insensitive' } },
-        { project: { name: { contains: search, mode: 'insensitive' } } }
+        { project: { name: { contains: search, mode: 'insensitive' } } },
+        { project: { city: { name: { contains: search, mode: 'insensitive' } } } }
       ];
     }
 
@@ -222,7 +236,15 @@ const createInventoryItem = async (req, res, next) => {
         cannesCharges: data.cannesCharges ? parseFloat(data.cannesCharges) : null,
 
         // Ensure status enum is valid, default handled by schema if missing
-        status: data.status || undefined
+        status: data.status || undefined,
+        transactionType: data.transactionType || undefined,
+        propertyType: data.propertyType || undefined,
+        openSides: data.openSides ? parseInt(data.openSides) : undefined,
+        construction: data.construction !== undefined ? data.construction : undefined,
+        boundaryWalls: data.boundaryWalls !== undefined ? data.boundaryWalls : undefined,
+        gatedColony: data.gatedColony !== undefined ? data.gatedColony : undefined,
+        corner: data.corner !== undefined ? data.corner : undefined,
+        condition: data.condition || undefined
       }
     });
 
@@ -261,7 +283,12 @@ const updateInventoryItem = async (req, res, next) => {
         askingPrice: data.askingPrice ? parseFloat(data.askingPrice) : undefined,
         maintenanceCharges: data.maintenanceCharges ? parseFloat(data.maintenanceCharges) : undefined,
         clubCharges: data.clubCharges ? parseFloat(data.clubCharges) : undefined,
-        cannesCharges: data.cannesCharges ? parseFloat(data.cannesCharges) : undefined
+        cannesCharges: data.cannesCharges ? parseFloat(data.cannesCharges) : undefined,
+        openSides: data.openSides ? parseInt(data.openSides) : undefined,
+        construction: data.construction !== undefined ? data.construction : undefined,
+        boundaryWalls: data.boundaryWalls !== undefined ? data.boundaryWalls : undefined,
+        gatedColony: data.gatedColony !== undefined ? data.gatedColony : undefined,
+        corner: data.corner !== undefined ? data.corner : undefined
       }
     });
 

@@ -4,16 +4,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useEffect } from "react";
-import Input from "@/src/components/ui/Input";
+import Select from "@/src/components/ui/Select";
 import Button from "@/src/components/ui/Button";
+import Input from "@/src/components/ui/Input";
 
 const schema = z.object({
   name: z.string().min(2, "Name is required (min 2 chars)"),
   location: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
+  cityId: z.string().min(1, "City is required"),
 });
 
-export default function ProjectForm({ onSubmit, loading, initialData }) {
+export default function ProjectForm({ onSubmit, loading, initialData, cities = [] }) {
   const {
     register,
     handleSubmit,
@@ -21,16 +23,32 @@ export default function ProjectForm({ onSubmit, loading, initialData }) {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
+    defaultValues: {
+      name: "",
+      location: "",
+      description: "",
+      cityId: "",
+    }
   });
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData);
+      reset({
+        ...initialData,
+        cityId: initialData.cityId || "",
+      });
     }
   }, [initialData, reset]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 text-black p-1">
+      <Select
+        label="Select City"
+        placeholder="Choose a city"
+        error={errors.cityId?.message}
+        options={cities.map(city => ({ label: city.name, value: city.id }))}
+        {...register("cityId")}
+      />
       <Input
         label="Property Area Name"
         placeholder="e.g. Sector 15"

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "@/src/services/api";
 import { formatNumber, formatDate } from "@/src/utils/formatters";
-import { HiUser, HiPhone, HiCalendar, HiCurrencyRupee, HiLocationMarker, HiTag, HiInformationCircle, HiExternalLink } from "react-icons/hi";
+import { HiUser, HiPhone, HiCalendar, HiCheckCircle, HiCurrencyRupee, HiLocationMarker, HiTag, HiInformationCircle, HiExternalLink } from "react-icons/hi";
 import Link from "next/link";
 
 export default function InventoryDetail({ item: initialItem }) {
@@ -35,7 +35,18 @@ export default function InventoryDetail({ item: initialItem }) {
     { label: "Size", value: item.size, icon: <HiInformationCircle /> },
     { label: "Facing", value: item.facing, icon: <HiInformationCircle /> },
     { label: "Road Width", value: item.roadWidth ? `${item.roadWidth} ft` : null, icon: <HiInformationCircle /> },
+    { label: "Type", value: item.propertyType, icon: <HiTag /> },
+    { label: "Transaction", value: item.transactionType, icon: <HiTag /> },
+    { label: "Open Sides", value: item.openSides, icon: <HiInformationCircle /> },
+    { label: "Condition", value: item.condition, icon: <HiTag /> },
     { label: "Status", value: item.status, icon: <HiTag /> },
+  ];
+
+  const featureRows = [
+    { label: "Construction", value: item.construction ? "Yes" : "No", icon: <HiCheckCircle className={item.construction ? "text-green-500" : "text-gray-300"} /> },
+    { label: "Boundary Walls", value: item.boundaryWalls ? "Yes" : "No", icon: <HiCheckCircle className={item.boundaryWalls ? "text-green-500" : "text-gray-300"} /> },
+    { label: "Gated Colony", value: item.gatedColony ? "Yes" : "No", icon: <HiCheckCircle className={item.gatedColony ? "text-green-500" : "text-gray-300"} /> },
+    { label: "Corner Plot", value: item.corner ? "Yes" : "No", icon: <HiCheckCircle className={item.corner ? "text-green-500" : "text-gray-300"} /> },
   ];
 
   const pricingRows = [
@@ -100,13 +111,14 @@ export default function InventoryDetail({ item: initialItem }) {
           <h3 className="text-xl font-black text-gray-900">{item.project?.name || 'Inventory Item'}</h3>
         </div>
         <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${item.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-            item.status === 'SOLD' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+          item.status === 'SOLD' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
           }`}>
           {item.status}
         </div>
       </div>
 
       <Section title="Property Details" rows={detailRows} />
+      <Section title="Property Features" rows={featureRows} />
 
       {/* Connected Leads Section */}
       <div className="space-y-3">

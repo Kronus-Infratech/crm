@@ -11,6 +11,12 @@ const {
     deleteProject,
     getInventoryItemById
 } = require('../controllers/inventoryController');
+const {
+    getCities,
+    createCity,
+    updateCity,
+    deleteCity
+} = require('../controllers/cityController');
 const { protect } = require('../middleware/auth');
 
 // Project Routes
@@ -31,5 +37,14 @@ router.route('/items/:id')
     .get(protect, getInventoryItemById)
     .put(protect, updateInventoryItem)
     .delete(protect, deleteInventoryItem);
+
+// City Routes
+router.route('/cities')
+    .get(protect, getCities)
+    .post(protect, createCity);
+
+router.route('/cities/:id')
+    .put(protect, updateCity)
+    .delete(protect, deleteCity);
 
 module.exports = router;

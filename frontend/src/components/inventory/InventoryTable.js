@@ -61,6 +61,8 @@ export default function InventoryTable({
             <tr>
               <SortHeader label="Plot No." field="plotNumber" />
               {isAllView && <SortHeader label="Project" field="projectId" />}
+              <th className="px-4 py-3">Type</th>
+              <th className="px-4 py-3">Transaction</th>
               <SortHeader label="Block" field="block" />
               <th className="px-4 py-3">Size</th>
               <th className="px-4 py-3">Dimens.</th>
@@ -87,6 +89,20 @@ export default function InventoryTable({
                     {item.project?.name || "-"}
                   </td>
                 )}
+                <td className="px-4 py-3">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                    {item.propertyType || "RESIDENTIAL"}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className={clsx(
+                    "text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block",
+                    item.transactionType === 'SALE' ? "bg-blue-50 text-blue-600" :
+                      item.transactionType === 'RENT' ? "bg-purple-50 text-purple-600" : "bg-orange-50 text-orange-600"
+                  )}>
+                    {item.transactionType || "SALE"}
+                  </div>
+                </td>
                 <td className="px-4 py-3 font-medium text-gray-600">
                   {item.block || "-"}
                 </td>
