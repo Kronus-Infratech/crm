@@ -145,14 +145,14 @@ export default function CalendarPage() {
                     key={d}
                     onClick={() => handleDateClick(date)}
                     className={clsx(
-                        "h-20 sm:h-24 md:h-32 border-b border-r border-gray-100 p-1 md:p-3 transition-all hover:bg-gray-50/80 cursor-pointer relative group",
-                        isToday && "bg-brand-primary/3"
+                        "h-20 sm:h-24 md:h-32 border-b border-r border-brand-spanish-gray/10 p-1 md:p-3 transition-all hover:bg-gray-50/80 cursor-pointer relative group",
+                        isToday && "bg-[#009688]/5"
                     )}
                 >
                     <div className="flex flex-col h-full">
                         <span className={clsx(
-                            "text-xs md:text-sm font-bold w-6 h-6 md:w-9 md:h-9 mb-4 flex items-center justify-center rounded-xl transition-all",
-                            isToday ? "bg-brand-primary text-white shadow-xl shadow-brand-primary/30" : "text-gray-400 group-hover:text-brand-primary group-hover:bg-brand-primary/5"
+                            "text-xs md:text-sm font-bold w-6 h-6 md:w-9 md:h-9 mb-4 flex items-center justify-center rounded-lg transition-all",
+                            isToday ? "bg-[#009688] text-white shadow-xl shadow-[#009688]/30" : "text-brand-spanish-gray group-hover:text-[#009688] group-hover:bg-[#009688]/5"
                         )}>
                             {d}
                         </span>
@@ -165,17 +165,17 @@ export default function CalendarPage() {
                                     onClick={(e) => handleEventClick(e, event)}
                                     className={clsx(
                                         "px-2 py-1 text-[10px] font-bold rounded-lg truncate border-l-4",
-                                        event.type === 'FOLLOW_UP' ? "bg-amber-100 text-amber-700 border-amber-500" :
-                                            event.type === 'SITE_VISIT' ? "bg-teal-100 text-teal-700 border-teal-500" :
-                                                event.type === 'MEETING' ? "bg-purple-100 text-purple-700 border-purple-500" :
-                                                    "bg-blue-100 text-blue-700 border-blue-500"
+                                        event.type === 'FOLLOW_UP' ? "bg-[#FBB03B]/10 text-[#FBB03B] border-[#FBB03B]" :
+                                            event.type === 'SITE_VISIT' ? "bg-[#8DC63F]/10 text-[#8DC63F] border-[#8DC63F]" :
+                                                event.type === 'MEETING' ? "bg-[#009688]/10 text-[#009688] border-[#009688]" :
+                                                    "bg-red-500/10 text-red-500 border-red-500"
                                     )}
                                 >
                                     {event.title}
                                 </div>
                             ))}
                             {dateEvents.length > 2 && (
-                                <div className="text-[10px] text-brand-primary font-black px-1">
+                                <div className="text-[10px] text-[#009688] font-black px-1">
                                     + {dateEvents.length - 2} more
                                 </div>
                             )}
@@ -188,10 +188,10 @@ export default function CalendarPage() {
                                     key={idx}
                                     className={clsx(
                                         "h-1 px-1.5 flex-1 rounded-full",
-                                        event.type === 'FOLLOW_UP' ? "bg-amber-500" :
-                                            event.type === 'SITE_VISIT' ? "bg-teal-500" :
-                                                event.type === 'MEETING' ? "bg-purple-500" :
-                                                    "bg-blue-500"
+                                        event.type === 'FOLLOW_UP' ? "bg-[#FBB03B]" :
+                                            event.type === 'SITE_VISIT' ? "bg-[#8DC63F]" :
+                                                event.type === 'MEETING' ? "bg-[#009688]" :
+                                                    "bg-red-500"
                                     )}
                                 />
                             ))}
@@ -213,7 +213,7 @@ export default function CalendarPage() {
         <div className="max-w-7xl mx-auto space-y-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
-                    <span className="text-xs font-black uppercase tracking-[0.4em] text-brand-primary">Team Sync</span>
+                    <span className="text-xs font-black uppercase tracking-[0.4em] text-[#009688]">Team Sync</span>
                     <Heading level={1} className="text-4xl">Calendar</Heading>
                     <p className="text-gray-400">Streamline your follow-ups and onsite visits.</p>
                 </div>
@@ -230,43 +230,43 @@ export default function CalendarPage() {
                             />
                         </div>
                     )}
-                    <Button variant="primary" size="lg" icon={HiPlus} className="shadow-2xl shadow-brand-primary/20" onClick={() => { setSelectedEvent(null); setSelectedDate(new Date()); setModalOpen(true); }}>
+                    <Button variant="primary" size="lg" icon={HiPlus} className="shadow-2xl shadow-[#009688]/20 bg-[#009688] hover:bg-[#00796B]" onClick={() => { setSelectedEvent(null); setSelectedDate(new Date()); setModalOpen(true); }}>
                         New Schedule
                     </Button>
                 </div>
             </div>
 
-            <Card className="p-0 overflow-hidden border border-gray-100 shadow-2xl shadow-black/5 bg-white rounded-3xl">
-                <div className="bg-white p-2 flex flex-col lg:flex-row lg:items-center justify-between gap-8 border-b border-gray-100">
+            <Card className="p-0 overflow-hidden border border-brand-spanish-gray/20 shadow-2xl shadow-black/5 bg-white rounded-lg">
+                <div className="bg-white p-2 flex flex-col lg:flex-row lg:items-center justify-between gap-8 border-b border-brand-spanish-gray/20">
                     <div className="flex items-center gap-4">
                         <div className="flex flex-col">
                             <h2 className="text-3xl font-black text-gray-900 tracking-tighter">
                                 {monthNames[currentDate.getMonth()]} <span className="text-gray-200">/ {currentDate.getFullYear()}</span>
                             </h2>
                         </div>
-                        <div className="flex items-center gap-1 bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
-                            <button onClick={handlePrevMonth} className="p-2.5 hover:bg-white hover:shadow-md rounded-xl transition-all">
-                                <HiChevronLeft size={22} className="text-gray-700" />
+                        <div className="flex items-center gap-1 bg-gray-50 p-1.5 rounded-lg border border-brand-spanish-gray/20">
+                            <button onClick={handlePrevMonth} className="p-2.5 hover:bg-white hover:shadow-md rounded-lg transition-all">
+                                <HiChevronLeft size={22} className="text-brand-dark-gray" />
                             </button>
-                            <button onClick={() => setCurrentDate(new Date())} className="px-6 py-1.5 text-xs font-black uppercase tracking-widest text-gray-700 hover:text-brand-primary transition-colors">
+                            <button onClick={() => setCurrentDate(new Date())} className="px-6 py-1.5 text-xs font-black uppercase tracking-widest text-brand-dark-gray hover:text-[#009688] transition-colors">
                                 Today
                             </button>
-                            <button onClick={handleNextMonth} className="p-2.5 hover:bg-white hover:shadow-md rounded-xl transition-all">
-                                <HiChevronRight size={22} className="text-gray-700" />
+                            <button onClick={handleNextMonth} className="p-2.5 hover:bg-white hover:shadow-md rounded-lg transition-all">
+                                <HiChevronRight size={22} className="text-brand-dark-gray" />
                             </button>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-6 p-4 md:p-0 bg-gray-50/50 md:bg-transparent rounded-2xl">
+                    <div className="flex flex-wrap items-center gap-6 p-4 md:p-0 bg-gray-50/50 md:bg-transparent rounded-lg">
                         {[
-                            { color: "bg-blue-500", label: "General" },
-                            { color: "bg-amber-500", label: "Follow-ups" },
-                            { color: "bg-purple-500", label: "Meetings" },
-                            { color: "bg-teal-500", label: "Site Visits" }
+                            { color: "bg-red-500", label: "General" },
+                            { color: "bg-[#FBB03B]", label: "Follow-ups" },
+                            { color: "bg-[#009688]", label: "Meetings" },
+                            { color: "bg-[#8DC63F]", label: "Site Visits" }
                         ].map(item => (
                             <div key={item.label} className="flex items-center gap-2">
                                 <span className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{item.label}</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-brand-spanish-gray">{item.label}</span>
                             </div>
                         ))}
                     </div>
@@ -274,7 +274,7 @@ export default function CalendarPage() {
 
                 <div className="grid grid-cols-7 border-collapse">
                     {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => (
-                        <div key={i} className="py-5 text-center border-b border-r border-gray-100 text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-300">
+                        <div key={i} className="py-5 text-center border-b border-r border-brand-spanish-gray/10 text-[10px] md:text-xs font-black uppercase tracking-widest text-brand-spanish-gray">
                             {day}
                         </div>
                     ))}

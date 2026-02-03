@@ -163,7 +163,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 text-black p-1">
       {/* Contact Info Group */}
       <section className="space-y-4">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">Lead Information</h4>
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] mb-2">Lead Information</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Input
             label="Customer Name"
@@ -242,7 +242,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
             <button
               type="button"
               onClick={() => setIsCustomProperty(!isCustomProperty)}
-              className="absolute right-0 top-0 text-[10px] uppercase font-black tracking-widest text-indigo-500 hover:text-indigo-700 bg-indigo-50 px-2 py-1 rounded"
+              className="absolute right-0 top-0 text-[10px] uppercase font-black tracking-widest text-[#009688] hover:text-[#00796B] bg-[#009688]/10 px-2 py-1 rounded-lg"
             >
               {isCustomProperty ? "Select from Inventory" : "Use Custom Text"}
             </button>
@@ -252,7 +252,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
 
       {/* Business Details Group */}
       <section className="space-y-4 pt-2">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">Deal Metrics</h4>
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] mb-2">Deal Metrics</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <Select
             label="Source"
@@ -336,8 +336,8 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
 
       {/* Attachments Section */}
       <section className="space-y-4 pt-2">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">Project Documents</h4>
-        <div className="relative group border-2 border-dashed border-gray-100 rounded-lg p-8 text-center hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer overflow-hidden">
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] mb-2">Project Documents</h4>
+        <div className="relative group border-2 border-dashed border-brand-spanish-gray/30 rounded-lg p-8 text-center hover:border-[#009688] hover:bg-[#009688]/5 transition-all cursor-pointer overflow-hidden">
           <input
             type="file"
             multiple
@@ -346,7 +346,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
             accept="image/*,.pdf"
           />
           <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 bg-white rounded-lg shadow-sm flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 bg-white rounded-lg shadow-sm flex items-center justify-center text-[#009688] group-hover:scale-110 transition-transform">
               <HiCloudUpload size={28} />
             </div>
             <div>
@@ -362,7 +362,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
             {selectedFiles.map((file, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm group">
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="w-10 h-10 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-lg text-xs font-black">
+                  <div className="w-10 h-10 flex items-center justify-center bg-[#009688]/10 text-[#009688] rounded-lg text-xs font-black">
                     {file.type.includes('image') ? <HiPhotograph size={20} /> : <HiDocumentText size={20} />}
                   </div>
                   <div className="truncate">
@@ -383,8 +383,8 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         )}
 
         {uploading && (
-          <div className="flex items-center justify-center gap-2 py-4 text-indigo-600 animate-pulse">
-            <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex items-center justify-center gap-2 py-4 text-[#009688] animate-pulse">
+            <div className="w-4 h-4 border-2 border-[#009688] border-t-transparent rounded-full animate-spin"></div>
             <span className="text-xs font-black uppercase tracking-widest">Encrypting & Uploading...</span>
           </div>
         )}
@@ -394,7 +394,7 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
         <Button
           type="submit"
           disabled={loading || uploading}
-          className="bg-indigo-600! hover:bg-indigo-700! px-10! py-4! text-base font-black shadow-xl shadow-indigo-100 rounded-lg!"
+          className="bg-[#009688]! hover:bg-[#00796B]! px-10! py-4! text-base font-black shadow-xl shadow-[#009688]/20 rounded-lg!"
         >
           {loading || uploading ? "Processing..." : initialData ? "Save Changes" : "Create Lead"}
         </Button>

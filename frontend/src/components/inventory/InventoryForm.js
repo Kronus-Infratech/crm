@@ -109,7 +109,7 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
 
             {/* Basic Details */}
             <section className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2 border-b border-gray-100 pb-1">Property Details</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] mb-2 border-b border-brand-spanish-gray/20 pb-1">Property Details</h4>
 
                 {(!selectedProject || initialData) && (
                     <Select
@@ -207,27 +207,27 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-2">
                     <div className="flex items-center gap-2">
-                        <input type="checkbox" id="construction" {...register("construction")} className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                        <label htmlFor="construction" className="text-sm font-medium text-gray-700">Construction</label>
+                        <input type="checkbox" id="construction" {...register("construction")} className="w-4 h-4 text-[#009688] border-gray-300 rounded-lg focus:ring-[#009688]" />
+                        <label htmlFor="construction" className="text-sm font-medium text-brand-dark-gray">Construction</label>
                     </div>
                     <div className="flex items-center gap-2">
-                        <input type="checkbox" id="boundaryWalls" {...register("boundaryWalls")} className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                        <label htmlFor="boundaryWalls" className="text-sm font-medium text-gray-700">Boundary Walls</label>
+                        <input type="checkbox" id="boundaryWalls" {...register("boundaryWalls")} className="w-4 h-4 text-[#009688] border-gray-300 rounded-lg focus:ring-[#009688]" />
+                        <label htmlFor="boundaryWalls" className="text-sm font-medium text-brand-dark-gray">Boundary Walls</label>
                     </div>
                     <div className="flex items-center gap-2">
-                        <input type="checkbox" id="gatedColony" {...register("gatedColony")} className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                        <label htmlFor="gatedColony" className="text-sm font-medium text-gray-700">Gated Colony</label>
+                        <input type="checkbox" id="gatedColony" {...register("gatedColony")} className="w-4 h-4 text-[#009688] border-gray-300 rounded-lg focus:ring-[#009688]" />
+                        <label htmlFor="gatedColony" className="text-sm font-medium text-brand-dark-gray">Gated Colony</label>
                     </div>
                     <div className="flex items-center gap-2">
-                        <input type="checkbox" id="corner" {...register("corner")} className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                        <label htmlFor="corner" className="text-sm font-medium text-gray-700">Corner</label>
+                        <input type="checkbox" id="corner" {...register("corner")} className="w-4 h-4 text-[#009688] border-gray-300 rounded-lg focus:ring-[#009688]" />
+                        <label htmlFor="corner" className="text-sm font-medium text-brand-dark-gray">Corner</label>
                     </div>
                 </div>
             </section>
 
             {/* Pricing */}
             <section className="space-y-4 pt-2">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2 border-b border-gray-100 pb-1">Pricing & Payment</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] mb-2 border-b border-brand-spanish-gray/20 pb-1">Pricing & Payment</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Input
                         label="Rate per Sq.Yd (₹)"
@@ -266,7 +266,7 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
 
             {/* Ownership */}
             <section className="space-y-4 pt-2">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2 border-b border-gray-100 pb-1">Ownership & Reference</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] mb-2 border-b border-brand-spanish-gray/20 pb-1">Ownership & Reference</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
                         label="Owner Name"
@@ -295,7 +295,7 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
 
             {/* Other Charges */}
             <section className="space-y-4 pt-2">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2 border-b border-gray-100 pb-1">Additional Charges</h4>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] mb-2 border-b border-brand-spanish-gray/20 pb-1">Additional Charges</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Input
                         label="Maintenance Charges"
@@ -317,8 +317,8 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
 
             {/* Sold Info - Only if Status is SOLD */}
             {status === 'SOLD' && (
-                <section className="space-y-4 pt-2 bg-red-50 p-4 rounded-lg">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-2 border-b border-red-100 pb-1">Sale Details</h4>
+                <section className="space-y-4 pt-2 bg-red-500/10 p-4 rounded-lg">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-2 border-b border-red-500/20 pb-1">Sale Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
                             label="Sold To"
@@ -338,7 +338,7 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
                 <Button
                     type="submit"
                     disabled={loading}
-                    className="bg-indigo-600! hover:bg-indigo-700! w-full md:w-auto"
+                    className="bg-[#009688]! hover:bg-[#00796B]! w-full md:w-auto"
                 >
                     {loading ? "Processing..." : initialData ? "Update Inventory" : "Add Inventory"}
                 </Button>

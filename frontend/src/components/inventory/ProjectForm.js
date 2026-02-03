@@ -70,7 +70,7 @@ export default function ProjectForm({ onSubmit, loading, initialData, cities = [
         <Button
           type="submit"
           disabled={loading}
-          className="bg-indigo-600! hover:bg-indigo-700! w-full"
+          className="bg-[#009688]! hover:bg-[#00796B]! w-full"
         >
           {loading ? "Processing..." : initialData ? "Update Area" : "Create Area"}
         </Button>

@@ -76,10 +76,10 @@ export default function DashboardPage() {
   const isManagerOrAdmin = userRoles.includes('ADMIN') || userRoles.includes('MANAGER') || userRoles.includes('DIRECTOR') || userRoles.includes('EXECUTIVE');
 
   const statCards = [
-    { label: "Total Leads", value: stats.totalLeads, icon: <HiLightningBolt />, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Pipeline Value", value: `₹${formatNumber(stats.pipelineValue)}`, icon: <HiCurrencyRupee />, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Avg. Conversion", value: `${stats.conversionRate}%`, icon: <HiChartPie />, color: "text-orange-600", bg: "bg-orange-50" },
-    { label: "Active Agents", value: stats.activeUsers, icon: <HiUserGroup />, color: "text-purple-600", bg: "bg-purple-50" }
+    { label: "Total Leads", value: stats.totalLeads, icon: <HiLightningBolt />, color: "text-[#009688]", bg: "bg-[#009688]/10" },
+    { label: "Pipeline Value", value: `₹${formatNumber(stats.pipelineValue)}`, icon: <HiCurrencyRupee />, color: "text-[#8DC63F]", bg: "bg-[#8DC63F]/10" },
+    { label: "Avg. Conversion", value: `${stats.conversionRate}%`, icon: <HiChartPie />, color: "text-[#FBB03B]", bg: "bg-[#FBB03B]/10" },
+    { label: "Active Agents", value: stats.activeUsers, icon: <HiUserGroup />, color: "text-[#A07558]", bg: "bg-[#A07558]/10" }
   ];
 
   if (loading) {
@@ -96,12 +96,12 @@ export default function DashboardPage() {
             <p className="text-gray-400 font-bold uppercase tracking-widest text-[11px] leading-none">Security Protocol: {userRoles[0]} Level Access</p>
           </div>
         </div>
-        <div className="bg-white px-6 py-4 rounded-lg border border-gray-100 shadow-sm flex items-center gap-4">
+        <div className="bg-white px-6 py-4 rounded-lg border border-brand-spanish-gray/20 shadow-sm flex items-center gap-4">
           <div className="text-right">
-            <p className="text-[10px] font-black text-gray-400 uppercase leading-none">Global Revenue</p>
-            <p className="text-xl font-black text-gray-900 mt-1">₹{formatNumber(stats.valueBreakdown.won)}</p>
+            <p className="text-[10px] font-black text-brand-spanish-gray uppercase leading-none">Global Revenue</p>
+            <p className="text-xl font-black text-brand-dark-gray mt-1">₹{formatNumber(stats.valueBreakdown.won)}</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#8DC63F]/10 text-[#8DC63F] flex items-center justify-center">
             <HiTrendingUp size={20} />
           </div>
         </div>
@@ -125,22 +125,22 @@ export default function DashboardPage() {
       {/* Analytics Core Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         {/* Trend Analysis */}
-        <Card className="lg:col-span-8 p-10 border-none shadow-xl shadow-gray-200/50">
+        <Card className="lg:col-span-8 p-10 border-none shadow-xl shadow-brand-dark-gray/5">
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-1">
-              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Lead Growth Vectors</h3>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Monthly Acquisition Trends</p>
+              <h3 className="text-xl font-black text-brand-dark-gray uppercase tracking-tight">Lead Growth Vectors</h3>
+              <p className="text-xs font-bold text-brand-spanish-gray uppercase tracking-widest">Monthly Acquisition Trends</p>
             </div>
-            <span className="text-[10px] font-black bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg">HISTORICAL DATA</span>
+            <span className="text-[10px] font-black bg-[#009688]/10 text-[#009688] px-3 py-1.5 rounded-lg">HISTORICAL DATA</span>
           </div>
           <TrendLineChart data={stats.monthlyTrends} />
         </Card>
 
         {/* Distribution Ring */}
-        <Card className="lg:col-span-4 p-10 border-none shadow-xl shadow-gray-200/50">
+        <Card className="lg:col-span-4 p-10 border-none shadow-xl shadow-brand-dark-gray/5">
           <div className="text-center mb-8">
-            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Status Weights</h3>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Pipeline Distribution</p>
+            <h3 className="text-xl font-black text-brand-dark-gray uppercase tracking-tight">Status Weights</h3>
+            <p className="text-xs font-bold text-brand-spanish-gray uppercase tracking-widest mt-1">Pipeline Distribution</p>
           </div>
           <StatusChart data={stats.leadsByStatus} />
         </Card>
@@ -150,10 +150,10 @@ export default function DashboardPage() {
       {isManagerOrAdmin && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Performance Radar */}
-          <Card className="lg:col-span-4 p-10 border-none shadow-xl shadow-gray-200/50">
+          <Card className="lg:col-span-4 p-10 border-none shadow-xl shadow-brand-dark-gray/5">
             <div className="text-center mb-8">
-              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Agent Competency</h3>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Top Performer Radar</p>
+              <h3 className="text-xl font-black text-brand-dark-gray uppercase tracking-tight">Agent Competency</h3>
+              <p className="text-xs font-bold text-brand-spanish-gray uppercase tracking-widest mt-1">Top Performer Radar</p>
             </div>
             <PerformanceRadar performanceData={stats.performance} />
           </Card>
@@ -183,12 +183,12 @@ export default function DashboardPage() {
 
       <div className="space-y-10">
         <div>
-          <Card className="p-10 border-none shadow-xl shadow-gray-200/50">
+          <Card className="p-10 border-none shadow-xl shadow-brand-dark-gray/5">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">
+              <h3 className="text-xl font-black text-brand-dark-gray uppercase tracking-tight">
                 Channel Reach
               </h3>
-              <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg">
+              <span className="text-[10px] font-black bg-[#8DC63F]/10 text-[#8DC63F] px-3 py-1.5 rounded-lg">
                 SOURCE ANALYTICS
               </span>
             </div>

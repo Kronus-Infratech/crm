@@ -2,9 +2,9 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { 
-  HiOfficeBuilding, HiGlobe, HiShieldCheck, HiUserGroup, 
-  HiArrowRight, HiServer, HiChip 
+import {
+  HiOfficeBuilding, HiGlobe, HiShieldCheck, HiUserGroup,
+  HiArrowRight, HiServer, HiChip
 } from "react-icons/hi";
 import BgLayout from "@/src/components/layout/BgLayout";
 import Button from "@/src/components/ui/Button";
@@ -33,29 +33,29 @@ export default function Home() {
             transition={{ duration: 0.8 }}
             className="max-w-4xl"
           >
-             <span className="inline-block px-4 py-1.5 mb-8 text-xs font-bold tracking-[0.2em] text-blue-400 uppercase border border-blue-900/50 bg-blue-900/20 rounded-full">
-                Internal CRM Portal
-             </span>
+            <span className="inline-block px-4 py-1.5 mb-8 text-xs font-bold tracking-[0.2em] text-[#009688] uppercase border border-[#009688]/30 bg-[#009688]/10 rounded-full">
+              Internal CRM Portal
+            </span>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-8 leading-tight">
               Kronus <br />
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-indigo-500">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-[#009688] to-[#8DC63F]">
                 Infratech & Consultants
               </span>
             </h1>
-            <p className="max-w-xl text-xl text-gray-400 mb-12 leading-relaxed border-l-2 border-blue-500 pl-6">
-              Building the future of Sonipat, Haryana. <br/>This unified workspace is designed for our teams to manage projects, clients, and assets with precision.
+            <p className="max-w-xl text-xl text-gray-400 mb-12 leading-relaxed border-l-2 border-[#009688] pl-6">
+              Building the future of Sonipat, Haryana. <br />This unified workspace is designed for our teams to manage projects, clients, and assets with precision.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-6">
               <Link href="/login">
-                <button className="text-lg px-10 py-4 bg-white text-gray-900 hover:bg-gray-100 shadow-none rounded-none border-l-4 border-blue-600">
+                <button className="text-lg px-10 py-4 bg-white text-gray-900 hover:bg-gray-100 shadow-none rounded-lg border-l-4 border-[#009688]">
                   Access Workspace <HiArrowRight className="ml-2 inline" />
                 </button>
               </Link>
             </div>
           </motion.div>
         </div>
-        
+
         {/* Abstract Architectural Elements */}
         {/* <div className="h-full hidden lg:block">
             <img src="/logo.png" alt="Logo" className="w-full rounded-lg object-contain bg-white" />

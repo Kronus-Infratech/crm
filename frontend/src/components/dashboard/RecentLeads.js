@@ -18,12 +18,12 @@ export default function RecentLeads({ leads }) {
         <Card className="h-full p-8 border-none shadow-xl shadow-gray-200/50 rounded-3xl overflow-hidden">
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 bg-[#009688]/10 text-[#009688] rounded-lg flex items-center justify-center">
                         <HiArrowRight className="-rotate-45" />
                     </div>
                     <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Recent Activity</h3>
                 </div>
-                <Link href="/leads" className="text-xs font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-widest flex items-center gap-2 transition-colors bg-indigo-50 px-4 py-2 rounded-lg">
+                <Link href="/leads" className="text-xs font-black text-[#009688] hover:text-[#00796B] uppercase tracking-widest flex items-center gap-2 transition-colors bg-[#009688]/10 px-4 py-2 rounded-lg">
                     Full Pipeline <HiArrowRight />
                 </Link>
             </div>
@@ -43,7 +43,7 @@ export default function RecentLeads({ leads }) {
                             <tr key={lead.id} className="group hover:bg-gray-50/50 transition-all cursor-pointer">
                                 <td className="px-8 py-5">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center font-bold text-xs group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                        <div className="w-8 h-8 rounded-lg bg-gray-100 text-brand-spanish-gray flex items-center justify-center font-bold text-xs group-hover:bg-[#009688] group-hover:text-white transition-all">
                                             {lead.name[0].toUpperCase()}
                                         </div>
                                         <span className="font-bold text-gray-900">{lead.name}</span>
@@ -67,15 +67,15 @@ export default function RecentLeads({ leads }) {
 
 function StatusBadge({ status }) {
     const styles = {
-        NEW: "bg-blue-100 text-blue-700",
-        CONTACTED: "bg-cyan-100 text-cyan-700",
-        INTERESTED: "bg-green-100 text-green-700",
-        NOT_INTERESTED: "bg-gray-100 text-gray-700",
-        SITE_VISIT: "bg-purple-100 text-purple-700",
-        NEGOTIATION: "bg-orange-100 text-orange-700",
-        DOCUMENTATION: "bg-indigo-100 text-indigo-700",
-        CONVERTED: "bg-emerald-100 text-emerald-700",
-        NOT_CONVERTED: "bg-red-100 text-red-700"
+        'NEW': 'bg-[#009688]/10 text-[#009688]',
+        'CONTACTED': 'bg-[#009688]/10 text-[#009688]',
+        'INTERESTED': 'bg-[#8DC63F]/10 text-[#8DC63F]',
+        'CONVERTED': 'bg-[#8DC63F]/10 text-[#8DC63F]',
+        'NOT_CONVERTED': 'bg-red-500/10 text-red-500',
+        'SITE_VISIT': 'bg-[#FBB03B]/10 text-[#FBB03B]',
+        'NEGOTIATION': 'bg-[#FBB03B]/10 text-[#FBB03B]',
+        'NOT_INTERESTED': 'bg-[#9E9E9E]/10 text-[#9E9E9E]',
+        'DOCUMENTATION': 'bg-[#009688]/10 text-[#009688]'
     };
 
     return (

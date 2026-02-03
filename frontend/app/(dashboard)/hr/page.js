@@ -84,20 +84,20 @@ export default function HRPage() {
                     <StatCard
                         title="Pending Review"
                         value={pendingLeaves.length}
-                        icon={<HiClock className="text-amber-500" />}
-                        color="amber"
+                        icon={<HiClock className="text-[#FBB03B]" />}
+                        color="sunshade"
                     />
                     <StatCard
-                        title="Total Approved (Month)"
+                        title="Total Approved"
                         value={reports.summary.find(s => s.status === 'APPROVED')?._count || 0}
-                        icon={<HiCheck className="text-emerald-500" />}
-                        color="emerald"
+                        icon={<HiCheck className="text-[#8DC63F]" />}
+                        color="yellowgreen"
                     />
                     <StatCard
                         title="Total Employees"
                         value={reports.employeeReports.length}
-                        icon={<HiUserGroup className="text-indigo-500" />}
-                        color="indigo"
+                        icon={<HiUserGroup className="text-[#009688]" />}
+                        color="teal"
                     />
                     <StatCard
                         title="Today on Leave"
@@ -107,19 +107,19 @@ export default function HRPage() {
                             const end = new Date(l.endDate);
                             return l.status === 'APPROVED' && today >= start && today <= end;
                         }).length}
-                        icon={<HiClipboardList className="text-rose-500" />}
-                        color="rose"
+                        icon={<HiClipboardList className="text-red-500" />}
+                        color="palliser"
                     />
                 </div>
             )}
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-200">
+            <div className="flex border-b border-brand-spanish-gray/20">
                 <button
                     onClick={() => setActiveTab("pending")}
                     className={clsx(
                         "px-6 py-3 text-sm font-bold border-b-2 transition-all",
-                        activeTab === "pending" ? "border-brand-primary text-brand-primary" : "border-transparent text-gray-400 hover:text-gray-600"
+                        activeTab === "pending" ? "border-[#009688] text-[#009688]" : "border-transparent text-brand-spanish-gray hover:text-brand-dark-gray"
                     )}
                 >
                     Pending Requests ({pendingLeaves.length})
@@ -128,7 +128,7 @@ export default function HRPage() {
                     onClick={() => setActiveTab("all")}
                     className={clsx(
                         "px-6 py-3 text-sm font-bold border-b-2 transition-all",
-                        activeTab === "all" ? "border-brand-primary text-brand-primary" : "border-transparent text-gray-400 hover:text-gray-600"
+                        activeTab === "all" ? "border-[#009688] text-[#009688]" : "border-transparent text-brand-spanish-gray hover:text-brand-dark-gray"
                     )}
                 >
                     All Requests
@@ -137,7 +137,7 @@ export default function HRPage() {
                     onClick={() => setActiveTab("reports")}
                     className={clsx(
                         "px-6 py-3 text-sm font-bold border-b-2 transition-all",
-                        activeTab === "reports" ? "border-brand-primary text-brand-primary" : "border-transparent text-gray-400 hover:text-gray-600"
+                        activeTab === "reports" ? "border-[#009688] text-[#009688]" : "border-transparent text-brand-spanish-gray hover:text-brand-dark-gray"
                     )}
                 >
                     Employee Reports
@@ -194,9 +194,9 @@ export default function HRPage() {
                                             <td className="px-6 py-4 text-xs font-medium text-gray-600">{leave.type}</td>
                                             <td className="px-6 py-4">
                                                 <span className={clsx(
-                                                    "px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
-                                                    leave.status === 'APPROVED' ? "bg-green-100 text-green-700" :
-                                                        leave.status === 'REJECTED' ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                                                    "px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider",
+                                                    leave.status === 'APPROVED' ? "bg-[#8DC63F]/10 text-[#8DC63F]" :
+                                                        leave.status === 'REJECTED' ? "bg-red-500/10 text-red-500" : "bg-[#FBB03B]/10 text-[#FBB03B]"
                                                 )}>
                                                     {leave.status}
                                                 </span>
@@ -230,18 +230,18 @@ export default function HRPage() {
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
                                         {reports.employeeReports.map(emp => (
-                                            <tr key={emp.id} className="hover:bg-brand-primary/1">
+                                            <tr key={emp.id} className="hover:bg-[#009688]/5 transition-colors">
                                                 <td className="px-6 py-4">
-                                                    <div className="font-bold text-gray-900">{emp.name}</div>
-                                                    <div className="text-[10px] text-gray-400 uppercase font-black">{emp.designation || "Staff"} • {emp.department || "General"}</div>
+                                                    <div className="font-bold text-brand-dark-gray">{emp.name}</div>
+                                                    <div className="text-[10px] text-brand-spanish-gray uppercase font-black">{emp.designation || "Staff"} • {emp.department || "General"}</div>
                                                 </td>
-                                                <td className="px-6 py-4 text-center font-black text-emerald-600">{emp.approvedRequests}</td>
-                                                <td className="px-6 py-4 text-center font-black text-indigo-600">{emp.totalApprovedDays} days</td>
-                                                <td className="px-6 py-4 text-center font-black text-amber-600">{emp.pendingRequests}</td>
+                                                <td className="px-6 py-4 text-center font-black text-[#8DC63F] font-satoshi">{emp.approvedRequests}</td>
+                                                <td className="px-6 py-4 text-center font-black text-[#009688] font-satoshi">{emp.totalApprovedDays} days</td>
+                                                <td className="px-6 py-4 text-center font-black text-[#FBB03B] font-satoshi">{emp.pendingRequests}</td>
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="w-24 bg-gray-100 h-1.5 rounded-full ml-auto overflow-hidden">
                                                         <div
-                                                            className="bg-brand-primary h-full"
+                                                            className="bg-[#009688] h-full"
                                                             style={{ width: `${Math.min((emp.totalApprovedDays / 30) * 100, 100)}%` }}
                                                         ></div>
                                                     </div>
@@ -261,10 +261,10 @@ export default function HRPage() {
 
 function StatCard({ title, value, icon, color }) {
     const colors = {
-        amber: "from-amber-50 to-amber-100/50 text-amber-700 border-amber-200",
-        emerald: "from-emerald-50 to-emerald-100/50 text-emerald-700 border-emerald-200",
-        indigo: "from-indigo-50 to-indigo-100/50 text-indigo-700 border-indigo-200",
-        rose: "from-rose-50 to-rose-100/50 text-rose-700 border-rose-200",
+        sunshade: "bg-[#FBB03B]/5 text-[#FBB03B] border-[#FBB03B]/20",
+        yellowgreen: "bg-[#8DC63F]/5 text-[#8DC63F] border-[#8DC63F]/20",
+        teal: "bg-[#009688]/5 text-[#009688] border-[#009688]/20",
+        palliser: "bg-red-500/5 text-red-500 border-red-500/20",
     };
 
     return (
@@ -284,10 +284,10 @@ function StatCard({ title, value, icon, color }) {
 
 function LeaveRequestCard({ leave, onAction, processing, showReject, rejectionReason, setRejectionReason }) {
     return (
-        <Card className="p-6 border-l-4 border-l-amber-400 hover:shadow-lg transition-all group">
+        <Card className="p-6 border-l-4 border-l-[#FBB03B] hover:shadow-lg transition-all group rounded-lg">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-xl">
+                    <div className="w-12 h-12 rounded-lg bg-[#009688]/10 flex items-center justify-center text-[#009688] font-black text-xl">
                         {leave.user.name[0]}
                     </div>
                     <div>
@@ -297,9 +297,9 @@ function LeaveRequestCard({ leave, onAction, processing, showReject, rejectionRe
                         </div>
                         <p className="text-sm text-gray-500 mt-1">
                             Requested <span className="font-bold text-gray-900">{formatDate(leave.startDate)}</span> to <span className="font-bold text-gray-900">{formatDate(leave.endDate)}</span>
-                            <span className="ml-2 text-indigo-600 font-bold">({Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / (1000 * 60 * 60 * 24)) + 1} days)</span>
+                            <span className="ml-2 text-[#009688] font-bold">({Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / (1000 * 60 * 60 * 24)) + 1} days)</span>
                         </p>
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100 text-sm italic text-gray-600 max-w-lg">
+                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-brand-spanish-gray/20 text-sm italic text-brand-dark-gray max-w-lg">
                             "{leave.reason}"
                         </div>
                     </div>
@@ -311,7 +311,7 @@ function LeaveRequestCard({ leave, onAction, processing, showReject, rejectionRe
                             <input
                                 type="text"
                                 placeholder="Reason for rejection..."
-                                className="w-full text-black px-3 py-2 text-sm border-2 border-red-100 rounded-lg focus:outline-none focus:border-red-300"
+                                className="w-full text-black px-3 py-2 text-sm border border-brand-spanish-gray/30 rounded-lg focus:outline-none focus:border-red-500"
                                 required
                                 value={rejectionReason}
                                 onChange={(e) => setRejectionReason(e.target.value)}
@@ -319,7 +319,7 @@ function LeaveRequestCard({ leave, onAction, processing, showReject, rejectionRe
                             <div className="flex gap-2">
                                 <Button
                                     size="sm"
-                                    className="w-full bg-red-600 hover:bg-red-700"
+                                    className="w-full bg-red-500 hover:bg-[#8B654B] text-white"
                                     onClick={() => onAction(leave.id, 'REJECTED')}
                                     disabled={processing}
                                 >
@@ -340,7 +340,7 @@ function LeaveRequestCard({ leave, onAction, processing, showReject, rejectionRe
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-red-600 border-red-100 hover:bg-red-50 gap-2"
+                                className="text-red-500 border-red-500/30 hover:bg-red-500/5 gap-2"
                                 onClick={() => onAction(leave.id, 'REJECTED')}
                                 disabled={processing}
                             >
@@ -348,7 +348,7 @@ function LeaveRequestCard({ leave, onAction, processing, showReject, rejectionRe
                             </Button>
                             <Button
                                 size="sm"
-                                className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                                className="bg-[#8DC63F] hover:bg-[#7AB336] gap-2 text-white"
                                 onClick={() => onAction(leave.id, 'APPROVED')}
                                 disabled={processing}
                             >

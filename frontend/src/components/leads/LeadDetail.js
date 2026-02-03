@@ -100,26 +100,26 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
     if (!lead) return null;
 
     const statusColors = {
-        'NEW': 'bg-blue-100 text-blue-700',
-        'CONTACTED': 'bg-indigo-100 text-indigo-700',
-        'INTERESTED': 'bg-purple-100 text-purple-700',
-        'CONVERTED': 'bg-green-100 text-green-700',
-        'NOT_CONVERTED': 'bg-red-100 text-red-700',
-        'SITE_VISIT': 'bg-amber-100 text-amber-700',
-        'NEGOTIATION': 'bg-orange-100 text-orange-700',
+        'NEW': 'bg-[#009688]/10 text-[#009688]',
+        'CONTACTED': 'bg-[#009688]/10 text-[#009688]',
+        'INTERESTED': 'bg-[#8DC63F]/10 text-[#8DC63F]',
+        'CONVERTED': 'bg-[#8DC63F]/10 text-[#8DC63F]',
+        'NOT_CONVERTED': 'bg-red-500/10 text-red-500',
+        'SITE_VISIT': 'bg-[#FBB03B]/10 text-[#FBB03B]',
+        'NEGOTIATION': 'bg-[#FBB03B]/10 text-[#FBB03B]',
     };
 
     const priorityColors = {
-        'LOW': 'bg-gray-100 text-gray-700 border-gray-200',
-        'MEDIUM': 'bg-blue-50 text-blue-700 border-blue-200',
-        'HIGH': 'bg-orange-50 text-orange-700 border-orange-200',
-        'URGENT': 'bg-red-50 text-red-700 border-red-200 animate-pulse',
+        'LOW': 'bg-brand-spanish-gray/10 text-brand-spanish-gray border-brand-spanish-gray/20',
+        'MEDIUM': 'bg-[#009688]/10 text-[#009688] border-[#009688]/20',
+        'HIGH': 'bg-[#FBB03B]/10 text-[#FBB03B] border-[#FBB03B]/20',
+        'URGENT': 'bg-red-500/10 text-red-500 border-red-500/20 animate-pulse',
     };
 
     return (
         <div className="flex flex-col gap-6 text-black">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-brand-spanish-gray/20 pb-6">
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-3 mb-1">
                         <Heading level={2} className="text-3xl! font-extrabold tracking-tight text-gray-900">{lead.name}</Heading>
@@ -127,11 +127,11 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                             {lead.priority} Priority
                         </span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-gray-500 text-sm">
+                    <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-brand-spanish-gray text-sm">
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-200 rounded-lg w-fit">
-                                <HiTag className="text-gray-400" />
-                                <span className={`font-semibold ${statusColors[lead.status]?.split(' ')[1] || 'text-gray-700'}`}>{lead.status}</span>
+                                <HiTag className="text-brand-spanish-gray" />
+                                <span className={`font-semibold ${statusColors[lead.status]?.split(' ')[1] || 'text-brand-dark-gray'}`}>{lead.status}</span>
                             </div>
                             {lead.status === 'CONVERTED' && lead.ledgerStatus === 'CLOSED' && (
                                 <span className="text-[10px] text-red-600 font-extrabold uppercase tracking-tighter flex items-center ml-1">
@@ -140,12 +140,12 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                             )}
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <HiCalendar className="text-gray-400" />
+                            <HiCalendar className="text-brand-spanish-gray" />
                             Added {formatDate(lead.createdAt)}
                         </div>
                         {lead.source && (
                             <div className="flex items-center gap-1.5">
-                                <HiChartBar className="text-gray-400" />
+                                <HiChartBar className="text-brand-spanish-gray" />
                                 via {lead.source}
                             </div>
                         )}
@@ -167,7 +167,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
 
                 {lead.status === 'CONVERTED' && (
                     <Link href={`/leads/${lead.id}/ledger`}>
-                        <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all shadow-md active:scale-95">
+                        <button className="flex items-center gap-2 px-4 py-2 bg-[#8DC63F] hover:bg-[#7AB336] text-white font-bold rounded-lg transition-all shadow-md active:scale-95">
                             <HiCurrencyRupee size={20} />
                             View Running Ledger
                         </button>
@@ -191,20 +191,20 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
 
                     {/* Key Metrics Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-linear-to-br from-indigo-500 to-indigo-600 p-5 rounded-lg text-white shadow-lg shadow-indigo-100">
-                            <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">Budget Range</p>
+                        <div className="bg-linear-to-br from-[#009688] to-[#00796B] p-5 rounded-lg text-white shadow-lg shadow-[#009688]/20">
+                            <p className="text-white/80 text-xs font-bold uppercase tracking-widest mb-1">Budget Range</p>
                             <div className="flex items-center gap-2">
-                                <HiCurrencyRupee size={24} className="text-indigo-200" />
+                                <HiCurrencyRupee size={24} className="text-white/80" />
                                 <span className="text-2xl font-black">
                                     ₹{formatNumber(lead.budgetFrom)} - ₹{formatNumber(lead.budgetTo)}
                                 </span>
                             </div>
                         </div>
-                        <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div className="bg-white p-5 rounded-lg border border-brand-spanish-gray/20 shadow-sm flex items-center justify-between">
                             <div>
-                                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Property Interest</p>
-                                <div className="flex items-center gap-2 text-gray-900">
-                                    <HiLocationMarker size={20} className="text-indigo-500" />
+                                <p className="text-brand-spanish-gray text-xs font-bold uppercase tracking-widest mb-1">Property Interest</p>
+                                <div className="flex items-center gap-2 text-brand-dark-gray">
+                                    <HiLocationMarker size={20} className="text-[#009688]" />
                                     <span className="text-lg font-bold">{lead.property || "No Property Assigned"}</span>
                                 </div>
                             </div>
@@ -225,7 +225,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                     <textarea
                                         value={lead.financeNotes || ""}
                                         onChange={(e) => setLead({ ...lead, financeNotes: e.target.value })}
-                                        className="w-full text-black bg-white/50 border-amber-200 rounded-lg p-3 text-sm italic focus:ring-amber-500 focus:border-amber-500"
+                                        className="w-full text-black bg-white/50 border-amber-200 rounded-lg p-3 text-sm italic focus:ring-[#FBB03B] focus:border-[#FBB03B]"
                                         placeholder="Add finance instructions or feedback..."
                                         rows="2"
                                     />
@@ -248,10 +248,10 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                             </div>
                         )}
                         {lead.followUpDate && (
-                            <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
+                            <div className="bg-white p-5 rounded-lg border border-brand-spanish-gray/20 shadow-sm flex items-center justify-between">
                                 <div className="text-right">
-                                    <p className="text-gray-400 text-[10px] font-bold uppercase mb-1">Next Follow-up</p>
-                                    <div className="text-indigo-600 font-bold text-sm bg-indigo-50 px-2 py-1 rounded-lg">
+                                    <p className="text-brand-spanish-gray text-[10px] font-bold uppercase mb-1">Next Follow-up</p>
+                                    <div className="text-[#009688] font-bold text-sm bg-[#009688]/10 px-2 py-1 rounded-lg">
                                         {formatDate(lead.followUpDate)}
                                     </div>
                                 </div>
@@ -260,31 +260,31 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                     </div>
 
                     {/* Contact Information */}
-                    <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
-                        <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-100 flex items-center gap-2">
-                            <HiIdentification className="text-indigo-500" />
-                            <h3 className="font-bold text-gray-900">Contact Details</h3>
+                    <div className="bg-white rounded-lg border border-brand-spanish-gray/20 overflow-hidden">
+                        <div className="px-6 py-4 bg-linear-to-r from-brand-dark-gray/5 to-transparent border-b border-brand-spanish-gray/20 flex items-center gap-2">
+                            <HiIdentification className="text-[#009688]" />
+                            <h3 className="font-bold text-brand-dark-gray">Contact Details</h3>
                         </div>
                         <div className="grid grid-cols-1">
                             <div className="p-6 flex items-center gap-4 group">
-                                <div className="p-3 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
+                                <div className="p-3 bg-[#009688]/10 text-[#009688] rounded-lg group-hover:scale-110 transition-transform">
                                     <HiPhone size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase mb-0.5">Primary Phone</p>
-                                    <a href={`tel:${lead.phone}`} className="text-base font-bold text-gray-900 hover:text-indigo-600 transition-colors">
+                                    <p className="text-xs font-bold text-brand-spanish-gray uppercase mb-0.5">Primary Phone</p>
+                                    <a href={`tel:${lead.phone}`} className="text-base font-bold text-brand-dark-gray hover:text-[#009688] transition-colors">
                                         {lead.phone}
                                     </a>
                                 </div>
                             </div>
                             <div className="p-6 flex items-center gap-4 group">
-                                <div className="p-3 bg-purple-50 text-purple-600 rounded-lg group-hover:scale-110 transition-transform">
+                                <div className="p-3 bg-[#009688]/10 text-[#009688] rounded-lg group-hover:scale-110 transition-transform">
                                     <HiMail size={20} />
                                 </div>
                                 <div>
                                     <p className="text-xs font-bold text-gray-400 uppercase mb-0.5">Email Address</p>
                                     {lead.email ? (
-                                        <a href={`mailto:${lead.email}`} className="text-base font-bold text-gray-900 hover:text-indigo-600 transition-colors truncate block max-w-[220px]">
+                                        <a href={`mailto:${lead.email}`} className="text-base font-bold text-brand-dark-gray hover:text-[#009688] transition-colors truncate block max-w-[220px]">
                                             {lead.email}
                                         </a>
                                     ) : (
@@ -294,7 +294,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                             </div>
                             {lead.dob && (
                                 <div className="p-6 flex items-center gap-4 group border-t border-gray-50">
-                                    <div className="p-3 bg-pink-50 text-pink-600 rounded-lg group-hover:scale-110 transition-transform">
+                                    <div className="p-3 bg-[#8DC63F]/10 text-[#8DC63F] rounded-lg group-hover:scale-110 transition-transform">
                                         <HiGift size={20} />
                                     </div>
                                     <div>
@@ -305,7 +305,7 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                             )}
                             {lead.anniversaryDate && (
                                 <div className="p-6 flex items-center gap-4 group border-t border-gray-50">
-                                    <div className="p-3 bg-red-50 text-red-600 rounded-lg group-hover:scale-110 transition-transform">
+                                    <div className="p-3 bg-red-500/10 text-red-500 rounded-lg group-hover:scale-110 transition-transform">
                                         <HiHeart size={20} />
                                     </div>
                                     <div>
@@ -339,8 +339,8 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                         {/* Timeline Header */}
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                                <HiClock className="text-indigo-500" size={20} />
-                                <h3 className="text-lg font-bold text-gray-900">Activity Timeline</h3>
+                                <HiClock className="text-[#009688]" size={20} />
+                                <h3 className="text-lg font-bold text-brand-dark-gray">Activity Timeline</h3>
                             </div>
                             <span className="text-xs font-bold text-gray-400 uppercase">Latest 10 Interactions</span>
                         </div>
@@ -351,13 +351,13 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                 value={newNote}
                                 onChange={(e) => setNewNote(e.target.value)}
                                 placeholder="Write an update or call summary..."
-                                className="w-full h-24 p-4 pb-12 text-black rounded-lg border-2 border-gray-100 focus:border-indigo-500 focus:ring-0 transition-all text-sm resize-none bg-gray-50/30"
+                                className="w-full h-24 p-4 pb-12 text-black rounded-lg border-2 border-brand-spanish-gray/20 focus:border-[#009688] focus:ring-0 transition-all text-sm resize-none bg-gray-50/30"
                             />
                             <div className="absolute bottom-3 right-3">
                                 <button
                                     onClick={handleAddNote}
                                     disabled={savingNote || !newNote.trim()}
-                                    className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-bold text-sm shadow-md shadow-indigo-100 transition-all active:scale-95"
+                                    className="px-5 py-2 bg-[#009688] text-white rounded-lg hover:bg-[#00796B] disabled:opacity-50 font-bold text-sm shadow-md shadow-[#009688]/10 transition-all active:scale-95"
                                 >
                                     {savingNote ? 'Posting...' : 'Post Note'}
                                 </button>
@@ -368,19 +368,19 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                         <div className="relative pl-8 space-y-8 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100">
                             {loadingActivities ? (
                                 <div className="py-12 flex flex-col items-center gap-4">
-                                    <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-                                    <p className="text-sm text-gray-400 font-medium">Syncing timeline...</p>
+                                    <div className="w-8 h-8 border-4 border-[#009688]/20 border-t-[#009688] rounded-full animate-spin"></div>
+                                    <p className="text-sm text-brand-spanish-gray font-medium">Syncing timeline...</p>
                                 </div>
                             ) : lead.activities && lead.activities.length > 0 ? (
                                 lead.activities.map((activity) => (
                                     <div key={activity.id} className="relative">
                                         {/* Dot */}
-                                        <div className={`absolute -left-[29px] top-1.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ring-4 ring-white ${activity.title !== 'Note Added' ? 'bg-indigo-500' : 'bg-amber-500'}`} />
+                                        <div className={`absolute -left-[29px] top-1.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ring-4 ring-white ${activity.title !== 'Note Added' ? 'bg-[#009688]' : 'bg-[#FBB03B]'}`} />
 
-                                        <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="bg-white p-5 rounded-lg border border-brand-spanish-gray/20 shadow-sm hover:shadow-md transition-shadow">
                                             <div className="flex items-center justify-between mb-2">
-                                                <p className="text-xs font-black uppercase tracking-wider text-indigo-600">{activity.title}</p>
-                                                <p className="text-[10px] font-bold text-gray-400">{formatDateTime(activity.createdAt)}</p>
+                                                <p className="text-xs font-black uppercase tracking-wider text-[#009688]">{activity.title}</p>
+                                                <p className="text-[10px] font-bold text-brand-spanish-gray">{formatDateTime(activity.createdAt)}</p>
                                             </div>
                                             <p className="text-sm text-gray-700 leading-relaxed font-medium">
                                                 {activity.description}
@@ -409,8 +409,8 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
 
                     {/* Assignment Block */}
                     <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
-                        <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
-                            <HiUserCircle className="text-indigo-500" size={20} />
+                        <h3 className="font-bold text-brand-dark-gray mb-5 flex items-center gap-2">
+                            <HiUserCircle className="text-[#009688]" size={20} />
                             Responsibility
                         </h3>
                         <div className="space-y-4">
@@ -419,9 +419,9 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                                     {(lead.assignedTo?.name || "U")[0].toUpperCase()}
                                 </div> */}
                                 <div className="min-w-0">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase mb-0.5">Assigned Agent</p>
-                                    <p className="text-sm font-bold text-gray-900 truncate">{lead.assignedTo?.name || "Unassigned"}</p>
-                                    {lead.assignedTo?.email && <p className="text-xs text-indigo-500 font-medium truncate">{lead.assignedTo.email}</p>}
+                                    <p className="text-[10px] font-black text-brand-spanish-gray uppercase mb-0.5">Assigned Agent</p>
+                                    <p className="text-sm font-bold text-brand-dark-gray truncate">{lead.assignedTo?.name || "Unassigned"}</p>
+                                    {lead.assignedTo?.email && <p className="text-xs text-[#009688] font-medium truncate">{lead.assignedTo.email}</p>}
                                 </div>
                             </div>
                             <div className="pt-4 border-t border-gray-50">
@@ -434,8 +434,8 @@ export default function LeadDetail({ lead: initialLead, onLeadDeleted }) {
                     {/* Attachments Sidebar */}
                     <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                         <div className="flex items-center justify-between mb-5">
-                            <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                                <HiPaperClip className="text-indigo-500" size={20} />
+                            <h3 className="font-bold text-brand-dark-gray flex items-center gap-2">
+                                <HiPaperClip className="text-[#009688]" size={20} />
                                 Documents
                             </h3>
                             <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md text-[10px] font-bold">

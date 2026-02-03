@@ -1,15 +1,32 @@
 @import "tailwindcss";
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap');
 
 @theme {
-  --font-sans: var(--font-montserrat);
-  --font-serif: var(--font-merriweather);
+  /* Typography */
+  --font-sans: 'Clash Display', system-ui, sans-serif;
+  --font-body: 'Satoshi', system-ui, sans-serif;
   
-  --color-brand-primary: #4A3AFF;
+  /* Brand Colors - Primary Palette */
+  --color-brand-dark-gray: #4A4A4A;
+  --color-brand-yellow-green: #8DC63F;
+  --color-brand-teal: #009688;
+  --color-brand-cape-palliser: #A07558;
+  --color-brand-spanish-gray: #9E9E9E;
+  --color-brand-sunshade: #FBB03B;
+
+  /* Legacy Colors for Compatibility */
+  --color-brand-primary: #009688;
   --color-brand-secondary: #8DC63F;
-  --color-brand-blue: #1D88FE;
-  --color-brand-green: #05C168;
-  --color-brand-red: #FF5A65;
-  --color-brand-orange: #FF9E2C;
+  --color-brand-blue: #009688;
+  --color-brand-green: #8DC63F;
+  --color-brand-red: #A07558;
+  --color-brand-orange: #FBB03B;
+
+  /* Border Radius */
+  --radius-lg: 0.5rem;
+  --radius-md: 0.375rem;
+  --radius-sm: 0.25rem;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -17,7 +34,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #4A4A4A;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,16 +47,16 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-serif);
+  font-family: 'Satoshi', system-ui, sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-sans), sans-serif;
+  font-family: 'Clash Display', system-ui, sans-serif;
   font-weight: 700;
 }
 
 p {
-  font-family: var(--font-serif), serif;
+  font-family: 'Satoshi', system-ui, sans-serif;
 }
 
 button{
@@ -84,8 +101,8 @@ button{
 }
 
 /* Markdown Styling */
-.markdown-container h1 { font-size: 1.25rem; margin-bottom: 0.5rem; font-weight: 700; color: #1e293b; }
-.markdown-container h2 { font-size: 1.1rem; margin-bottom: 0.4rem; font-weight: 700; color: #1e293b; }
+.markdown-container h1 { font-size: 1.25rem; margin-bottom: 0.5rem; font-weight: 700; color: #4A4A4A; }
+.markdown-container h2 { font-size: 1.1rem; margin-bottom: 0.4rem; font-weight: 700; color: #4A4A4A; }
 .markdown-container p { margin-bottom: 0.5rem; line-height: 1.5; }
 .markdown-container ul, .markdown-container ol { padding-left: 1.25rem; margin-bottom: 0.6rem; }
 .markdown-container li { margin-bottom: 0.25rem; }
@@ -101,7 +118,7 @@ button{
 }
 .markdown-container th { 
   background: #f1f5f9; 
-  color: #0f172a; 
+  color: #4A4A4A; 
   font-weight: 700; 
   text-align: left; 
   padding: 8px 10px; 
@@ -111,14 +128,14 @@ button{
 .markdown-container td { 
   padding: 8px 10px; 
   border: 1px solid #e2e8f0; 
-  color: #334155;
+  color: #4A4A4A;
   white-space: nowrap;
 }
 
 .markdown-container strong { font-weight: 800; }
-.markdown-container blockquote { border-left: 3px solid #4A3AFF; padding-left: 0.75rem; color: #64748b; margin-bottom: 0.5rem; }
+.markdown-container blockquote { border-left: 3px solid #009688; padding-left: 0.75rem; color: #9E9E9E; margin-bottom: 0.5rem; }
 
-.model-markdown strong { color: #1e293b; }
+.model-markdown strong { color: #4A4A4A; }
 .user-markdown { color: white !important; }
 .user-markdown strong { color: white !important; }
 

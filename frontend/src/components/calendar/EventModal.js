@@ -174,9 +174,9 @@ export default function EventModal({ isOpen, onClose, onEventSaved, event = null
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700">Description</label>
+                    <label className="text-sm font-medium text-brand-dark-gray">Description</label>
                     <textarea
-                        className="w-full text-black px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none transition-all resize-none min-h-[100px]"
+                        className="w-full text-black px-4 py-3 rounded-lg border border-brand-spanish-gray/30 focus:ring-2 focus:ring-[#009688]/20 focus:border-[#009688] outline-none transition-all resize-none min-h-[100px]"
                         placeholder="Additional notes or meeting agenda..."
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -184,7 +184,7 @@ export default function EventModal({ isOpen, onClose, onEventSaved, event = null
                     />
                 </div>
 
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-3 pt-4 border-t border-brand-spanish-gray/20">
                     {!isFollowUp && (
                         <>
                             <Button

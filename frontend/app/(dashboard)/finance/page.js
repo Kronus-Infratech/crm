@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import clsx from "clsx";
-import { HiCurrencyRupee, HiCheck, HiX, HiClock, HiFilter, HiPlus, HiDocumentDuplicate } from "react-icons/hi";
+import { HiCurrencyRupee, HiTrendingUp, HiTrendingDown, HiCheck, HiX, HiClock, HiFilter, HiPlus, HiDocumentDuplicate } from "react-icons/hi";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 import Heading from "@/src/components/ui/Heading";
@@ -116,31 +116,31 @@ export default function FinancePage() {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
-                        <HiCurrencyRupee size={24} />
+                <div className="bg-white p-6 rounded-lg border border-brand-spanish-gray/20 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 bg-[#8DC63F]/10 rounded-lg flex items-center justify-center text-[#8DC63F]">
+                        <HiTrendingUp size={24} />
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">Total Credits</p>
-                        <p className="text-2xl font-black text-emerald-600">₹{formatNumber(totalCredits)}</p>
+                        <p className="text-sm font-bold text-brand-spanish-gray uppercase tracking-wider">Total Credits</p>
+                        <p className="text-2xl font-black text-[#8DC63F]">₹{formatNumber(totalCredits)}</p>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center text-red-600">
-                        <HiCurrencyRupee size={24} />
+                <div className="bg-white p-6 rounded-lg border border-brand-spanish-gray/20 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center text-red-500">
+                        <HiTrendingDown size={24} />
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">Total Debits</p>
-                        <p className="text-2xl font-black text-red-600">₹{formatNumber(totalDebits)}</p>
+                        <p className="text-sm font-bold text-brand-spanish-gray uppercase tracking-wider">Total Debits</p>
+                        <p className="text-2xl font-black text-red-500">₹{formatNumber(totalDebits)}</p>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                <div className="bg-white p-6 rounded-lg border border-brand-spanish-gray/20 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 bg-[#009688]/10 rounded-lg flex items-center justify-center text-[#009688]">
                         <HiCurrencyRupee size={24} />
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">Net Balance</p>
-                        <p className={clsx("text-2xl font-black", netBalance >= 0 ? "text-indigo-600" : "text-red-600")}>
+                        <p className="text-sm font-bold text-brand-spanish-gray uppercase tracking-wider">Net Balance</p>
+                        <p className={clsx("text-2xl font-black", netBalance >= 0 ? "text-[#009688]" : "text-red-500")}>
                             ₹{formatNumber(netBalance)}
                         </p>
                     </div>
@@ -148,13 +148,13 @@ export default function FinancePage() {
             </div>
 
             {/* Content Tabs */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+            <div className="bg-white rounded-lg border border-brand-spanish-gray/20 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
                 <div className="flex border-b border-gray-100 px-6 pt-4">
                     <button
                         onClick={() => setActiveTab("TRANSACTIONS")}
                         className={clsx(
                             "pb-4 px-4 text-sm font-black uppercase tracking-widest border-b-2 transition-all",
-                            activeTab === "TRANSACTIONS" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"
+                            activeTab === "TRANSACTIONS" ? "border-[#009688] text-[#009688]" : "border-transparent text-brand-spanish-gray hover:text-brand-dark-gray"
                         )}
                     >
                         Transactions Log
@@ -163,7 +163,7 @@ export default function FinancePage() {
                         onClick={() => setActiveTab("APPROVALS")}
                         className={clsx(
                             "pb-4 px-4 text-sm font-black uppercase tracking-widest border-b-2 transition-all flex items-center gap-2",
-                            activeTab === "APPROVALS" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"
+                            activeTab === "APPROVALS" ? "border-[#009688] text-[#009688]" : "border-transparent text-brand-spanish-gray hover:text-brand-dark-gray"
                         )}
                     >
                         Pending Approvals
@@ -178,7 +178,7 @@ export default function FinancePage() {
                 <div className="p-6 h-full flex-1">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400 italic">
-                            <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-10 h-10 border-4 border-[#009688] border-t-transparent rounded-full animate-spin"></div>
                             Loading finance records...
                         </div>
                     ) : activeTab === "TRANSACTIONS" ? (
@@ -201,7 +201,7 @@ export default function FinancePage() {
                                             <td className="px-4 py-4">
                                                 <span className={clsx(
                                                     "px-2 py-1 rounded text-[10px] uppercase font-bold border",
-                                                    t.type === 'CREDIT' ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-red-50 text-red-700 border-red-100"
+                                                    t.type === 'CREDIT' ? "bg-[#8DC63F]/10 text-[#8DC63F] border-[#8DC63F]/30" : "bg-red-500/10 text-red-500 border-red-500/30"
                                                 )}>
                                                     {t.type}
                                                 </span>
@@ -210,10 +210,10 @@ export default function FinancePage() {
                                             <td className="px-4 py-4 text-gray-500 italic max-w-xs truncate" title={t.description}>
                                                 {t.description || "-"}
                                             </td>
-                                            <td className={clsx("px-4 py-4 text-right font-black text-base", t.type === 'CREDIT' ? "text-emerald-600" : "text-red-500")}>
+                                            <td className={clsx("px-4 py-4 text-right font-black text-base", t.type === 'CREDIT' ? "text-[#8DC63F]" : "text-red-500")}>
                                                 {t.type === 'DEBIT' ? '-' : ''}₹{formatNumber(t.amount)}
                                             </td>
-                                            <td className="px-4 py-4 text-indigo-600 font-bold">{t.handledBy?.name}</td>
+                                            <td className="px-4 py-4 text-[#009688] font-bold">{t.handledBy?.name}</td>
                                         </tr>
                                     ))}
                                     {transactions.length === 0 && (
@@ -234,7 +234,7 @@ export default function FinancePage() {
                             ) : (
                                 <div className="grid grid-cols-1 gap-4">
                                     {approvals.map((lead) => (
-                                        <div key={lead.id} className="bg-white border text-black border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row gap-6 items-center">
+                                        <div key={lead.id} className="bg-white border text-black border-brand-spanish-gray/20 rounded-lg p-6 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row gap-6 items-center">
                                             <div className="flex-1 space-y-3 cursor-pointer" onClick={() => {
                                                 window.location.href = `/leads/${lead.id}/ledger`;
                                             }}>
@@ -250,21 +250,21 @@ export default function FinancePage() {
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-[10px] font-black text-gray-400 uppercase">Credited So Far</p>
-                                                        <p className="text-xl font-black text-emerald-600">₹{formatNumber(lead.totalAmountToCredit || 0)}</p>
+                                                        <p className="text-[10px] font-black text-brand-spanish-gray uppercase">Credited So Far</p>
+                                                        <p className="text-xl font-black text-[#8DC63F]">₹{formatNumber(lead.totalAmountToCredit || 0)}</p>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex gap-4">
-                                                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                                                        <HiCurrencyRupee className="text-emerald-500" />
-                                                        <span className="text-xs font-bold text-gray-600">
+                                                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-brand-spanish-gray/10">
+                                                        <HiCurrencyRupee className="text-[#8DC63F]" />
+                                                        <span className="text-xs font-bold text-brand-spanish-gray">
                                                             {lead.paymentLedgerEntries?.length || 0} Pending Payments
                                                         </span>
                                                     </div>
-                                                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                                                        < HiDocumentDuplicate className="text-blue-500" />
-                                                        <span className="text-xs font-bold text-gray-600">
+                                                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-brand-spanish-gray/10">
+                                                        < HiDocumentDuplicate className="text-[#009688]" />
+                                                        <span className="text-xs font-bold text-brand-spanish-gray">
                                                             {lead.documentLedgerEntries?.length || 0} Pending Docs
                                                         </span>
                                                     </div>
@@ -273,7 +273,7 @@ export default function FinancePage() {
 
                                             <div className="w-full md:w-fit">
                                                 <Link href={`/leads/${lead.id}/ledger`}>
-                                                    <Button className="w-full shadow-lg shadow-indigo-100">
+                                                    <Button className="w-full shadow-lg shadow-[#009688]/10 bg-[#009688] hover:bg-[#00796B]">
                                                         Review Running Ledger
                                                     </Button>
                                                 </Link>
@@ -294,13 +294,13 @@ export default function FinancePage() {
                 title="Record Finance Entry"
             >
                 <form onSubmit={handleCreateTransaction} className="space-y-5">
-                    <div className="flex bg-gray-100 p-1 rounded-xl">
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
                         <button
                             type="button"
                             onClick={() => setTransactionForm({ ...transactionForm, type: "CREDIT" })}
                             className={clsx(
                                 "flex-1 py-3 text-sm font-black uppercase tracking-widest rounded-lg transition-all",
-                                transactionForm.type === "CREDIT" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400"
+                                transactionForm.type === "CREDIT" ? "bg-white text-[#8DC63F] shadow-sm" : "text-brand-spanish-gray"
                             )}
                         >
                             Credit (+)
@@ -310,7 +310,7 @@ export default function FinancePage() {
                             onClick={() => setTransactionForm({ ...transactionForm, type: "DEBIT" })}
                             className={clsx(
                                 "flex-1 py-3 text-sm font-black uppercase tracking-widest rounded-lg transition-all",
-                                transactionForm.type === "DEBIT" ? "bg-white text-red-600 shadow-sm" : "text-gray-400"
+                                transactionForm.type === "DEBIT" ? "bg-white text-red-500 shadow-sm" : "text-brand-spanish-gray"
                             )}
                         >
                             Debit (-)
@@ -322,7 +322,7 @@ export default function FinancePage() {
                         <input
                             type="number"
                             required
-                            className="w-full text-black bg-gray-50 border-gray-100 rounded-xl p-3 text-lg font-black focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full text-black bg-gray-50 border-brand-spanish-gray/30 rounded-lg p-3 text-lg font-black focus:ring-[#009688]/20 focus:border-[#009688]"
                             placeholder="0.00"
                             value={transactionForm.amount}
                             onChange={(e) => setTransactionForm({ ...transactionForm, amount: e.target.value })}
@@ -330,11 +330,11 @@ export default function FinancePage() {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Source / Category</label>
+                        <label className="text-xs font-black text-brand-spanish-gray uppercase tracking-widest">Source / Category</label>
                         <input
                             type="text"
                             required
-                            className="w-full text-black bg-gray-50 border-gray-100 rounded-xl p-3 text-sm font-bold focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full text-black bg-gray-50 border-brand-spanish-gray/30 rounded-lg p-3 text-sm font-bold focus:ring-[#009688]/20 focus:border-[#009688]"
                             placeholder="e.g. Office Rent, Lead Sale, Marketing"
                             value={transactionForm.source}
                             onChange={(e) => setTransactionForm({ ...transactionForm, source: e.target.value })}
@@ -342,19 +342,19 @@ export default function FinancePage() {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Date</label>
+                        <label className="text-xs font-black text-brand-spanish-gray uppercase tracking-widest">Date</label>
                         <input
                             type="date"
-                            className="w-full text-black bg-gray-50 border-gray-100 rounded-xl p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition-all"
+                            className="w-full text-black bg-gray-50 border-brand-spanish-gray/30 rounded-lg p-3 text-sm focus:ring-[#009688]/20 focus:border-[#009688] shadow-sm transition-all"
                             value={transactionForm.date}
                             onChange={(e) => setTransactionForm({ ...transactionForm, date: e.target.value })}
                         />
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Description (Optional)</label>
+                        <label className="text-xs font-black text-brand-spanish-gray uppercase tracking-widest">Description (Optional)</label>
                         <textarea
-                            className="w-full text-black bg-gray-50 border-gray-100 rounded-xl p-3 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full text-black bg-gray-50 border-brand-spanish-gray/30 rounded-lg p-3 text-sm focus:ring-[#009688]/20 focus:border-[#009688]"
                             placeholder="Internal details..."
                             rows="2"
                             value={transactionForm.description}

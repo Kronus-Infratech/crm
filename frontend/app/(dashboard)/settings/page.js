@@ -65,8 +65,8 @@ export default function SettingsPage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                                    ? "bg-brand-primary/10 text-brand-primary"
-                                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                    ? "bg-[#009688]/10 text-[#009688]"
+                                    : "text-brand-spanish-gray hover:bg-gray-50 hover:text-brand-dark-gray"
                                     }`}
                             >
                                 <span className="text-lg">{tab.icon}</span>
@@ -227,7 +227,7 @@ function ProfileForm() {
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Roles</label>
                         <div className="flex flex-wrap gap-1">
                             {(user.roles || []).map(role => (
-                                <span key={role} className="inline-block px-2 py-1 bg-brand-primary/10 text-brand-primary rounded text-[10px] font-bold ring-1 ring-brand-primary/20">
+                                <span key={role} className="inline-block px-2 py-1 bg-[#009688]/10 text-[#009688] rounded text-[10px] font-bold ring-1 ring-[#009688]/20">
                                     {role}
                                 </span>
                             ))}
@@ -235,8 +235,8 @@ function ProfileForm() {
                     </div>
                     <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Status</label>
-                        <div className={`font-medium flex items-center gap-2 ${isUserOnline(user.lastLoginAt) ? "text-green-600" : "text-gray-500"}`}>
-                            <span className={`w-2 h-2 rounded-full ${isUserOnline(user.lastLoginAt) ? "bg-green-600 animate-pulse" : "bg-gray-400"}`}></span>
+                        <div className={`font-medium flex items-center gap-2 ${isUserOnline(user.lastLoginAt) ? "text-[#8DC63F]" : "text-brand-spanish-gray"}`}>
+                            <span className={`w-2 h-2 rounded-full ${isUserOnline(user.lastLoginAt) ? "bg-[#8DC63F] animate-pulse" : "bg-brand-spanish-gray/30"}`}></span>
                             {isUserOnline(user.lastLoginAt) ? "Online" : "Away"}
                         </div>
                     </div>

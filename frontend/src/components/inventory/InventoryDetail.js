@@ -79,14 +79,14 @@ export default function InventoryDetail({ item: initialItem }) {
 
     return (
       <div className="space-y-3">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 border-b border-gray-100 pb-1">{title}</h4>
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] border-b border-brand-spanish-gray/20 pb-1">{title}</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {activeRows.map((row, idx) => (
             <div key={idx} className="flex items-center gap-3">
-              <div className="text-gray-400">{row.icon}</div>
+              <div className="text-[#009688]">{row.icon}</div>
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase">{row.label}</p>
-                <p className={`text-sm ${row.bold ? 'font-black text-gray-900' : 'font-medium text-gray-700'}`}>
+                <p className="text-[10px] text-brand-spanish-gray font-bold uppercase">{row.label}</p>
+                <p className={`text-sm ${row.bold ? 'font-black text-brand-dark-gray' : 'font-medium text-brand-dark-gray'}`}>
                   {row.value}
                 </p>
               </div>
@@ -105,13 +105,13 @@ export default function InventoryDetail({ item: initialItem }) {
         </div>
       )}
 
-      <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
+      <div className="flex items-center justify-between bg-linear-to-r from-brand-dark-gray/5 to-transparent p-4 rounded-lg border border-brand-spanish-gray/20">
         <div>
-          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Selected Property</p>
-          <h3 className="text-xl font-black text-gray-900">{item.project?.name || 'Inventory Item'}</h3>
+          <p className="text-[10px] font-black text-[#009688] uppercase tracking-widest">Selected Property</p>
+          <h3 className="text-xl font-black text-brand-dark-gray">{item.project?.name || 'Inventory Item'}</h3>
         </div>
-        <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${item.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-          item.status === 'SOLD' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+        <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${item.status === 'AVAILABLE' ? 'bg-[#009688]/10 text-[#009688] border-[#009688]/30' :
+          item.status === 'SOLD' ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-[#FBB03B]/10 text-[#FBB03B] border-[#FBB03B]/30'
           }`}>
           {item.status}
         </div>
@@ -122,26 +122,26 @@ export default function InventoryDetail({ item: initialItem }) {
 
       {/* Connected Leads Section */}
       <div className="space-y-3">
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 border-b border-gray-100 pb-1">Connected Leads</h4>
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] border-b border-brand-spanish-gray/20 pb-1">Connected Leads</h4>
         {item.leads && item.leads.length > 0 ? (
           <div className="grid grid-cols-1 gap-2">
             {item.leads.map(lead => (
-              <div key={lead.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg hover:border-indigo-200 transition-all shadow-sm">
+              <div key={lead.id} className="flex items-center justify-between p-3 bg-white border border-brand-spanish-gray/20 rounded-lg hover:border-[#009688]/30 transition-all shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#009688]/10 flex items-center justify-center text-[#009688] font-black text-xs">
                     {lead.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900 leading-none">{lead.name}</p>
-                    <p className="text-[10px] text-gray-400 mt-1">{lead.phone} • {lead.status}</p>
+                    <p className="text-sm font-bold text-brand-dark-gray leading-none">{lead.name}</p>
+                    <p className="text-[10px] text-brand-spanish-gray mt-1">{lead.phone} • {lead.status}</p>
                   </div>
                 </div>
                 <div className="text-right flex items-center gap-3">
                   <div className="hidden sm:block">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase">Budget</p>
-                    <p className="text-xs font-black text-emerald-600">₹{formatNumber(lead.budgetTo || lead.budgetFrom || 0)}</p>
+                    <p className="text-[10px] text-brand-spanish-gray font-bold uppercase">Budget</p>
+                    <p className="text-xs font-black text-[#8DC63F]">₹{formatNumber(lead.budgetTo || lead.budgetFrom || 0)}</p>
                   </div>
-                  <Link href={`/leads?id=${lead.id}`} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                  <Link href={`/leads?id=${lead.id}`} className="p-2 text-brand-spanish-gray hover:text-[#009688] hover:bg-[#009688]/10 rounded-lg transition-all">
                     <HiExternalLink size={18} />
                   </Link>
                 </div>
@@ -149,7 +149,7 @@ export default function InventoryDetail({ item: initialItem }) {
             ))}
           </div>
         ) : (
-          <p className="text-xs text-gray-400 italic">No leads associated with this property yet.</p>
+          <p className="text-xs text-brand-spanish-gray italic">No leads associated with this property yet.</p>
         )}
       </div>
 
@@ -160,8 +160,8 @@ export default function InventoryDetail({ item: initialItem }) {
 
       {item.amenities && (
         <div className="space-y-2">
-          <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-500 border-b border-gray-100 pb-1">Amenities & Remarks</h4>
-          <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 italic">
+          <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] border-b border-brand-spanish-gray/20 pb-1">Amenities & Remarks</h4>
+          <p className="text-sm text-brand-dark-gray bg-linear-to-r from-brand-dark-gray/5 to-transparent p-3 rounded-lg border border-brand-spanish-gray/20 italic">
             {item.amenities}
           </p>
         </div>

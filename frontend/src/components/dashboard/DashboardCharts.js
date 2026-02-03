@@ -33,12 +33,12 @@ ChartJS.register(
 );
 
 const COLORS = [
-    'rgba(99, 102, 241, 0.8)',   // Indigo
-    'rgba(16, 185, 129, 0.8)',   // Emerald 
-    'rgba(245, 158, 11, 0.8)',   // Amber
-    'rgba(239, 68, 68, 0.8)',    // Red
-    'rgba(139, 92, 246, 0.8)',   // Violet
-    'rgba(14, 165, 233, 0.8)',   // Sky
+    'rgba(0, 150, 136, 0.8)',   // Teal
+    'rgba(141, 198, 63, 0.8)',  // Yellow-Green
+    'rgba(251, 176, 59, 0.8)',  // Sunshade
+    'rgba(160, 117, 88, 0.8)',  // Cape Palliser
+    'rgba(158, 158, 158, 0.8)', // Spanish Gray
+    'rgba(74, 74, 74, 0.8)',    // Dark Gray
 ];
 
 export function StatusChart({ data }) {
@@ -100,20 +100,20 @@ export function SourceChart({ data }) {
                 label: 'Leads',
                 data: values,
                 backgroundColor: [
-                    'rgb(99, 102, 241)',
-                    'rgb(34, 197, 94)',
-                    'rgb(245, 158, 11)',
-                    'rgb(239, 68, 68)',
-                    'rgb(168, 85, 247)',
-                    'rgb(236, 72, 153)',
+                    '#009688', // Teal
+                    '#8DC63F', // Yellow-Green
+                    '#FBB03B', // Sunshade
+                    '#A07558', // Cape Palliser
+                    '#9E9E9E', // Spanish Gray
+                    '#4A4A4A', // Dark Gray
                 ],
                 borderColor: [
-                    'rgb(99, 102, 241)',
-                    'rgb(34, 197, 94)',
-                    'rgb(245, 158, 11)',
-                    'rgb(239, 68, 68)',
-                    'rgb(168, 85, 247)',
-                    'rgb(236, 72, 153)',
+                    '#009688',
+                    '#8DC63F',
+                    '#FBB03B',
+                    '#A07558',
+                    '#9E9E9E',
+                    '#4A4A4A',
                 ],
                 borderWidth: 2,
                 borderRadius: 2,
@@ -152,8 +152,8 @@ export function TrendLineChart({ data }) {
                 label: 'New Leads',
                 data: data.map(d => d.count),
                 fill: true,
-                backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                borderColor: 'rgb(99, 102, 241)',
+                backgroundColor: 'rgba(0, 150, 136, 0.1)',
+                borderColor: '#009688',
                 tension: 0.4,
                 pointRadius: 6,
                 pointBackgroundColor: 'white',

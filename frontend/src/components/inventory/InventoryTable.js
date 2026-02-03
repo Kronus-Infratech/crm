@@ -17,16 +17,16 @@ export default function InventoryTable({
 }) {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden p-12 flex flex-col items-center justify-center gap-4">
-        <div className="w-10 h-10 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-gray-500 font-medium italic animate-pulse">Fetching inventory data...</p>
+      <div className="bg-white rounded-lg border border-brand-spanish-gray/20 shadow-sm overflow-hidden p-12 flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border-4 border-[#009688] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-brand-spanish-gray font-medium italic animate-pulse">Fetching inventory data...</p>
       </div>
     );
   }
 
   if (!items || items.length === 0) {
     return (
-      <div className="p-12 text-center border-2 border-dashed border-gray-200 rounded-lg text-gray-500">
+      <div className="p-12 text-center border-2 border-dashed border-brand-spanish-gray/30 rounded-lg text-brand-spanish-gray">
         No inventory items found. Add one to get started.
       </div>
     );
@@ -36,16 +36,16 @@ export default function InventoryTable({
     const isSorted = sortBy === field;
     return (
       <th
-        className={`px-4 py-3 cursor-pointer hover:bg-gray-100 transition-colors ${align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left"}`}
+        className={`px-4 py-3 cursor-pointer hover:bg-[#009688]/5 transition-colors ${align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left"}`}
         onClick={() => onSort && onSort(field)}
       >
         <div className={`flex items-center gap-1 ${align === "right" ? "justify-end" : align === "center" ? "justify-center" : "justify-start"}`}>
           {label}
           {isSorted ? (
-            sortOrder === "asc" ? <HiChevronUp className="text-indigo-500" /> : <HiChevronDown className="text-indigo-500" />
+            sortOrder === "asc" ? <HiChevronUp className="text-[#009688]" /> : <HiChevronDown className="text-[#009688]" />
           ) : (
             <div className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <HiChevronUp className="text-gray-300" />
+              <HiChevronUp className="text-brand-spanish-gray/30" />
             </div>
           )}
         </div>
@@ -54,10 +54,10 @@ export default function InventoryTable({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden relative">
+    <div className="bg-white rounded-lg border border-brand-spanish-gray/20 shadow-sm overflow-hidden relative">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs whitespace-nowrap">
-          <thead className="bg-gray-50 border-b border-gray-100 uppercase font-black text-gray-400">
+          <thead className="bg-linear-to-r from-brand-dark-gray/5 to-transparent border-b border-brand-spanish-gray/20 uppercase font-black text-brand-dark-gray">
             <tr>
               <SortHeader label="Plot No." field="plotNumber" />
               {isAllView && <SortHeader label="Project" field="projectId" />}
@@ -85,7 +85,7 @@ export default function InventoryTable({
                   {item.plotNumber}
                 </td>
                 {isAllView && (
-                  <td className="px-4 py-3 font-medium text-indigo-600">
+                  <td className="px-4 py-3 font-medium text-[#009688]">
                     {item.project?.name || "-"}
                   </td>
                 )}
@@ -97,8 +97,8 @@ export default function InventoryTable({
                 <td className="px-4 py-3">
                   <div className={clsx(
                     "text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block",
-                    item.transactionType === 'SALE' ? "bg-blue-50 text-blue-600" :
-                      item.transactionType === 'RENT' ? "bg-purple-50 text-purple-600" : "bg-orange-50 text-orange-600"
+                    item.transactionType === 'SALE' ? "bg-[#009688]/10 text-[#009688]" :
+                      item.transactionType === 'RENT' ? "bg-[#FBB03B]/10 text-[#FBB03B]" : "bg-red-500/10 text-red-500"
                   )}>
                     {item.transactionType || "SALE"}
                   </div>
@@ -123,8 +123,8 @@ export default function InventoryTable({
                 </td>
                 <td className="px-4 py-3 text-center">
                   <span className={clsx(
-                    "px-2 py-1 rounded-full text-[10px] font-bold",
-                    item._count?.leads > 0 ? "bg-indigo-50 text-indigo-700 border border-indigo-100" : "bg-gray-50 text-gray-400 border border-gray-100"
+                    "px-2 py-1 rounded-lg text-[10px] font-bold",
+                    item._count?.leads > 0 ? "bg-[#009688]/10 text-[#009688] border border-[#009688]/20" : "bg-gray-50 text-brand-spanish-gray border border-gray-100"
                   )}>
                     {item._count?.leads || 0} Leads
                   </span>
@@ -136,21 +136,21 @@ export default function InventoryTable({
                   <div className="flex items-center justify-center gap-1">
                     <button
                       onClick={(e) => { e.stopPropagation(); onView(item); }}
-                      className="text-gray-400 hover:text-indigo-600 p-1.5 rounded-md hover:bg-indigo-50 transition-all"
+                      className="text-brand-spanish-gray hover:text-[#009688] p-1.5 rounded-lg hover:bg-[#009688]/10 transition-all"
                       title="View Details"
                     >
                       <HiEye size={16} />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-                      className="text-gray-400 hover:text-amber-600 p-1.5 rounded-md hover:bg-amber-50 transition-all"
+                      className="text-brand-spanish-gray hover:text-[#FBB03B] p-1.5 rounded-lg hover:bg-[#FBB03B]/10 transition-all"
                       title="Edit"
                     >
                       <HiPencil size={16} />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); onDelete(item); }}
-                      className="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-all"
+                      className="text-brand-spanish-gray hover:text-red-500 p-1.5 rounded-lg hover:bg-red-500/10 transition-all"
                       title="Delete"
                     >
                       <HiTrash size={16} />
@@ -169,24 +169,24 @@ export default function InventoryTable({
 function StatusBadge({ status }) {
   if (status === 'AVAILABLE') {
     return (
-      <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-100 whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 bg-[#009688]/10 text-[#009688] px-2 py-0.5 rounded-lg text-[10px] font-bold border border-[#009688]/30 whitespace-nowrap">
         <HiCheckCircle /> Available
       </span>
     );
   }
   if (status === 'SOLD') {
     return (
-      <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold border border-red-100 whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 bg-red-500/10 text-red-500 px-2 py-0.5 rounded-lg text-[10px] font-bold border border-red-500/30 whitespace-nowrap">
         <HiXCircle /> Sold
       </span>
     );
   }
   if (status === 'BLOCKED') {
     return (
-      <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-[10px] font-bold border border-amber-100 whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 bg-[#FBB03B]/10 text-[#FBB03B] px-2 py-0.5 rounded-lg text-[10px] font-bold border border-[#FBB03B]/30 whitespace-nowrap">
         <HiPause /> Blocked
       </span>
     );
   }
-  return <span className="text-gray-400">-</span>;
+  return <span className="text-brand-spanish-gray">-</span>;
 }

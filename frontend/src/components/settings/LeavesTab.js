@@ -73,9 +73,9 @@ export default function LeavesTab() {
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case "APPROVED": return "bg-green-100 text-green-700 ring-1 ring-green-200";
-      case "REJECTED": return "bg-red-100 text-red-700 ring-1 ring-red-200";
-      default: return "bg-amber-100 text-amber-700 ring-1 ring-amber-200";
+      case "APPROVED": return "bg-[#8DC63F]/10 text-[#8DC63F] ring-1 ring-[#8DC63F]/30";
+      case "REJECTED": return "bg-red-500/10 text-red-500 ring-1 ring-red-500/30";
+      default: return "bg-[#FBB03B]/10 text-[#FBB03B] ring-1 ring-[#FBB03B]/30";
     }
   };
 
@@ -94,8 +94,8 @@ export default function LeavesTab() {
           <h3 className="text-lg font-bold text-gray-900">Leave Management</h3>
           <p className="text-sm text-gray-500">Track and apply for your leaves.</p>
         </div>
-        <Button 
-          onClick={() => setShowForm(!showForm)} 
+        <Button
+          onClick={() => setShowForm(!showForm)}
           variant={showForm ? "outline" : "primary"}
           className="gap-2"
         >
@@ -120,7 +120,7 @@ export default function LeavesTab() {
                 error={errors.endDate?.message}
               />
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Select
                 label="Leave Type"

@@ -32,7 +32,7 @@ export default function DashboardLayout({ children }) {
 
     if (loading || !user) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="w-10 h-10 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-10 h-10 border-4 border-[#009688] border-t-transparent rounded-full animate-spin"></div>
         </div>
     );
 
@@ -59,21 +59,21 @@ export default function DashboardLayout({ children }) {
                     x: isSidebarOpen ? 0 : 0
                 }}
                 className={clsx(
-                    "fixed md:relative z-50 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300",
+                    "fixed md:relative z-50 h-screen bg-brand-dark-gray border-r border-brand-spanish-gray/20 flex flex-col transition-all duration-300",
                     // Mobile: Fixed position, slide in/out
                     "fixed inset-y-0 left-0",
                     !isSidebarOpen && "-translate-x-full md:translate-x-0"
                 )}
             >
-                <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100">
+                <div className="h-16 flex items-center justify-between px-6 border-b border-brand-spanish-gray/20">
                     {isSidebarOpen ? (
-                        // <span className="text-2xl font-bold text-brand-primary">Kronus</span>
-                        <img src="/logo.png" alt="Logo" className="w-44 pt-2" />
+                        // <span className="text-2xl font-bold text-[#8DC63F]">Kronus</span>
+                        <img src="/logo.png" alt="Logo" className="w-44 pt-2 brightness-0 invert" />
                     ) : (
-                        <span className="text-2xl font-bold text-brand-primary"></span>
+                        <span className="text-2xl font-bold text-[#8DC63F]"></span>
                         // <img src="/logo_circular.png" alt="Logo" className="w-44"/>
                     )}
-                    <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="text-gray-500 hover:text-brand-primary">
+                    <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="text-brand-spanish-gray hover:text-[#8DC63F] transition-colors">
                         <HiMenuAlt2 size={24} />
                     </button>
                 </div>
@@ -89,8 +89,8 @@ export default function DashboardLayout({ children }) {
                         return (
                             <Link key={item.name} href={item.href} onClick={() => setTimeout(() => setSidebarOpen(false), 200)}>
                                 <div className={clsx(
-                                    "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
-                                    isActive ? "bg-brand-primary/10 text-brand-primary font-medium" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                                    "flex items-center gap-3 px-3 py-3 rounded-lg transition-all font-medium",
+                                    isActive ? "bg-[#8DC63F] text-white shadow-md shadow-[#8DC63F]/30" : "text-gray-300 hover:bg-[#009688]/20 hover:text-white",
                                     !isSidebarOpen && "justify-center"
                                 )}>
                                     <item.icon size={24} />
@@ -101,11 +101,11 @@ export default function DashboardLayout({ children }) {
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-gray-100">
+                <div className="p-4 border-t border-brand-spanish-gray/20">
                     <button
                         onClick={handleLogout}
                         className={clsx(
-                            "flex items-center gap-3 w-full px-3 py-3 rounded-lg  text-red-500 hover:bg-red-50 transition-colors",
+                            "flex items-center gap-3 w-full px-3 py-3 rounded-lg text-red-500 hover:bg-red-500/20 hover:text-red-500 transition-all font-medium",
                             !isSidebarOpen && "justify-center"
                         )}
                     >
@@ -121,15 +121,15 @@ export default function DashboardLayout({ children }) {
                 // isSidebarOpen ? "md:ml-[280px]" : "md:ml-[80px]"
             )}>
                 {/* Mobile Header */}
-                <div className="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-20">
+                <div className="md:hidden h-16 bg-white border-b border-brand-spanish-gray/20 flex items-center justify-between px-4 sticky top-0 z-20">
                     <div className="flex items-center gap-2">
-                        {/* <span className="text-xl font-bold text-brand-primary">Kronus</span> */}
+                        {/* <span className="text-xl font-bold text-[#009688]">Kronus</span> */}
                         <img src="/logo.png" alt="Logo" className="w-28 pt-2" />
-                        <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="text-gray-500 hover:text-brand-primary">
+                        <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="text-brand-dark-gray hover:text-[#009688] transition-colors">
                             <HiMenuAlt2 size={24} />
                         </button>
                     </div>
-                    <button onClick={handleLogout} className="text-gray-500"><HiLogout size={24} /></button>
+                    <button onClick={handleLogout} className="text-red-500 hover:bg-red-500/20 hover:text-red-500 transition-colors"><HiLogout size={24} /></button>
                 </div>
 
                 <div className="p-6 md:p-10">

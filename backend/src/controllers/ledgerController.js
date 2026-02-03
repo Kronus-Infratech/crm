@@ -239,9 +239,10 @@ const addDocumentEntry = async (req, res, next) => {
 const approveDocumentEntry = async (req, res, next) => {
     try {
         const { entryId } = req.params;
-        const { status, notes } = req.body; // status: APPROVED or REJECTED
-        const isFinance = req.user.roles.includes(ROLES.FINANCE) || req.user.roles.includes(ROLES.ADMIN);
-        const isSales = req.user.roles.includes(ROLES.SALESMAN) || req.user.roles.includes(ROLES.ADMIN);
+        const { status, notes, role } = req.body; // status: APPROVED or REJECTED, role: SALES or FINANCE
+        const userRoles = req.user.roles;
+        const isFinanceAction = role === 'FINANCE' || (!role && (userRoles.includes(ROLES.FINANCE) || userRoles.includes(ROLES.ADMIN)));
+        const isSalesAction = role === 'SALES' || (!role && userRoles.includes(ROLES.SALESMAN));
 
         if (status === 'REJECTED' && (!notes || notes.trim() === '')) {
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
@@ -253,21 +254,21 @@ const approveDocumentEntry = async (req, res, next) => {
         const updateData = {};
         if (status === 'REJECTED') {
             updateData.status = 'REJECTED';
-            if (isFinance) {
+            if (isFinanceAction) {
                 updateData.financeNotes = notes;
                 updateData.financeApproved = false; // Reset if it was approved
-            } else if (isSales) {
+            } else if (isSalesAction) {
                 updateData.salesNotes = notes;
                 updateData.salesApproved = false; // Reset if it was approved
             }
         } else {
             // approving
-            if (isFinance) {
+            if (isFinanceAction) {
                 updateData.financeApproved = true;
                 updateData.financeApprovedBy = req.user.id;
                 updateData.financeApprovedAt = new Date();
                 updateData.financeNotes = notes || null;
-            } else if (isSales) {
+            } else if (isSalesAction) {
                 updateData.salesApproved = true;
                 updateData.salesApprovedBy = req.user.id;
                 updateData.salesApprovedAt = new Date();
@@ -277,7 +278,7 @@ const approveDocumentEntry = async (req, res, next) => {
             // If it's a dual approval and this was the second one, mark overall status as APPROVED
             // We'll need to fetch the current entry first to check other side
             const currentEntry = await prisma.documentLedgerEntry.findUnique({ where: { id: entryId } });
-            if ((isFinance && currentEntry.salesApproved) || (isSales && currentEntry.financeApproved)) {
+            if ((isFinanceAction && currentEntry.salesApproved) || (isSalesAction && currentEntry.financeApproved)) {
                 updateData.status = 'APPROVED';
             }
         }
@@ -316,13 +317,13 @@ const handleLedgerClosure = async (req, res, next) => {
             }
         });
 
-        // Check if all entries are approved before closure
+        // Check if all entries are resolved (not PENDING) before closure
         if (type === 'PAYMENT') {
-            const allApproved = lead.paymentLedgerEntries.every(e => e.status === 'APPROVED');
-            if (!allApproved) {
+            const allResolved = lead.paymentLedgerEntries.every(e => e.status !== 'PENDING');
+            if (!allResolved) {
                 return res.status(HTTP_STATUS.BAD_REQUEST).json({
                     success: false,
-                    message: 'All payment entries must be approved before closure'
+                    message: 'All payment entries must be resolved (Approved or Rejected) before closure'
                 });
             }
 
@@ -337,11 +338,11 @@ const handleLedgerClosure = async (req, res, next) => {
 
             await prisma.lead.update({ where: { id: leadId }, data: updateData });
         } else if (type === 'DOCUMENT') {
-            const allApproved = lead.documentLedgerEntries.every(e => e.salesApproved && e.financeApproved);
-            if (!allApproved) {
+            const allResolved = lead.documentLedgerEntries.every(e => e.status !== 'PENDING');
+            if (!allResolved) {
                 return res.status(HTTP_STATUS.BAD_REQUEST).json({
                     success: false,
-                    message: 'All document entries must be dual-approved before closure'
+                    message: 'All document entries must be resolved (Dual-Approved or Rejected) before closure'
                 });
             }
 

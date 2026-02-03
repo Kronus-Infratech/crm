@@ -80,7 +80,7 @@ export default function AIInsights() {
                     >
                         <div className={clsx(
                             "w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm",
-                            msg.role === "user" ? "bg-indigo-600 text-white" : "bg-white text-indigo-600 border border-indigo-100"
+                            msg.role === "user" ? "bg-[#009688] text-white" : "bg-white text-[#009688] border border-[#009688]/20"
                         )}>
                             {msg.role === "user" ? <HiUser size={16} /> : <HiSparkles size={16} />}
                         </div>
@@ -88,8 +88,8 @@ export default function AIInsights() {
                         <div className={clsx(
                             "max-w-[92%] md:max-w-[80%] p-3 md:p-4 rounded-2xl text-[13px] md:text-sm leading-relaxed",
                             msg.role === "user"
-                                ? "bg-indigo-600 text-white rounded-tr-none shadow-md"
-                                : "bg-white text-gray-800 border border-gray-100 rounded-tl-none shadow-sm"
+                                ? "bg-[#009688] text-white rounded-tr-none shadow-md"
+                                : "bg-white text-brand-dark-gray border border-brand-spanish-gray/20 rounded-tl-none shadow-sm"
                         )}>
                             <div className={clsx(
                                 "markdown-container",
@@ -114,13 +114,13 @@ export default function AIInsights() {
 
                 {loading && (
                     <div className="flex gap-3 animate-pulse">
-                        <div className="w-8 h-8 rounded-full bg-white border border-indigo-100 flex items-center justify-center text-indigo-300">
+                        <div className="w-8 h-8 rounded-full bg-white border border-brand-spanish-gray/20 flex items-center justify-center text-[#009688]">
                             <HiSparkles size={16} />
                         </div>
-                        <div className="bg-white border border-gray-100 p-4 rounded-2xl rounded-tl-none w-32 flex gap-1 items-center justify-center">
-                            <span className="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce"></span>
-                            <span className="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                            <span className="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                        <div className="bg-white border border-brand-spanish-gray/20 p-4 rounded-2xl rounded-tl-none w-32 flex gap-1 items-center justify-center">
+                            <span className="w-1.5 h-1.5 bg-[#009688] rounded-full animate-bounce"></span>
+                            <span className="w-1.5 h-1.5 bg-[#009688] rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                            <span className="w-1.5 h-1.5 bg-[#009688] rounded-full animate-bounce [animation-delay:0.4s]"></span>
                         </div>
                     </div>
                 )}
@@ -135,7 +135,7 @@ export default function AIInsights() {
                             <button
                                 key={i}
                                 onClick={() => { setInput(s); }}
-                                className="text-[11px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition-colors border border-indigo-100"
+                                className="text-[11px] font-bold uppercase tracking-wider bg-[#009688]/10 text-[#009688] px-3 py-1.5 rounded-full hover:bg-[#009688]/20 transition-colors border border-[#009688]/20"
                             >
                                 <HiLightBulb className="inline-block mr-1 mb-0.5" /> {s}
                             </button>
@@ -147,7 +147,7 @@ export default function AIInsights() {
                     <input
                         type="text"
                         placeholder="Ask anything about your data..."
-                        className="flex-1 bg-gray-50 border-gray-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all pr-12 text-black font-medium"
+                        className="flex-1 bg-gray-50 border-brand-spanish-gray/30 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-[#009688]/20 focus:border-[#009688] outline-none transition-all pr-12 text-black font-medium"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         disabled={loading}
@@ -156,7 +156,7 @@ export default function AIInsights() {
                         type="submit"
                         disabled={!input.trim() || loading}
                         className={clsx(
-                            "bg-indigo-600 text-white p-3 rounded-xl shadow-lg shadow-indigo-200 transition-all hover:scale-105 active:scale-95",
+                            "bg-[#009688] text-white p-3 rounded-lg shadow-lg shadow-[#009688]/20 transition-all hover:scale-105 active:scale-95",
                             (!input.trim() || loading) && "opacity-50 cursor-not-allowed grayscale"
                         )}
                     >

@@ -188,7 +188,7 @@ export default function UsersPage() {
                                         className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 flex items-center justify-center"
                                     >
                                         <td colSpan="5" className="w-full h-full flex items-center justify-center">
-                                            <div className="w-6 h-6 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+                                            <div className="w-6 h-6 border-2 border-[#009688] border-t-transparent rounded-full animate-spin"></div>
                                         </td>
                                     </motion.tr>
                                 )}
@@ -224,7 +224,7 @@ export default function UsersPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${user.isActive ? "bg-[#8DC63F]/10 text-[#8DC63F]" : "bg-red-500/10 text-red-500"
                                                 }`}>
                                                 {user.isActive ? "Active" : "Inactive"}
                                             </span>
@@ -331,11 +331,11 @@ export default function UsersPage() {
 
 function RoleBadge({ role }) {
     const styles = {
-        ADMIN: "bg-indigo-100 text-indigo-700 ring-indigo-600/20",
-        DIRECTOR: "bg-purple-100 text-purple-700 ring-purple-600/20",
-        MANAGER: "bg-blue-100 text-blue-700 ring-blue-600/20",
-        EXECUTIVE: "bg-green-100 text-green-700 ring-green-600/20",
-        SALESMAN: "bg-gray-100 text-gray-700 ring-gray-600/20",
+        ADMIN: "bg-[#009688]/10 text-[#009688] ring-[#009688]/20",
+        DIRECTOR: "bg-[#FBB03B]/10 text-[#FBB03B] ring-[#FBB03B]/20",
+        MANAGER: "bg-[#8DC63F]/10 text-[#8DC63F] ring-[#8DC63F]/20",
+        EXECUTIVE: "bg-red-500/10 text-red-500 ring-red-500/20",
+        SALESMAN: "bg-[#9E9E9E]/10 text-[#9E9E9E] ring-[#9E9E9E]/20",
     };
 
     return (
@@ -354,7 +354,7 @@ function OnlineDot({ lastLoginAt }) {
 
     return (
         <span
-            className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-gray-300"}`}
+            className={`w-2 h-2 rounded-full ${isOnline ? "bg-[#8DC63F] animate-pulse" : "bg-brand-spanish-gray/30"}`}
             title={isOnline ? "Online" : `Last seen: ${formatDateTime(lastLogin)}`}
         ></span>
     );

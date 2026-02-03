@@ -13,7 +13,7 @@ export default function AIPage() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[70vh] flex flex-col">
+            <div className="bg-white rounded-lg border border-brand-spanish-gray/20 shadow-sm overflow-hidden min-h-[70vh] flex flex-col">
                 <AIInsights />
             </div>
         </div>

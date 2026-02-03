@@ -677,7 +677,10 @@ const getLeadStats = async (req, res, next) => {
         _sum: {
           budgetTo: true,
         },
-        where,
+        where: {
+          ...where,
+          status: { notIn: ['CONVERTED', 'NOT_CONVERTED'] }
+        },
       }),
     ]);
 
@@ -740,7 +743,9 @@ const getLeadStats = async (req, res, next) => {
         const totalAssigned = user.assignedLeads.length;
         const wonLeads = user.assignedLeads.filter(l => l.status === 'CONVERTED').length;
         const lostLeads = user.assignedLeads.filter(l => l.status === 'NOT_CONVERTED').length;
-        const pipelineValue = user.assignedLeads.reduce((sum, l) => sum + (l.budgetTo || 0), 0);
+        const pipelineValue = user.assignedLeads
+          .filter(l => !['CONVERTED', 'NOT_CONVERTED'].includes(l.status))
+          .reduce((sum, l) => sum + (l.budgetTo || 0), 0);
 
         const closeRate = totalAssigned > 0 ? ((wonLeads / totalAssigned) * 100).toFixed(1) : "0.0";
         const loseRate = totalAssigned > 0 ? ((lostLeads / totalAssigned) * 100).toFixed(1) : "0.0";

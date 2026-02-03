@@ -341,25 +341,25 @@ export default function InventoryPage() {
                                 className="fixed inset-0 z-10"
                                 onClick={() => setIsNewMenuOpen(false)}
                             />
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-brand-spanish-gray/20 z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                 <button
-                                    onClick={() => { openCityCreate(); setIsNewMenuOpen(false); }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
+                                    onClick={() => { setIsNewMenuOpen(false); setCityModalOpen(true); }}
+                                    className="w-full text-left px-4 py-2 text-sm text-brand-dark-gray hover:bg-[#009688]/10 hover:text-[#009688] flex items-center gap-2"
                                 >
-                                    <HiPlus className="text-gray-400" /> New City
+                                    <HiPlus className="text-brand-spanish-gray" /> New City
                                 </button>
                                 <button
-                                    onClick={() => { openProjectCreate(); setIsNewMenuOpen(false); }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
+                                    onClick={() => { setIsNewMenuOpen(false); setProjectModalOpen(true); }}
+                                    className="w-full text-left px-4 py-2 text-sm text-brand-dark-gray hover:bg-[#009688]/10 hover:text-[#009688] flex items-center gap-2"
                                 >
-                                    <HiPlus className="text-gray-400" /> New Area
+                                    <HiPlus className="text-brand-spanish-gray" /> New Area
                                 </button>
-                                <div className="h-px bg-gray-100 my-1" />
+                                <div className="h-px bg-brand-spanish-gray/20 my-1" />
                                 <button
-                                    onClick={() => { openItemAdd(); setIsNewMenuOpen(false); }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2 font-medium"
+                                    onClick={() => { setIsNewMenuOpen(false); setItemModalOpen(true); }}
+                                    className="w-full text-left px-4 py-2 text-sm text-brand-dark-gray hover:bg-[#009688]/10 hover:text-[#009688] flex items-center gap-2 font-medium"
                                 >
-                                    <HiPlus className="text-indigo-600" /> New Inventory
+                                    <HiPlus className="text-[#009688]" /> New Inventory
                                 </button>
                             </div>
                         </>
@@ -377,8 +377,8 @@ export default function InventoryPage() {
                                 setActiveProjectId("ALL");
                             }}
                             className={`pb-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition-all border-b-2 px-1 ${activeCityId === "ALL"
-                                ? "border-indigo-600 text-indigo-600"
-                                : "border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200"
+                                ? "border-[#009688] text-[#009688]"
+                                : "border-transparent text-brand-spanish-gray hover:text-brand-dark-gray hover:border-brand-spanish-gray/30"
                                 }`}
                         >
                             All Cities
@@ -392,8 +392,8 @@ export default function InventoryPage() {
                                     setPagination(p => ({ ...p, page: 1 }));
                                 }}
                                 className={`pb-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap transition-all border-b-2 px-1 ${activeCityId === city.id
-                                    ? "border-indigo-600 text-indigo-600"
-                                    : "border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200"
+                                    ? "border-[#009688] text-[#009688]"
+                                    : "border-transparent text-brand-spanish-gray hover:text-brand-dark-gray hover:border-brand-spanish-gray/30"
                                     }`}
                             >
                                 {city.name}
@@ -405,14 +405,14 @@ export default function InventoryPage() {
                         <div className="flex items-center gap-1 ml-4 mb-2">
                             <button
                                 onClick={() => openCityEdit(activeCity)}
-                                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                className="p-2 text-brand-spanish-gray hover:text-[#009688] hover:bg-[#009688]/10 rounded-lg transition-all"
                                 title="Edit City"
                             >
                                 <HiPencil size={18} />
                             </button>
                             <button
                                 onClick={() => handleDeleteCity(activeCity)}
-                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                className="p-2 text-brand-spanish-gray hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                                 title="Delete City"
                             >
                                 <HiTrash size={18} />
@@ -428,9 +428,9 @@ export default function InventoryPage() {
                         <div className="flex overflow-x-auto gap-4">
                             <button
                                 onClick={() => setActiveProjectId("ALL")}
-                                className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${activeProjectId === "ALL"
-                                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
-                                    : "text-gray-500 hover:bg-gray-100"
+                                className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeProjectId === "ALL"
+                                    ? "bg-[#009688] text-white shadow-md shadow-[#009688]/20"
+                                    : "text-brand-spanish-gray hover:bg-gray-100"
                                     }`}
                             >
                                 All Areas
@@ -442,9 +442,9 @@ export default function InventoryPage() {
                                         setActiveProjectId(project.id);
                                         setPagination(p => ({ ...p, page: 1 }));
                                     }}
-                                    className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${activeProjectId === project.id
-                                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
-                                        : "text-gray-500 hover:bg-gray-100"
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeProjectId === project.id
+                                        ? "bg-[#009688] text-white shadow-md shadow-[#009688]/20"
+                                        : "text-brand-spanish-gray hover:bg-gray-100"
                                         }`}
                                 >
                                     {project.name}
@@ -456,14 +456,14 @@ export default function InventoryPage() {
                             <div className="flex items-center gap-1 ml-4">
                                 <button
                                     onClick={() => openProjectEdit(activeProject)}
-                                    className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"
+                                    className="p-1.5 text-brand-spanish-gray hover:text-[#009688] hover:bg-white rounded-lg transition-all"
                                     title="Edit Area Details"
                                 >
                                     <HiPencil size={16} />
                                 </button>
                                 <button
                                     onClick={() => handleDeleteProject(activeProject)}
-                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all"
+                                    className="p-1.5 text-brand-spanish-gray hover:text-red-500 hover:bg-white rounded-lg transition-all"
                                     title="Delete Area"
                                 >
                                     <HiTrash size={16} />
@@ -495,7 +495,7 @@ export default function InventoryPage() {
 
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     <select
-                        className="text-sm font-bold bg-gray-50 border-gray-100 rounded-lg text-gray-600 focus:ring-indigo-500 focus:border-indigo-500 py-2"
+                        className="text-sm font-bold bg-gray-50 border-brand-spanish-gray/30 rounded-lg text-brand-dark-gray focus:ring-[#009688]/20 focus:border-[#009688] py-2"
                         value={statusFilter}
                         onChange={(e) => {
                             setStatusFilter(e.target.value);

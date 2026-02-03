@@ -1,67 +1,49 @@
 "use client";
 
+import { forwardRef, isValidElement } from "react";
 import clsx from "clsx";
-import { forwardRef, useState, isValidElement } from "react";
-import { motion } from "framer-motion";
-import { HiEye, HiEyeOff } from "react-icons/hi";
 
-const Input = forwardRef(({
-  label,
-  error,
-  type = "text",
-  icon: Icon,
-  className,
-  containerClassName,
-  ...props
-}, ref) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const isPassword = type === "password";
-  const inputType = isPassword ? (showPassword ? "text" : "password") : type;
-
+const Input = forwardRef((
+  {
+    label,
+    error,
+    icon: Icon,
+    type = "text",
+    className,
+    containerClassName,
+    ...props
+  },
+  ref
+) => {
   return (
     <div className={clsx("w-full", containerClassName)}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-bold text-brand-dark-gray mb-1.5">
           {label}
         </label>
       )}
-      <motion.div
-        initial={false}
-        animate={error ? { x: [-2, 2, -2, 2, 0] } : {}}
-        className="relative"
-      >
+      <div className="relative">
         <input
           ref={ref}
-          type={inputType}
-          autoComplete={isPassword ? "off" : props.autoComplete}
+          type={type}
           className={clsx(
-            "w-full py-3 text-black rounded-lg border bg-white focus:outline-none focus:ring-2 transition-all",
+            "w-full py-3 text-brand-dark-gray rounded-lg border bg-white focus:outline-none focus:ring-2 transition-all",
             Icon ? "pl-12 pr-4" : "px-4",
             error
-              ? "border-brand-red focus:ring-brand-red/50 text-brand-red"
-              : "border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20",
-            isPassword && "pr-12",
+              ? "border-red-500 focus:ring-red-500/50 text-red-500"
+              : "border-brand-spanish-gray/30 focus:border-[#009688] focus:ring-[#009688]/20",
             className
           )}
           {...props}
         />
         {Icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-spanish-gray">
             {isValidElement(Icon) ? Icon : <Icon size={20} />}
           </div>
         )}
-        {isPassword && (
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-brand-primary transition-colors"
-          >
-            {showPassword ? <HiEyeOff size={20} /> : <HiEye size={20} />}
-          </button>
-        )}
-      </motion.div>
+      </div>
       {error && (
-        <p className="mt-1 text-xs text-brand-red">{error}</p>
+        <p className="mt-1.5 text-xs text-red-500 font-medium">{error}</p>
       )}
     </div>
   );

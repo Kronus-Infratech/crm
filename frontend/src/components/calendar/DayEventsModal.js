@@ -41,10 +41,10 @@ export default function DayEventsModal({ isOpen, onClose, date, events, onSelect
                                 onClick={() => onSelectEvent(event)}
                                 className={clsx(
                                     "p-4 rounded-2xl border-l-4 cursor-pointer transition-all hover:translate-x-1 group",
-                                    event.type === 'FOLLOW_UP' ? "bg-amber-50 border-amber-500 hover:bg-amber-100/80" :
-                                        event.type === 'SITE_VISIT' ? "bg-teal-50 border-teal-500 hover:bg-teal-100/80" :
-                                            event.type === 'MEETING' ? "bg-purple-50 border-purple-500 hover:bg-purple-100/80" :
-                                                "bg-blue-50 border-blue-500 hover:bg-blue-100/80"
+                                    event.type === 'FOLLOW_UP' ? "bg-[#FBB03B]/10 border-[#FBB03B] hover:bg-[#FBB03B]/20" :
+                                        event.type === 'SITE_VISIT' ? "bg-[#009688]/10 border-[#009688] hover:bg-[#009688]/20" :
+                                            event.type === 'MEETING' ? "bg-[#8DC63F]/10 border-[#8DC63F] hover:bg-[#8DC63F]/20" :
+                                                "bg-[#009688]/10 border-[#009688] hover:bg-[#009688]/20"
                                 )}
                             >
                                 <div className="flex items-center justify-between mb-2">
@@ -53,10 +53,10 @@ export default function DayEventsModal({ isOpen, onClose, date, events, onSelect
                                     </h4>
                                     <span className={clsx(
                                         "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider",
-                                        event.type === 'FOLLOW_UP' ? "bg-amber-200 text-amber-800" :
-                                            event.type === 'SITE_VISIT' ? "bg-teal-200 text-teal-800" :
-                                                event.type === 'MEETING' ? "bg-purple-200 text-purple-800" :
-                                                    "bg-blue-200 text-blue-800"
+                                        event.type === 'FOLLOW_UP' ? "bg-[#FBB03B] text-white" :
+                                            event.type === 'SITE_VISIT' ? "bg-[#009688] text-white" :
+                                                event.type === 'MEETING' ? "bg-[#8DC63F] text-white" :
+                                                    "bg-[#009688] text-white"
                                     )}>
                                         {event.type}
                                     </span>

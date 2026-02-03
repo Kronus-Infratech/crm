@@ -7,8 +7,8 @@ import clsx from "clsx";
 
 export default function Button({
   children,
-  variant = "primary", // primary, secondary, outline, ghost
-  size = "md", // sm, md, lg
+  variant = "primary", // primary, secondary, outline, ghost, danger, warning
+  size = "md", // xs, sm, md, lg
   fullWidth = false,
   className,
   onClick,
@@ -20,14 +20,15 @@ export default function Button({
   ...props
 }) {
   const isActuallyLoading = loading || isLoading;
-  const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  const baseStyles = "inline-flex items-center justify-center rounded-lg font-bold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    primary: "bg-brand-primary hover:bg-brand-primary/90 text-white focus:ring-brand-primary/50 shadow-lg shadow-brand-primary/30",
-    secondary: "bg-brand-secondary hover:bg-brand-secondary/90 text-white focus:ring-brand-secondary/50",
-    outline: "border-2 border-brand-primary text-brand-primary hover:bg-brand-primary/5 focus:ring-brand-primary/50",
-    ghost: "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-    danger: "bg-red-600 hover:bg-red-700 text-white focus:ring-red-500 shadow-lg shadow-red-200",
+    primary: "bg-[#009688] hover:bg-[#00796B] text-white focus:ring-[#009688]/50 shadow-lg shadow-[#009688]/20",
+    secondary: "bg-[#8DC63F] hover:bg-[#7AB52F] text-white focus:ring-[#8DC63F]/50 shadow-md shadow-[#8DC63F]/20",
+    outline: "border-2 border-[#009688] text-[#009688] hover:bg-[#009688]/5 focus:ring-[#009688]/50",
+    ghost: "text-[#4A4A4A] hover:bg-gray-100 hover:text-[#009688]",
+    danger: "bg-red-500 hover:bg-[#8F6449] text-white focus:ring-red-500/50 shadow-lg shadow-red-500/20",
+    warning: "bg-[#FBB03B] hover:bg-[#E89F2A] text-white focus:ring-[#FBB03B]/50 shadow-md shadow-[#FBB03B]/20",
   };
 
   const sizes = {

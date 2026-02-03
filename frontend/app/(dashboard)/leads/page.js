@@ -293,7 +293,7 @@ export default function LeadsPage() {
                                         className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 flex items-center justify-center"
                                     >
                                         <td colSpan="9" className="w-full h-full flex items-center justify-center">
-                                            <div className="w-6 h-6 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+                                            <div className="w-6 h-6 border-2 border-[#009688] border-t-transparent rounded-full animate-spin"></div>
                                         </td>
                                     </motion.tr>
                                 )}
@@ -329,7 +329,7 @@ export default function LeadsPage() {
                                         <td className="px-4 py-4 font-semibold text-gray-900 whitespace-nowrap">
                                             ₹{formatNumber(lead.budgetFrom)} - ₹{formatNumber(lead.budgetTo)}
                                         </td>
-                                        <td className="px-4 py-4 text-gray-600">
+                                        <td className="px-4 py-4 text-brand-spanish-gray">
                                             {lead.followUpDate ? (
                                                 <div className="flex flex-col">
                                                     <span>{formatDate(lead.followUpDate)}</span>
@@ -351,7 +351,7 @@ export default function LeadsPage() {
                                                     <Button
                                                         variant="outline"
                                                         size="xs"
-                                                        className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 px-2 py-1 text-xs"
+                                                        className="border-[#8DC63F] text-[#8DC63F] hover:bg-[#8DC63F]/10 px-2 py-1 text-xs"
                                                         icon={<HiCurrencyRupee />}
                                                     >
                                                         Ledger
@@ -362,7 +362,7 @@ export default function LeadsPage() {
                                                 <Button
                                                     variant="primary"
                                                     size="xs"
-                                                    className={`px-2 py-1 text-xs ${lead.ledgerStatus === 'CLOSED' ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600'}`}
+                                                    className={`px-2 py-1 text-xs font-bold rounded-lg ${lead.ledgerStatus === 'CLOSED' ? 'bg-brand-spanish-gray/30 text-brand-spanish-gray cursor-not-allowed' : 'bg-[#8DC63F] text-white hover:bg-[#7AB336]'}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         if (lead.ledgerStatus !== 'CLOSED') {
@@ -377,7 +377,7 @@ export default function LeadsPage() {
                                                 <Button
                                                     variant="primary"
                                                     size="xs"
-                                                    className="bg-red-500 text-white hover:bg-red-600 px-2 py-1 text-xs"
+                                                    className="bg-red-500 text-white hover:bg-[#8D644A] px-2 py-1 text-xs font-bold rounded-lg"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setClosingLead(lead);
@@ -389,7 +389,7 @@ export default function LeadsPage() {
                                             <Button
                                                 variant="primary"
                                                 size="xs"
-                                                className="px-2 py-1 text-xs"
+                                                className="px-2 py-1 text-xs bg-[#009688] hover:bg-[#00796B] font-bold rounded-lg"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setEditingLead(lead);
@@ -514,14 +514,14 @@ export default function LeadsPage() {
 
                     <div className="flex gap-3 justify-end pt-2">
                         <Button
-                            className="bg-red-500 text-white hover:bg-red-700 border-red-700"
+                            className="bg-red-500 text-white hover:bg-[#8D644A] border-none font-bold rounded-lg"
                             onClick={() => handleCloseLead('NOT_CONVERTED')}
                             disabled={isClosing}
                         >
                             {isClosing ? "Processing..." : "Not Converted"}
                         </Button>
                         <Button
-                            className="bg-green-600 text-white hover:bg-green-700 focus:ring-green-500"
+                            className="bg-[#8DC63F] text-white hover:bg-[#7AB336] focus:ring-[#8DC63F]/30 border-none font-bold rounded-lg"
                             onClick={() => handleCloseLead('CONVERTED')}
                             disabled={isClosing}
                         >
@@ -575,20 +575,20 @@ export default function LeadsPage() {
 
 function StatusBadge({ status, ledgerStatus }) {
     const styles = {
-        NEW: "bg-blue-100 text-blue-700",
-        CONTACTED: "bg-cyan-100 text-cyan-700",
-        INTERESTED: "bg-green-100 text-green-700",
-        NOT_INTERESTED: "bg-gray-100 text-gray-700",
-        SITE_VISIT: "bg-purple-100 text-purple-700",
-        NEGOTIATION: "bg-orange-100 text-orange-700",
-        DOCUMENTATION: "bg-indigo-100 text-indigo-700",
-        CONVERTED: "bg-emerald-100 text-emerald-700",
-        NOT_CONVERTED: "bg-red-100 text-red-700"
+        NEW: "bg-[#009688]/10 text-[#009688] border-[#009688]/20",
+        CONTACTED: "bg-cyan-100 text-cyan-700 border-cyan-200",
+        INTERESTED: "bg-green-100 text-green-700 border-green-200",
+        NOT_INTERESTED: "bg-brand-dark-gray/10 text-brand-dark-gray border-brand-dark-gray/20",
+        SITE_VISIT: "bg-purple-100 text-purple-700 border-purple-200",
+        NEGOTIATION: "bg-red-500/10 text-red-500 border-red-500/20",
+        DOCUMENTATION: "bg-brand-spanish-gray/10 text-brand-spanish-gray border-brand-spanish-gray/20",
+        CONVERTED: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        NOT_CONVERTED: "bg-red-500/10 text-red-500 border-red-500/20"
     };
 
     return (
         <div className="flex flex-col gap-1">
-            <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded w-fit ${styles[status] || "bg-gray-100 text-gray-700"}`}>
+            <span className={`text-[10px] uppercase tracking-wider font-extrabold px-3 py-1 rounded-lg border w-fit ${styles[status] || "bg-gray-100 text-gray-700"}`}>
                 {status.replace('_', ' ')}
             </span>
             {status === 'CONVERTED' && (
@@ -597,7 +597,7 @@ function StatusBadge({ status, ledgerStatus }) {
                         <HiLockClosed className="mr-0.5" /> Ledger Closed
                     </span>
                 ) : (
-                    <span className="text-[9px] text-emerald-600 font-extrabold uppercase tracking-tighter flex items-center">
+                    <span className="text-[9px] text-[#8DC63F] font-extrabold uppercase tracking-tighter flex items-center">
                         <HiCurrencyRupee className="mr-0.5" /> Running Ledger Active
                     </span>
                 )

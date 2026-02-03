@@ -98,7 +98,7 @@ export default function FeedbackPage() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="overflow-hidden rounded-[2.5rem] bg-white shadow-2xl shadow-black/5"
             >
-              <div className="bg-[#4a4a4a] py-16 px-8 text-center border-b-8 border-red-500">
+              <div className="bg-brand-dark-gray py-16 px-8 text-center border-b-8 border-red-500">
                 <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10 text-red-500">
                   <HiExclamationCircle size={48} />
                 </div>
@@ -106,7 +106,7 @@ export default function FeedbackPage() {
                 <p className="mt-4 text-gray-400 font-bold uppercase tracking-widest text-xs">{error}</p>
               </div>
               <div className="p-12 text-center bg-gray-50/50">
-                <button 
+                <button
                   onClick={() => router.push('/')}
                   className="inline-flex items-center gap-2 text-[#4a4a4a] font-black uppercase text-sm tracking-widest hover:text-[#009688] transition-colors"
                 >
@@ -122,7 +122,7 @@ export default function FeedbackPage() {
               className="overflow-hidden rounded-[2.5rem] bg-white shadow-2xl shadow-black/5"
             >
               <div className="bg-[#4a4a4a] py-20 px-8 text-center border-b-8 border-[#009688]">
-                <motion.div 
+                <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', damping: 12, delay: 0.2 }}
@@ -180,14 +180,13 @@ export default function FeedbackPage() {
                       >
                         <HiStar
                           size={48}
-                          className={`transition-colors duration-200 ${
-                            star <= (hoverRating || rating) ? 'text-[#fbb03b]' : 'text-gray-100'
-                          }`}
+                          className={`transition-colors duration-200 ${star <= (hoverRating || rating) ? 'text-[#fbb03b]' : 'text-gray-100'
+                            }`}
                         />
                       </motion.button>
                     ))}
                   </div>
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     key={rating}
@@ -208,7 +207,7 @@ export default function FeedbackPage() {
                   </label>
                   <textarea
                     rows={5}
-                    className="w-full rounded-3xl border-2 border-gray-50 bg-gray-50 p-6 text-gray-900 outline-none focus:border-[#009688] focus:bg-white transition-all duration-300 resize-none font-medium placeholder:text-gray-300"
+                    className="w-full rounded-lg border-2 border-brand-spanish-gray/30 bg-gray-50 p-6 text-brand-dark-gray outline-none focus:border-[#009688] focus:bg-white transition-all duration-300 resize-none font-medium placeholder:text-brand-spanish-gray"
                     placeholder="Share the specifics of your experience..."
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
@@ -225,7 +224,7 @@ export default function FeedbackPage() {
                   <span className="relative z-10">
                     {submitting ? 'Transmitting Data...' : 'Finalize Feedback'}
                   </span>
-                  <motion.div 
+                  <motion.div
                     className="absolute inset-0 bg-black/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"
                   />
                 </motion.button>
