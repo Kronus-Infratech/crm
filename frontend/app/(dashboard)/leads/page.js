@@ -40,6 +40,8 @@ export default function LeadsPage() {
 
     const [sortBy, setSortBy] = useState("createdAt");
     const [sortOrder, setSortOrder] = useState("desc");
+    const [assignedToFilter, setAssignedToFilter] = useState("");
+    const [salesmen, setSalesmen] = useState([]);
 
     // Debounced search term
     const debouncedSearch = useDebounce(searchTerm, 500);
@@ -108,6 +110,19 @@ export default function LeadsPage() {
     // Helper to check if lead is closed
     const isLeadClosed = (status) => ['CONVERTED', 'NOT_CONVERTED'].includes(status);
 
+    const fetchSalesmen = useCallback(async () => {
+        try {
+            const response = await api.get("/users");
+            setSalesmen(response.data.data.users);
+        } catch (error) {
+            console.error("Failed to fetch salesmen", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchSalesmen();
+    }, [fetchSalesmen]);
+
 
     const fetchLeads = useCallback(async () => {
         setLoading(true);
@@ -118,6 +133,7 @@ export default function LeadsPage() {
                 search: debouncedSearch,
                 status: statusFilter || undefined,
                 source: sourceFilter || undefined,
+                assignedToId: assignedToFilter || undefined,
                 sortBy: sortBy,
                 sortOrder: sortOrder
             };
@@ -131,7 +147,7 @@ export default function LeadsPage() {
         } finally {
             setLoading(false);
         }
-    }, [page, debouncedSearch, statusFilter, sourceFilter, sortBy, sortOrder]);
+    }, [page, debouncedSearch, statusFilter, sourceFilter, assignedToFilter, sortBy, sortOrder]);
 
     useEffect(() => {
         fetchLeads();
@@ -139,7 +155,7 @@ export default function LeadsPage() {
 
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, statusFilter, sourceFilter]);
+    }, [debouncedSearch, statusFilter, sourceFilter, assignedToFilter]);
 
     // Handlers
     const handleSort = (field) => {
@@ -200,7 +216,7 @@ export default function LeadsPage() {
 
             {/* Filters */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="w-full md:w-1/3 relative">
+                <div className="w-full md:w-1/4 relative">
                     <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <Input
                         placeholder="Search leads..."
@@ -247,6 +263,15 @@ export default function LeadsPage() {
                         ]}
                         value={sourceFilter}
                         onChange={(e) => setSourceFilter(e.target.value)}
+                    />
+                </div>
+                <div className="w-full md:w-1/4">
+                    <Select
+                        placeholder="Filter by Salesman"
+                        className="py-2.5!"
+                        options={salesmen.map(s => ({ label: s.name, value: s.id }))}
+                        value={assignedToFilter}
+                        onChange={(e) => setAssignedToFilter(e.target.value)}
                     />
                 </div>
             </div>
