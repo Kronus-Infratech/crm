@@ -23,6 +23,7 @@ export default function InventoryPage() {
     const [activeProjectId, setActiveProjectId] = useState("ALL");
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [projectsLoading, setProjectsLoading] = useState(false);
 
     // Search & Filter State
     const [searchQuery, setSearchQuery] = useState("");
@@ -70,6 +71,7 @@ export default function InventoryPage() {
 
     // Fetch Projects (Areas)
     const fetchProjects = async () => {
+        setProjectsLoading(true);
         try {
             const params = activeCityId !== "ALL" ? { cityId: activeCityId } : {};
             const res = await api.get("/inventory/projects", { params });
@@ -79,6 +81,8 @@ export default function InventoryPage() {
         } catch (error) {
             console.error("Failed to fetch projects", error);
             toast.error("Could not load property areas.");
+        } finally {
+            setProjectsLoading(false);
         }
     };
 
@@ -435,21 +439,29 @@ export default function InventoryPage() {
                             >
                                 All Areas
                             </button>
-                            {projects.map(project => (
-                                <button
-                                    key={project.id}
-                                    onClick={() => {
-                                        setActiveProjectId(project.id);
-                                        setPagination(p => ({ ...p, page: 1 }));
-                                    }}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeProjectId === project.id
-                                        ? "bg-[#009688] text-white shadow-md shadow-[#009688]/20"
-                                        : "text-brand-spanish-gray hover:bg-gray-100"
-                                        }`}
-                                >
-                                    {project.name}
-                                </button>
-                            ))}
+                            {projectsLoading ? (
+                                <div className="flex gap-2">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="w-24 h-8 bg-gray-100 animate-pulse rounded-lg"></div>
+                                    ))}
+                                </div>
+                            ) : (
+                                projects.map(project => (
+                                    <button
+                                        key={project.id}
+                                        onClick={() => {
+                                            setActiveProjectId(project.id);
+                                            setPagination(p => ({ ...p, page: 1 }));
+                                        }}
+                                        className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeProjectId === project.id
+                                            ? "bg-[#009688] text-white shadow-md shadow-[#009688]/20"
+                                            : "text-brand-spanish-gray hover:bg-gray-100"
+                                            }`}
+                                    >
+                                        {project.name}
+                                    </button>
+                                ))
+                            )}
                         </div>
 
                         {activeProject && (
