@@ -62,7 +62,7 @@ export default function Login() {
                     transition={{ duration: 0.5 }}
                     className="w-full max-w-md"
                 >
-                    <Card glass className="bg-white/80">
+                    <Card glass className="bg-white/80 p-6">
                         <div className="text-center mb-8">
                             <Heading level={2} className="text-brand-primary mb-2">Welcome Back</Heading>
                             <p className="text-gray-600">Sign in to your account to continue</p>
