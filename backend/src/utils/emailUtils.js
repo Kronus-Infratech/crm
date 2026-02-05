@@ -390,6 +390,90 @@ const sendLeadFeedbackEmail = async (email, name, status, token) => {
   });
 };
 
+/**
+ * Send notification to Finance team when a ledger is opened
+ */
+const sendLedgerOpenedEmail = async (emails, leadName, leadId, salesmanName) => {
+  const content = `
+    <div class="badge" style="background: #e0f2fe; color: #0369a1;">Ledger Opened</div>
+    <h1>New Ledger Awaiting Review</h1>
+    <p>Finance Team,</p>
+    <p>A new Running Ledger has been initialized for <strong>${leadName}</strong> by <strong>${salesmanName}</strong>.</p>
+    
+    <div class="card">
+      <p style="margin: 0; font-weight: 600; color: #1e293b;">Action Required</p>
+      <p style="margin: 8px 0 0 0; font-size: 14px; color: #475569;">Please review the payment milestones and document requirements to ensure financial compliance.</p>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="${process.env.FRONTEND_URL}/leads/${leadId}/ledger" class="button">Access Ledger</a>
+    </div>
+  `;
+
+  // Filter out any empty/null emails
+  const validEmails = emails.filter(e => e && e.trim() !== '');
+  if (validEmails.length === 0) return;
+
+  await Promise.all(validEmails.map(email =>
+    sendEmail({
+      email,
+      subject: `New Ledger Opened: ${leadName}`,
+      html: baseTemplate(content),
+      text: `New ledger initialized for ${leadName} by ${salesmanName}. Access it here: ${process.env.FRONTEND_URL}/leads/${leadId}/ledger`,
+    })
+  ));
+};
+
+/**
+ * Send notification to CEO for critical lead updates
+ */
+const sendCEONotificationEmail = async (leadName, leadId, type, salesmanName, additionalInfo = '') => {
+  let badgeColor = '#f1f5f9';
+  let badgeTextColor = '#64748b';
+  let title = 'Lead Update';
+  let subject = `Lead Alert: ${leadName}`;
+
+  if (type === 'CONVERTED') {
+    badgeColor = '#dcfce7';
+    badgeTextColor = '#15803d';
+    title = 'Lead Successfully Converted';
+    subject = `🏆 CONVERTED: ${leadName}`;
+  } else if (type === 'NOT_CONVERTED') {
+    badgeColor = '#fee2e2';
+    badgeTextColor = '#b91c1c';
+    title = 'Lead Not Converted (Lost)';
+    subject = `❌ LOST: ${leadName}`;
+  } else if (type === 'MISSED_FOLLOWUP') {
+    badgeColor = '#fef3c7';
+    badgeTextColor = '#92400e';
+    title = 'Missed Follow-up Alert';
+    subject = `⚠️ MISSED FOLLOW-UP: ${leadName}`;
+  }
+
+  const content = `
+    <div class="badge" style="background: ${badgeColor}; color: ${badgeTextColor};">${type.replace('_', ' ')}</div>
+    <h1>${title}</h1>
+    <p>Sir,</p>
+    <p>Regarding the lead <strong>${leadName}</strong> managed by <strong>${salesmanName}</strong>.</p>
+    
+    <div class="card">
+      <p style="margin: 0; font-weight: 600; color: #1e293b;">Summary</p>
+      <p style="margin: 8px 0 0 0; font-size: 14px; color: #475569;">${additionalInfo || 'No additional notes provided.'}</p>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="${process.env.FRONTEND_URL}/leads" class="button">View Lead Data</a>
+    </div>
+  `;
+
+  await sendEmail({
+    email: 'ceo@kronusinfra.org',
+    subject: subject,
+    html: baseTemplate(content),
+    text: `${title}: ${leadName} (Managed by ${salesmanName}). ${additionalInfo}`,
+  });
+};
+
 module.exports = {
   sendEmail,
   sendPasswordResetEmail,
@@ -398,4 +482,6 @@ module.exports = {
   sendFollowUpReminderEmail,
   sendLeadWelcomeEmail,
   sendLeadFeedbackEmail,
+  sendLedgerOpenedEmail,
+  sendCEONotificationEmail,
 };

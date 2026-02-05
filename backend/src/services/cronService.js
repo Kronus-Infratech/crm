@@ -21,6 +21,14 @@ const initCronJobs = () => {
   }, {
     timezone: "Asia/Kolkata"
   });
+
+  // 3. Every day at 9:30 AM: Check for missed follow-ups and notify CEO
+  cron.schedule('30 9 * * *', async () => {
+    console.log('Running 9:30 AM Cron: Checking for missed follow-ups...');
+    await processMissedFollowUps();
+  }, {
+    timezone: "Asia/Kolkata"
+  });
 };
 
 /**
@@ -87,6 +95,55 @@ const processFollowUpReminders = async (type) => {
     console.log(`Successfully sent follow-up reminders for ${type} to ${Object.keys(agentGroups).length} agents.`);
   } catch (error) {
     console.error(`Error in ${type} follow-up cron:`, error);
+  }
+};
+
+/**
+ * Identify leads with missed follow-up dates and notify CEO
+ */
+const processMissedFollowUps = async () => {
+  try {
+    const yesterday = new Date();
+    yesterday.setHours(0, 0, 0, 0);
+
+    // Find leads where followUpDate is in the past AND status is not closed
+    const missedLeads = await prisma.lead.findMany({
+      where: {
+        followUpDate: {
+          lt: yesterday // Anything before today
+        },
+        status: { notIn: ['CONVERTED', 'NOT_CONVERTED'] },
+      },
+      include: {
+        assignedTo: true,
+      }
+    });
+
+    if (missedLeads.length === 0) {
+      console.log('No missed follow-ups detected.');
+      return;
+    }
+
+    const { sendCEONotificationEmail } = require('../utils/emailUtils');
+
+    // Notify CEO for each missed lead
+    // (In a high volume system, we might want to aggregate these, but for now individual is more surgical)
+    for (const lead of missedLeads) {
+      const salesmanName = lead.assignedTo?.name || 'Unassigned';
+      const delayDays = Math.floor((new Date() - new Date(lead.followUpDate)) / (1000 * 60 * 60 * 24));
+      
+      await sendCEONotificationEmail(
+        lead.name,
+        lead.id,
+        'MISSED_FOLLOWUP',
+        salesmanName,
+        `Follow-up was scheduled for ${lead.followUpDate.toLocaleDateString()}. It is now delayed by ${delayDays} day(s).`
+      ).catch(err => console.error(`Failed to notify CEO about missed lead ${lead.id}:`, err));
+    }
+
+    console.log(`Processed ${missedLeads.length} missed follow-ups.`);
+  } catch (error) {
+    console.error('Error in missed follow-up cron:', error);
   }
 };
 

@@ -15,6 +15,8 @@ import LeadForm from "@/src/components/leads/LeadForm";
 import LeadDetail from "@/src/components/leads/LeadDetail";
 import { formatNumber, formatDate } from "@/src/utils/formatters";
 import Link from "next/link";
+import ExportModal from "@/src/components/leads/ExportModal";
+import { HiDownload } from "react-icons/hi";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -56,6 +58,7 @@ export default function LeadsPage() {
     const [isReopening, setIsReopening] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isExportOpen, setIsExportOpen] = useState(false);
 
     // ... (existing handlers)
 
@@ -207,10 +210,24 @@ export default function LeadsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
                     <Heading level={2}>Leads</Heading>
-                    <p className="text-gray-600">Manage your sales pipeline</p>
+                    <p className="text-gray-600 font-bold uppercase tracking-widest text-[10px]">Active Operations Pipeline</p>
                 </div>
-                <div>
-                    <Button icon={<HiPlus />} onClick={() => setIsCreateOpen(true)}>Add New Lead</Button>
+                <div className="flex gap-4">
+                    <Button 
+                        variant="ghost" 
+                        icon={<HiDownload />} 
+                        onClick={() => setIsExportOpen(true)}
+                        className="font-black uppercase tracking-widest text-xs border-2 border-brand-teal/20 text-brand-teal hover:bg-brand-teal/5"
+                    >
+                        Export
+                    </Button>
+                    <Button 
+                        icon={<HiPlus />} 
+                        onClick={() => setIsCreateOpen(true)}
+                        className="font-black uppercase tracking-widest text-xs px-6 shadow-xl shadow-brand-teal/20"
+                    >
+                        Add New Lead
+                    </Button>
                 </div>
             </div>
 
@@ -627,6 +644,12 @@ function StatusBadge({ status, ledgerStatus }) {
                     </span>
                 )
             )}
+            {/* Export Modal */}
+            <ExportModal 
+                isOpen={isExportOpen} 
+                onClose={() => setIsExportOpen(false)} 
+                data={leads} // For now exporting current view, can be expanded to fetch all matching results
+            />
         </div>
     );
 }

@@ -1,7 +1,7 @@
 const prisma = require('../config/database');
 const crypto = require('crypto');
 const { HTTP_STATUS, ROLES } = require('../config/constants');
-const { sendLeadAssignmentEmail, sendLeadWelcomeEmail, sendLeadFeedbackEmail } = require('../utils/emailUtils');
+const { sendLeadAssignmentEmail, sendLeadWelcomeEmail, sendLeadFeedbackEmail, sendLedgerOpenedEmail, sendCEONotificationEmail } = require('../utils/emailUtils');
 const { formatDate } = require('../utils/dateUtils');
 
 /**
@@ -554,11 +554,34 @@ const updateLead = async (req, res, next) => {
       if (
         updateData.status &&
         (updateData.status === 'CONVERTED' || updateData.status === 'NOT_CONVERTED') &&
-        updateData.status !== existingLead.status &&
-        lead.email
+        updateData.status !== existingLead.status
       ) {
-        sendLeadFeedbackEmail(lead.email, lead.name, updateData.status, lead.feedbackToken)
-          .catch(err => console.error('Failed to send feedback email:', err));
+        if (lead.email) {
+          sendLeadFeedbackEmail(lead.email, lead.name, updateData.status, lead.feedbackToken)
+            .catch(err => console.error('Failed to send feedback email:', err));
+        }
+
+        // Send to CEO
+        const salesmanName = lead.assignedTo?.name || lead.createdBy?.name || 'System';
+        const additionalInfo = updateData.status === 'CONVERTED' 
+          ? `Lead converted successfully. Value: ${lead.budgetTo || 'N/A'}`
+          : `Lead marked as NOT CONVERTED. Check activities for notes.`;
+        
+        sendCEONotificationEmail(lead.name, lead.id, updateData.status, salesmanName, additionalInfo)
+          .catch(err => console.error('Failed to send CEO email:', err));
+
+        // If CONVERTED, also notify Finance
+        if (updateData.status === 'CONVERTED') {
+          // Fetch all finance users
+          prisma.user.findMany({
+            where: { roles: { has: ROLES.FINANCE }, isActive: true },
+            select: { email: true }
+          }).then(financeUsers => {
+            const financeEmails = financeUsers.map(u => u.email);
+            sendLedgerOpenedEmail(financeEmails, lead.name, lead.id, salesmanName)
+              .catch(err => console.error('Failed to send Finance email:', err));
+          });
+        }
       }
     }
 
