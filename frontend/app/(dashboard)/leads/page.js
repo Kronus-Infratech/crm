@@ -611,6 +611,12 @@ export default function LeadsPage() {
                     </div>
                 </div>
             </Modal>
+            {/* Export Modal */}
+            <ExportModal 
+                isOpen={isExportOpen} 
+                onClose={() => setIsExportOpen(false)} 
+                data={leads} // For now exporting current view, can be expanded to fetch all matching results
+            />
         </div>
     );
 }
@@ -644,12 +650,6 @@ function StatusBadge({ status, ledgerStatus }) {
                     </span>
                 )
             )}
-            {/* Export Modal */}
-            <ExportModal 
-                isOpen={isExportOpen} 
-                onClose={() => setIsExportOpen(false)} 
-                data={leads} // For now exporting current view, can be expanded to fetch all matching results
-            />
         </div>
     );
 }
