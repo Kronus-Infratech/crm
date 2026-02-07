@@ -88,6 +88,7 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
     });
 
     const status = watch("status");
+    const images = watch("images") || [];
 
     useEffect(() => {
         if (initialData) {
@@ -121,17 +122,18 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
 
     const handleFormSubmit = async (data) => {
         try {
-            let uploadedImages = initialData?.images || [];
-            
+            let finalizedImages = data.images || [];
+
             if (selectedFiles.length > 0) {
                 setUploading(true);
                 const uploadPromises = selectedFiles.map(file => uploadFile(file));
                 const newImages = await Promise.all(uploadPromises);
-                uploadedImages = [...uploadedImages, ...newImages];
+                const newImageUrls = newImages.map(img => img.url);
+                finalizedImages = [...finalizedImages, ...newImageUrls];
                 setUploading(false);
             }
 
-            onSubmit({ ...data, images: uploadedImages });
+            onSubmit({ ...data, images: finalizedImages });
             setSelectedFiles([]);
         } catch (error) {
             console.error("Upload failed", error);
@@ -373,17 +375,17 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
             {/* Media Section */}
             <section className="space-y-4 pt-2">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] mb-2 border-b border-brand-spanish-gray/20 pb-1">Property Media</h4>
-                
+
                 {/* Existing Images Previews */}
-                {initialData?.images && initialData.images.length > 0 && (
+                {images && images.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                        {initialData.images.map((img, idx) => (
+                        {images.map((img, idx) => (
                             <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-gray-100 group">
                                 <img src={img} alt="Property" className="w-full h-full object-cover" />
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        const newImages = initialData.images.filter((_, i) => i !== idx);
+                                        const newImages = images.filter((_, i) => i !== idx);
                                         setValue("images", newImages);
                                     }}
                                     className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
