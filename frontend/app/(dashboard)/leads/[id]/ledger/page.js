@@ -220,9 +220,9 @@ export default function LedgerPage({ params }) {
                     <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <span className="bg-[#009688]/20 text-[#009688] text-[9px] font-black uppercase px-3 py-1 rounded-lg tracking-[0.3em] border border-[#009688]/30">Financial Nexus</span>
+                                <span className="bg-[#009688]/20 text-[#009688] text-[9px] font-black uppercase px-3 py-1 rounded-lg tracking-[0.3em] border border-[#009688]/30">Financial Ledger</span>
                                 <span className="text-white/20 font-black">•</span>
-                                <span className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">ID: {lead.id.slice(-12)}</span>
+                                <span className="text-white/40 text-[9px] font-black uppercase tracking-widest leading-none">ID: {lead.id}</span>
                             </div>
                             <h1 className="text-5xl md:text-6xl font-black text-white tracking-tighter leading-none">
                                 {lead.name}
@@ -233,7 +233,7 @@ export default function LedgerPage({ params }) {
                                         <HiDocumentDuplicate size={20} />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-[#009688]">Project Asset</p>
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-[#009688]">Project Value</p>
                                         <p className="text-sm font-bold text-white leading-tight">{lead.property}</p>
                                     </div>
                                 </div>
@@ -304,7 +304,7 @@ export default function LedgerPage({ params }) {
                         <div className="lg:col-span-4 space-y-6">
                             <h3 className="text-xs font-black text-brand-dark-gray uppercase tracking-[0.3em] flex items-center gap-3">
                                 <div className="w-1.5 h-6 bg-[#FBB03B] rounded-full" />
-                                Account Ecosystem
+                                Account Summary
                             </h3>
                             <div className="grid grid-cols-1 gap-4">
                                 <div className="p-5 bg-white border border-brand-spanish-gray/10 rounded-lg shadow-sm">
@@ -313,11 +313,6 @@ export default function LedgerPage({ params }) {
                                     <div className="mt-3 w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
                                         <div className="bg-[#8DC63F] h-full transition-all duration-1000" style={{ width: '100%' }} />
                                     </div>
-                                </div>
-                                <div className="p-5 bg-white border border-brand-spanish-gray/10 rounded-lg shadow-sm">
-                                    <p className="text-[10px] font-black text-brand-spanish-gray uppercase tracking-widest mb-2">Verification Integrity</p>
-                                    <p className="text-xl font-black text-[#009688]">High Efficiency</p>
-                                    <p className="text-[10px] text-brand-spanish-gray font-bold uppercase mt-1">Managed by Finance Dept</p>
                                 </div>
                             </div>
                         </div>

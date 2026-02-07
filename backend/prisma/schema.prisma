@@ -42,6 +42,9 @@ model User {
   uploadedPayments      PaymentLedgerEntry[] @relation("PaymentUploader")
   uploadedDocuments     DocumentLedgerEntry[] @relation("DocumentUploader")
   
+  // Inventory Relations
+  createdInventory      InventoryItem[] @relation("InventoryCreator")
+  
   @@map("users")
 }
 
@@ -378,6 +381,13 @@ model InventoryItem {
   // Sold Details
   soldTo            String?
   soldDate          DateTime?
+  
+  // Media
+  images            String[]   @default([])
+
+  // Tracking
+  createdById       String?     @db.ObjectId
+  createdBy         User?       @relation("InventoryCreator", fields: [createdById], references: [id])
   
   // Relations
   projectId         String   @db.ObjectId

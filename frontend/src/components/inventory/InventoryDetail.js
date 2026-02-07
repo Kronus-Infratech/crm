@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "@/src/services/api";
 import { formatNumber, formatDate } from "@/src/utils/formatters";
-import { HiUser, HiPhone, HiCalendar, HiCheckCircle, HiCurrencyRupee, HiLocationMarker, HiTag, HiInformationCircle, HiExternalLink } from "react-icons/hi";
+import { HiUser, HiPhone, HiCalendar, HiCheckCircle, HiCurrencyRupee, HiLocationMarker, HiTag, HiInformationCircle, HiExternalLink, HiUpload, HiClock } from "react-icons/hi";
 import Link from "next/link";
 
 export default function InventoryDetail({ item: initialItem }) {
@@ -73,6 +73,12 @@ export default function InventoryDetail({ item: initialItem }) {
     { label: "Sold Date", value: item.soldDate ? formatDate(item.soldDate) : null, icon: <HiCalendar /> },
   ] : [];
 
+  const trackingRows = [
+    { label: "Created By", value: item.createdBy?.name || 'System', icon: <HiUpload /> },
+    { label: "Listed On", value: formatDate(item.listingDate), icon: <HiCalendar /> },
+    { label: "Last Updated", value: formatDate(item.updatedAt), icon: <HiClock /> },
+  ];
+
   const Section = ({ title, rows }) => {
     const activeRows = rows.filter(r => r.value);
     if (activeRows.length === 0) return null;
@@ -117,6 +123,28 @@ export default function InventoryDetail({ item: initialItem }) {
         </div>
       </div>
 
+      {/* Image Gallery */}
+      {item.images && item.images.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] border-b border-brand-spanish-gray/20 pb-1">Property Gallery</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {item.images.map((img, idx) => (
+              <div key={idx} className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-brand-spanish-gray/20 shadow-sm hover:shadow-md transition-all">
+                <img src={img} alt={`Property ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <a 
+                  href={img} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
+                >
+                  <HiExternalLink size={24} />
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Section title="Property Details" rows={detailRows} />
       <Section title="Property Features" rows={featureRows} />
 
@@ -154,6 +182,7 @@ export default function InventoryDetail({ item: initialItem }) {
       </div>
 
       <Section title="Pricing & Value" rows={pricingRows} />
+      <Section title="Listing History" rows={trackingRows} />
       <Section title="Ownership & Contacts" rows={ownerRows} />
       <Section title="Additional Charges" rows={chargesRows} />
       <Section title="Finalized Sale" rows={saleRows} />

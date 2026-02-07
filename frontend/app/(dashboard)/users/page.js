@@ -155,7 +155,7 @@ export default function UsersPage() {
                             { label: "Executive", value: "EXECUTIVE" },
                             { label: "Director", value: "DIRECTOR" },
                             { label: "Manager", value: "MANAGER" },
-                            { label: "Salesman", value: "SALESMAN" }
+                            { label: "Sales Executive", value: "SALESMAN" }
                         ]}
                         value={roleFilter}
                         onChange={(e) => setRoleFilter(e.target.value)}
@@ -219,7 +219,7 @@ export default function UsersPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex flex-wrap gap-1">
                                                 {(user.roles || []).map(role => (
-                                                    <RoleBadge key={role} role={role} />
+                                                    <RoleBadge key={role} role={role.replace("SALESMAN","SALES EXECUTIVE")} />
                                                 ))}
                                             </div>
                                         </td>

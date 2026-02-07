@@ -184,6 +184,9 @@ const getInventoryItems = async (req, res, next) => {
           project: {
             select: { name: true }
           },
+          createdBy: {
+            select: { name: true }
+          },
           _count: {
             select: { leads: true }
           }
@@ -244,7 +247,9 @@ const createInventoryItem = async (req, res, next) => {
         boundaryWalls: data.boundaryWalls !== undefined ? data.boundaryWalls : undefined,
         gatedColony: data.gatedColony !== undefined ? data.gatedColony : undefined,
         corner: data.corner !== undefined ? data.corner : undefined,
-        condition: data.condition || undefined
+        condition: data.condition || undefined,
+        images: data.images || [],
+        createdById: req.user.id
       }
     });
 
@@ -288,7 +293,8 @@ const updateInventoryItem = async (req, res, next) => {
         construction: data.construction !== undefined ? data.construction : undefined,
         boundaryWalls: data.boundaryWalls !== undefined ? data.boundaryWalls : undefined,
         gatedColony: data.gatedColony !== undefined ? data.gatedColony : undefined,
-        corner: data.corner !== undefined ? data.corner : undefined
+        corner: data.corner !== undefined ? data.corner : undefined,
+        images: data.images !== undefined ? data.images : undefined,
       }
     });
 
@@ -338,6 +344,9 @@ const getInventoryItemById = async (req, res, next) => {
       include: {
         project: {
           select: { name: true, location: true }
+        },
+        createdBy: {
+          select: { name: true }
         },
         leads: {
           select: {

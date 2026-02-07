@@ -64,12 +64,9 @@ export default function ForgotPassword() {
                         {!submitted ? (
                             <>
                                 <div className="text-center mb-10">
-                                    <div className="w-20 h-20 bg-brand-teal/10 text-brand-teal rounded-3xl flex items-center justify-center mx-auto mb-8 transform -rotate-6 hover:rotate-0 transition-all duration-500 shadow-lg shadow-brand-teal/5">
-                                        <HiFingerPrint size={40} />
-                                    </div>
-                                    <Heading level={2} className="text-4xl font-black text-brand-dark-gray tracking-tighter uppercase mb-3">Identity Recovery</Heading>
+                                    <Heading level={2} className="text-4xl font-black text-brand-dark-gray tracking-tighter uppercase mb-3">Forgot Password</Heading>
                                     <p className="text-brand-spanish-gray font-medium text-sm max-w-[280px] mx-auto leading-relaxed">
-                                        Initiate the secure override protocol by providing your registered access channel.
+                                        Reset your password by providing your registered email address.
                                     </p>
                                 </div>
 
@@ -87,14 +84,13 @@ export default function ForgotPassword() {
                                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-10 group">
                                     <div className="space-y-2">
                                         <Input
-                                            label="Access Email"
+                                            label="Registered Email Address"
                                             type="email"
-                                            placeholder="agent@nexus.kronus"
+                                            placeholder="user@kronusinfra.org"
                                             className="py-5! px-6! bg-gray-50/50 border-brand-spanish-gray/20 focus:border-brand-teal focus:ring-8 focus:ring-brand-teal/5 transition-all font-bold text-brand-dark-gray placeholder:text-brand-spanish-gray/50 rounded-xl"
                                             error={errors.email?.message}
                                             {...register("email")}
                                         />
-                                        <p className="text-[10px] font-black text-brand-spanish-gray uppercase tracking-widest pl-1 opacity-50">Authorized Personnel Only</p>
                                     </div>
 
                                     <div className="space-y-6 pt-4">
@@ -104,7 +100,7 @@ export default function ForgotPassword() {
                                             disabled={loading}
                                             className="py-6 font-black uppercase tracking-[0.25em] text-xs shadow-2xl shadow-brand-teal/30 bg-brand-teal hover:bg-brand-dark-gray transform active:scale-[0.97] transition-all duration-300 rounded-xl border-none"
                                         >
-                                            {loading ? "Decrypting..." : "Transmit Recovery Link"}
+                                            {loading ? "Sending Link..." : "Send Reset Link"}
                                         </Button>
                                         
                                         <Link 
@@ -112,7 +108,7 @@ export default function ForgotPassword() {
                                             className="flex items-center justify-center gap-2 text-brand-spanish-gray hover:text-brand-teal font-black uppercase text-[10px] tracking-[0.2em] transition-all group/back py-2"
                                         >
                                             <HiArrowLeft size={16} className="group-hover/back:-translate-x-1 transition-transform" />
-                                            Abort and Return to Nexus
+                                            Cancel and Return to Login
                                         </Link>
                                     </div>
                                 </form>
@@ -127,19 +123,19 @@ export default function ForgotPassword() {
                                     <HiCheckCircle size={56} className="animate-in zoom-in duration-700 fade-in" />
                                     <div className="absolute inset-0 rounded-full border-4 border-brand-yellow-green/20 animate-ping"></div>
                                 </div>
-                                <Heading level={2} className="text-4xl font-black text-brand-dark-gray tracking-tighter uppercase mb-4">Transmission Successful</Heading>
+                                <Heading level={2} className="text-4xl font-black text-brand-dark-gray tracking-tighter uppercase mb-4">Password Reset Successful</Heading>
                                 <p className="text-brand-spanish-gray font-medium text-sm leading-relaxed mb-12 max-w-[320px] mx-auto">
-                                    Secure recovery packets have been dispatched to your terminal. Check your communications channel for further instructions.
+                                    Check your email for further instructions.
                                 </p>
                                 <Link href="/login" className="block w-full">
                                     <Button fullWidth className="py-6 font-black uppercase tracking-[0.25em] text-xs bg-brand-dark-gray hover:bg-black transition-all shadow-xl rounded-xl">
-                                        Back to Operations
+                                        Back to Login
                                     </Button>
                                 </Link>
                                 <div className="mt-12 pt-8 border-t border-brand-spanish-gray/10">
                                     <p className="text-[10px] font-black text-brand-spanish-gray uppercase tracking-widest leading-loose">
-                                        Communication failure? <br />
-                                        <button onClick={() => setSubmitted(false)} className="text-brand-teal hover:text-brand-yellow-green transition-colors mt-2 underline-offset-4 underline">Re-initialize Transmission</button>
+                                        Didn't receive the email? <br />
+                                        <button onClick={() => setSubmitted(false)} className="text-brand-teal hover:text-brand-yellow-green transition-colors mt-2 underline-offset-4 underline">Send Reset Link Again</button>
                                     </p>
                                 </div>
                             </motion.div>

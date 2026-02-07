@@ -615,7 +615,15 @@ export default function LeadsPage() {
             <ExportModal 
                 isOpen={isExportOpen} 
                 onClose={() => setIsExportOpen(false)} 
-                data={leads} // For now exporting current view, can be expanded to fetch all matching results
+                currentData={leads}
+                filters={{
+                    search: debouncedSearch,
+                    status: statusFilter || undefined,
+                    source: sourceFilter || undefined,
+                    assignedToId: assignedToFilter || undefined,
+                    sortBy,
+                    sortOrder
+                }}
             />
         </div>
     );

@@ -7,6 +7,10 @@ import { useEffect } from "react";
 import Input from "@/src/components/ui/Input";
 import Select from "@/src/components/ui/Select";
 import Button from "@/src/components/ui/Button";
+import { useState } from "react";
+import { uploadFile } from "@/src/services/r2";
+import { HiCloudUpload, HiX, HiPhotograph } from "react-icons/hi";
+import { toast } from "react-hot-toast";
 
 const schema = z.object({
     projectId: z.string().min(1, "Project/Area is required"),
@@ -50,10 +54,14 @@ const schema = z.object({
 
     // Sold details if status is SOLD
     soldTo: z.string().optional(),
-    soldDate: z.string().optional()
+    soldDate: z.string().optional(),
+    images: z.array(z.string()).optional()
 });
 
 export default function InventoryForm({ initialData, onSubmit, loading, selectedProject, projects = [] }) {
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [uploading, setUploading] = useState(false);
+
     const {
         register,
         handleSubmit,
@@ -100,8 +108,36 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
     // This is a bit tricky as size is a string "200 sqyd". 
     // We'll leave it manual for now unless user asks.
 
-    const handleFormSubmit = (data) => {
-        onSubmit(data);
+    const handleFileSelect = (e) => {
+        if (e.target.files) {
+            const newFiles = Array.from(e.target.files);
+            setSelectedFiles((prev) => [...prev, ...newFiles]);
+        }
+    };
+
+    const removeFile = (index) => {
+        setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleFormSubmit = async (data) => {
+        try {
+            let uploadedImages = initialData?.images || [];
+            
+            if (selectedFiles.length > 0) {
+                setUploading(true);
+                const uploadPromises = selectedFiles.map(file => uploadFile(file));
+                const newImages = await Promise.all(uploadPromises);
+                uploadedImages = [...uploadedImages, ...newImages];
+                setUploading(false);
+            }
+
+            onSubmit({ ...data, images: uploadedImages });
+            setSelectedFiles([]);
+        } catch (error) {
+            console.error("Upload failed", error);
+            setUploading(false);
+            toast.error("Failed to upload images. Please try again.");
+        }
     };
 
     return (
@@ -334,13 +370,81 @@ export default function InventoryForm({ initialData, onSubmit, loading, selected
                 </section>
             )}
 
+            {/* Media Section */}
+            <section className="space-y-4 pt-2">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#009688] mb-2 border-b border-brand-spanish-gray/20 pb-1">Property Media</h4>
+                
+                {/* Existing Images Previews */}
+                {initialData?.images && initialData.images.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        {initialData.images.map((img, idx) => (
+                            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-gray-100 group">
+                                <img src={img} alt="Property" className="w-full h-full object-cover" />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const newImages = initialData.images.filter((_, i) => i !== idx);
+                                        setValue("images", newImages);
+                                    }}
+                                    className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                                >
+                                    <HiX size={20} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div className="relative group border-2 border-dashed border-brand-spanish-gray/30 rounded-lg p-6 text-center hover:border-[#009688] hover:bg-[#009688]/5 transition-all cursor-pointer overflow-hidden">
+                    <input
+                        type="file"
+                        multiple
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        onChange={handleFileSelect}
+                        accept="image/*"
+                    />
+                    <div className="flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center text-[#009688] group-hover:scale-110 transition-transform">
+                            <HiCloudUpload size={24} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-gray-900">Upload property photos</p>
+                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Drag & drop or click to browse</p>
+                        </div>
+                    </div>
+                </div>
+
+                {selectedFiles.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                        {selectedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-white border border-gray-100 rounded-lg shadow-sm">
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                    <HiPhotograph size={18} className="text-[#009688]" />
+                                    <p className="text-[10px] font-bold text-gray-900 truncate">{file.name}</p>
+                                </div>
+                                <button type="button" onClick={() => removeFile(index)} className="text-gray-400 hover:text-red-500">
+                                    <HiX size={16} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {uploading && (
+                    <div className="flex items-center justify-center gap-2 py-2 text-[#009688] animate-pulse">
+                        <div className="w-3 h-3 border-2 border-[#009688] border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Uploading Media...</span>
+                    </div>
+                )}
+            </section>
+
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-50">
                 <Button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || uploading}
                     className="bg-[#009688]! hover:bg-[#00796B]! w-full md:w-auto"
                 >
-                    {loading ? "Processing..." : initialData ? "Update Inventory" : "Add Inventory"}
+                    {loading || uploading ? "Processing..." : initialData ? "Update Inventory" : "Add Inventory"}
                 </Button>
             </div>
         </form>

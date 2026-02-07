@@ -53,10 +53,24 @@ const getLeads = async (req, res, next) => {
 
     // Non-admin users can only see their created or assigned leads
     if (!req.user.roles.includes(ROLES.ADMIN)) {
-      where.OR = [
-        { createdById: req.user.id },
-        { assignedToId: req.user.id },
-      ];
+      const associationFilter = {
+        OR: [
+          { createdById: req.user.id },
+          { assignedToId: req.user.id },
+        ],
+      };
+
+      if (where.OR) {
+        // If there's already an OR (from search), we need both to match
+        const searchOR = where.OR;
+        delete where.OR;
+        where.AND = [
+          { OR: searchOR },
+          associationFilter
+        ];
+      } else {
+        where.OR = associationFilter.OR;
+      }
     }
 
     // Get leads with pagination

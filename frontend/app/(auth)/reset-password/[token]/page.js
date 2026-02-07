@@ -76,12 +76,9 @@ export default function ResetPassword({ params }) {
                         {!success ? (
                             <>
                                 <div className="text-center mb-10">
-                                    <div className="w-20 h-20 bg-brand-yellow-green/10 text-brand-yellow-green rounded-3xl flex items-center justify-center mx-auto mb-8 transform rotate-6 hover:rotate-0 transition-all duration-500 shadow-lg">
-                                        <HiShieldCheck size={44} />
-                                    </div>
                                     <Heading level={2} className="text-4xl font-black text-brand-dark-gray tracking-tighter uppercase mb-4">Reset Credentials</Heading>
                                     <p className="text-brand-spanish-gray font-medium text-sm max-w-[300px] mx-auto leading-relaxed">
-                                        Establish a new secure access pattern for your Nexus account.
+                                        Enter a new password for your account.
                                     </p>
                                 </div>
 
@@ -122,12 +119,12 @@ export default function ResetPassword({ params }) {
                                             disabled={loading}
                                             className="py-6 font-black uppercase tracking-[0.25em] text-xs shadow-2xl shadow-brand-teal/20 bg-brand-teal hover:bg-brand-dark-gray transition-all duration-300 rounded-xl"
                                         >
-                                            {loading ? "Re-encrypting..." : "Update Credentials"}
+                                            {loading ? "Updating..." : "Update Credentials"}
                                         </Button>
 
                                         <div className="mt-8 text-center">
                                             <Link href="/login" className="text-[10px] font-black text-brand-spanish-gray uppercase tracking-widest hover:text-brand-teal transition-colors">
-                                                Return to Login Nexus
+                                                Return to Login
                                             </Link>
                                         </div>
                                     </div>
@@ -144,7 +141,7 @@ export default function ResetPassword({ params }) {
                                 </div>
                                 <Heading level={2} className="text-4xl font-black text-brand-dark-gray tracking-tighter uppercase mb-6">Reset Complete</Heading>
                                 <p className="text-brand-spanish-gray font-medium text-sm leading-relaxed mb-10 max-w-[320px] mx-auto">
-                                    Your secure access pattern has been updated successfully. Redirecting you to the Nexus Login...
+                                    Your password has been updated successfully. Redirecting you to the Login...
                                 </p>
                                 <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
                                     <motion.div

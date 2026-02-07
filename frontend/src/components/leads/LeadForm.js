@@ -155,7 +155,8 @@ export default function LeadForm({ initialData, onSubmit, loading }) {
   }, [initialData, reset, inventoryItems]);
 
   const userOptions = users.map(u => ({
-    label: `${u.name} (${u.roles[0]})`,
+    // label: `${u.name} (${u.roles[0]})`,
+    label: `${u.name}`,
     value: u.id
   }));
 
