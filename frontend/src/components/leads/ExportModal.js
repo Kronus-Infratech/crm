@@ -109,7 +109,7 @@ export default function ExportModal({ isOpen, onClose, currentData, filters }) {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Lead Export Intelligence">
+        <Modal isOpen={isOpen} onClose={onClose} title="Lead Export">
             <div className="p-1 max-h-[80vh] overflow-y-auto pr-2">
 
                 {/* Export Scope Selector */}

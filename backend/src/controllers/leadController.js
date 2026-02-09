@@ -51,13 +51,14 @@ const getLeads = async (req, res, next) => {
       }),
     };
 
-    // Non-admin users can only see their created or assigned leads
-    if (!req.user.roles.includes(ROLES.ADMIN)) {
+    // Privilege check: Admin, Executive, Director, and Manager see all leads
+    const privilegedRoles = [ROLES.ADMIN, ROLES.EXECUTIVE, ROLES.DIRECTOR, ROLES.MANAGER];
+    const isPrivileged = req.user.roles.some(role => privilegedRoles.includes(role));
+
+    if (!isPrivileged) {
+      // For non-privileged users (Salesmen, Finance, etc.), restrict to leads assigned to them
       const associationFilter = {
-        OR: [
-          { createdById: req.user.id },
-          { assignedToId: req.user.id },
-        ],
+        assignedToId: req.user.id
       };
 
       if (where.OR) {
@@ -69,7 +70,7 @@ const getLeads = async (req, res, next) => {
           associationFilter
         ];
       } else {
-        where.OR = associationFilter.OR;
+        where.assignedToId = req.user.id;
       }
     }
 
@@ -109,7 +110,7 @@ const getLeads = async (req, res, next) => {
     ]);
 
     // Filter financeNotes for non-authorized roles
-    const authorizedRoles = [ROLES.ADMIN, ROLES.EXECUTIVE, ROLES.DIRECTOR];
+    const authorizedRoles = [ROLES.ADMIN, ROLES.EXECUTIVE, ROLES.DIRECTOR, ROLES.MANAGER];
     const userRoles = req.user.roles || [];
     const isAuthorized = userRoles.some(role => authorizedRoles.includes(role));
 
@@ -187,20 +188,17 @@ const getLeadById = async (req, res, next) => {
     }
 
     // Filter financeNotes for non-authorized roles
-    const authorizedRoles = [ROLES.ADMIN, ROLES.EXECUTIVE, ROLES.DIRECTOR];
+    const privilegedRoles = [ROLES.ADMIN, ROLES.EXECUTIVE, ROLES.DIRECTOR, ROLES.MANAGER];
     const userRoles = req.user.roles || [];
-    const isAuthorized = userRoles.some(role => authorizedRoles.includes(role));
+    const isAuthorized = userRoles.some(role => privilegedRoles.includes(role));
 
     if (!isAuthorized) {
       delete lead.financeNotes;
     }
 
-    // Check access permission
-    if (
-      !req.user.roles.includes(ROLES.ADMIN) &&
-      lead.createdById !== req.user.id &&
-      lead.assignedToId !== req.user.id
-    ) {
+    // Check access permission: Only privileged roles can see any lead. 
+    // Others can only see leads assigned to them.
+    if (!isAuthorized && lead.assignedToId !== req.user.id) {
       return res.status(HTTP_STATUS.FORBIDDEN).json({
         success: false,
         message: 'You do not have permission to access this lead',
@@ -348,9 +346,9 @@ const updateLead = async (req, res, next) => {
     const { activityNote, documents, ...updateData } = req.body;
 
     // Filter financeNotes if passed in body by non-authorized roles
-    const authorizedRoles = [ROLES.ADMIN, ROLES.EXECUTIVE, ROLES.DIRECTOR];
+    const privilegedRoles = [ROLES.ADMIN, ROLES.EXECUTIVE, ROLES.DIRECTOR, ROLES.MANAGER];
     const userRoles = req.user.roles || [];
-    const isAuthorized = userRoles.some(role => authorizedRoles.includes(role));
+    const isAuthorized = userRoles.some(role => privilegedRoles.includes(role));
 
     if (!isAuthorized && updateData.financeNotes !== undefined) {
       delete updateData.financeNotes;
@@ -375,12 +373,9 @@ const updateLead = async (req, res, next) => {
       });
     }
 
-    // Check access permission
-    if (
-      !req.user.roles.includes(ROLES.ADMIN) &&
-      existingLead.createdById !== req.user.id &&
-      existingLead.assignedToId !== req.user.id
-    ) {
+    // Check access permission: Only privileged roles can update any lead. 
+    // Others can only update leads assigned to them.
+    if (!isAuthorized && existingLead.assignedToId !== req.user.id) {
       return res.status(HTTP_STATUS.FORBIDDEN).json({
         success: false,
         message: 'You do not have permission to update this lead',
