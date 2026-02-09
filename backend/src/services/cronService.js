@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const prisma = require('../config/database');
-const { sendFollowUpReminderEmail } = require('../utils/emailUtils');
+const { sendFollowUpReminderEmail, sendEmail } = require('../utils/emailUtils');
+const { getReportingData, generateReportPDF } = require('./reportService');
 
 /**
  * Initialize all scheduled tasks
@@ -26,6 +27,22 @@ const initCronJobs = () => {
   cron.schedule('30 9 * * *', async () => {
     console.log('Running 9:30 AM Cron: Checking for missed follow-ups...');
     await processMissedFollowUps();
+  }, {
+    timezone: "Asia/Kolkata"
+  });
+
+  // 4. Daily Organization Report: Every day at 7:00 PM (19:00)
+  cron.schedule('0 19 * * *', async () => {
+    console.log('Running 7 PM Cron: Generating Daily Organization Report...');
+    await sendAutomatedReport('Daily');
+  }, {
+    timezone: "Asia/Kolkata"
+  });
+
+  // 5. Weekly Organization Report: Every Monday at 8:00 PM (20:00)
+  cron.schedule('0 20 * * 1', async () => {
+    console.log('Running 8 PM Cron: Generating Weekly Organization Report...');
+    await sendAutomatedReport('Weekly');
   }, {
     timezone: "Asia/Kolkata"
   });
@@ -131,7 +148,7 @@ const processMissedFollowUps = async () => {
     for (const lead of missedLeads) {
       const salesmanName = lead.assignedTo?.name || 'Unassigned';
       const delayDays = Math.floor((new Date() - new Date(lead.followUpDate)) / (1000 * 60 * 60 * 24));
-      
+
       await sendCEONotificationEmail(
         lead.name,
         lead.id,
@@ -147,4 +164,68 @@ const processMissedFollowUps = async () => {
   }
 };
 
-module.exports = { initCronJobs };
+/**
+ * Generates and emails the report
+ * @param {string} type - 'Daily' or 'Weekly'
+ */
+const sendAutomatedReport = async (type) => {
+  try {
+    const now = new Date();
+    let startDate = new Date();
+
+    if (type === 'Daily') {
+      // From start of today
+      startDate.setHours(0, 0, 0, 0);
+    } else {
+      // From start of last 7 days (Monday report, end of week)
+      startDate.setDate(now.getDate() - 7);
+      startDate.setHours(0, 0, 0, 0);
+    }
+
+    const data = await getReportingData({ startDate, endDate: now });
+    const fullVectors = ['orgStats', 'rankings', 'agentMetrics', 'feedback'];
+    const pdfBuffer = await generateReportPDF(data, fullVectors);
+
+    const dateString = now.toISOString().split('T')[0];
+    const subject = `[KRONUS] ${type} Business Intelligence Report - ${dateString}`;
+
+    const html = `
+            <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                <h2 style="color: #009688;">Kronus Infratech & Consultants</h2>
+                <p>Sir,</p>
+                <p>Please find attached the <strong>${type} Business Intelligence Report</strong> for the period ending ${dateString}.</p>
+                <p>This report includes:</p>
+                <ul style="line-height: 1.6;">
+                    <li>Organization-wide conversion metrics</li>
+                    <li>Pipeline valuation</li>
+                    <li>Individual salesman performance breakdowns</li>
+                    <li>Customer satisfaction ratings</li>
+                </ul>
+                <p>The report is generated automatically by the Kronus CRM Intelligence Suite.</p>
+                <br>
+                <p style="font-size: 12px; color: #666; border-top: 1px solid #eee; padding-top: 10px;">
+                    © ${now.getFullYear()} Kronus Infratech & Consultants
+                </p>
+            </div>
+        `;
+
+    await sendEmail({
+      email: 'ceo@kronusinfra.org',
+      subject: subject,
+      html: html,
+      attachments: [
+        {
+          filename: `Kronus_${type}_Report_${dateString}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        }
+      ]
+    });
+
+    console.log(`[Cron] ${type} Report successfully sent to CEO.`);
+  } catch (error) {
+    console.error(`[Cron] Failed to process ${type} automated report:`, error.message);
+  }
+};
+
+module.exports = { initCronJobs, sendAutomatedReport };
