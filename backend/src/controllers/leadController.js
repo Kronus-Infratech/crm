@@ -577,10 +577,10 @@ const updateLead = async (req, res, next) => {
 
         // Send to CEO
         const salesmanName = lead.assignedTo?.name || lead.createdBy?.name || 'System';
-        const additionalInfo = updateData.status === 'CONVERTED' 
+        const additionalInfo = updateData.status === 'CONVERTED'
           ? `Lead converted successfully. Value: ${lead.budgetTo || 'N/A'}`
           : `Lead marked as NOT CONVERTED. Check activities for notes.`;
-        
+
         sendCEONotificationEmail(lead.name, lead.id, updateData.status, salesmanName, additionalInfo)
           .catch(err => console.error('Failed to send CEO email:', err));
 
@@ -777,15 +777,16 @@ const getLeadStats = async (req, res, next) => {
 
       // Calculate Performance per User (Team Metrics)
       performance = users.map(user => {
-        const totalAssigned = user.assignedLeads.length;
+        const historyTotal = user.assignedLeads.length;
+        const activeLeads = user.assignedLeads.filter(l => !['CONVERTED', 'NOT_CONVERTED'].includes(l.status)).length;
         const wonLeads = user.assignedLeads.filter(l => l.status === 'CONVERTED').length;
         const lostLeads = user.assignedLeads.filter(l => l.status === 'NOT_CONVERTED').length;
         const pipelineValue = user.assignedLeads
           .filter(l => !['CONVERTED', 'NOT_CONVERTED'].includes(l.status))
           .reduce((sum, l) => sum + (l.budgetTo || 0), 0);
 
-        const closeRate = totalAssigned > 0 ? ((wonLeads / totalAssigned) * 100).toFixed(1) : "0.0";
-        const loseRate = totalAssigned > 0 ? ((lostLeads / totalAssigned) * 100).toFixed(1) : "0.0";
+        const closeRate = historyTotal > 0 ? ((wonLeads / historyTotal) * 100).toFixed(1) : "0.0";
+        const loseRate = historyTotal > 0 ? ((lostLeads / historyTotal) * 100).toFixed(1) : "0.0";
 
 
         const ratedLeads = user.assignedLeads.filter(l => l.feedbackRating !== null);
@@ -795,7 +796,7 @@ const getLeadStats = async (req, res, next) => {
         return {
           userId: user.id,
           name: user.name,
-          totalLeads: totalAssigned,
+          totalLeads: activeLeads,
           wonLeads,
           lostLeads,
           closeRate,
