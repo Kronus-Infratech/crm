@@ -10,15 +10,31 @@ const { formatDate } = require('../utils/dateUtils');
  */
 const getReportingData = async (filters = {}) => {
     const { startDate, endDate, salesmanId } = filters;
-    const dateFilter = {};
-    if (startDate && endDate) {
-        dateFilter.createdAt = {
-            gte: new Date(startDate),
-            lte: new Date(endDate)
-        };
+
+    // Normalize dates to full days
+    let rangeStart = startDate ? new Date(startDate) : null;
+    let rangeEnd = endDate ? new Date(endDate) : null;
+    if (rangeStart) rangeStart.setHours(0, 0, 0, 0);
+    if (rangeEnd) rangeEnd.setHours(23, 59, 59, 999);
+
+    const now = new Date();
+
+    // Build highly inclusive filter to get all relevant leads in one pass
+    const leadWhere = {
+        OR: []
+    };
+
+    if (rangeStart && rangeEnd) {
+        leadWhere.OR.push({ createdAt: { gte: rangeStart, lte: rangeEnd } });
+        leadWhere.OR.push({ followUpDate: { gte: rangeStart, lte: rangeEnd } });
     }
 
-    const leadWhere = { ...dateFilter };
+    // Always include leads with future follow-ups for pipeline health metrics
+    leadWhere.OR.push({ followUpDate: { gt: now } });
+
+    // If no range, just get everything
+    if (leadWhere.OR.length === 0) delete leadWhere.OR;
+
     if (salesmanId && salesmanId !== 'all') {
         leadWhere.assignedToId = salesmanId;
     }
@@ -31,7 +47,8 @@ const getReportingData = async (filters = {}) => {
             budgetTo: true,
             feedbackRating: true,
             assignedToId: true,
-            createdAt: true
+            createdAt: true,
+            followUpDate: true
         }
     });
 
@@ -43,7 +60,7 @@ const getReportingData = async (filters = {}) => {
         userWhere.id = salesmanId;
     }
 
-    // Fetch all salesmen
+    // Fetch involved salesmen
     const salesmen = await prisma.user.findMany({
         where: userWhere,
         select: {
@@ -54,17 +71,30 @@ const getReportingData = async (filters = {}) => {
     });
 
     const processLeads = (leads) => {
-        const total = leads.length;
-        const won = leads.filter(l => l.status === 'CONVERTED').length;
-        const lost = leads.filter(l => l.status === 'NOT_CONVERTED').length;
-        const pipelineValue = leads
+        // 1. Growth Metrics: Based on leads CREATED in the period
+        const growthLeads = rangeStart && rangeEnd
+            ? leads.filter(l => l.createdAt >= rangeStart && l.createdAt <= rangeEnd)
+            : leads;
+
+        const total = growthLeads.length;
+        const won = growthLeads.filter(l => l.status === 'CONVERTED').length;
+        const lost = growthLeads.filter(l => l.status === 'NOT_CONVERTED').length;
+        const pipelineValue = growthLeads
             .filter(l => !['CONVERTED', 'NOT_CONVERTED'].includes(l.status))
             .reduce((sum, l) => sum + (l.budgetTo || 0), 0);
 
-        const ratedLeads = leads.filter(l => l.feedbackRating !== null);
+        const ratedLeads = growthLeads.filter(l => l.feedbackRating !== null);
         const avgRating = ratedLeads.length > 0
             ? (ratedLeads.reduce((sum, l) => sum + l.feedbackRating, 0) / ratedLeads.length).toFixed(1)
             : "N/A";
+
+        // 2. Activity Metrics: Based on ANY lead with a follow-up scheduled IN the period
+        const periodFollowUps = rangeStart && rangeEnd
+            ? leads.filter(l => l.followUpDate && new Date(l.followUpDate) >= rangeStart && new Date(l.followUpDate) <= rangeEnd).length
+            : leads.filter(l => l.followUpDate).length;
+
+        // 3. Pipeline Metrics: Based on ANY lead with a follow-up scheduled in the FUTURE (from now)
+        const futureFollowUps = leads.filter(l => l.followUpDate && new Date(l.followUpDate) > now).length;
 
         return {
             total,
@@ -73,7 +103,9 @@ const getReportingData = async (filters = {}) => {
             pipelineValue,
             closeRate: total > 0 ? ((won / total) * 100).toFixed(1) : "0.0",
             loseRate: total > 0 ? ((lost / total) * 100).toFixed(1) : "0.0",
-            avgRating
+            avgRating,
+            futureFollowUps,
+            periodFollowUps
         };
     };
 
@@ -90,8 +122,8 @@ const getReportingData = async (filters = {}) => {
     return {
         orgStats,
         salesmanStats,
-        generatedAt: new Date().toLocaleString(),
-        filterInfo: startDate && endDate ? `${formatDate(startDate)} to ${formatDate(endDate)}` : "Lifetime"
+        generatedAt: now.toLocaleString(),
+        filterInfo: rangeStart && rangeEnd ? `${formatDate(rangeStart)} to ${formatDate(rangeEnd)}` : "Lifetime"
     };
 };
 
@@ -112,14 +144,16 @@ const generateReportPDF = async (data, vectorList = []) => {
         feedback: vectorList.includes('feedback')
     };
 
-    // Use absolute path for logo
-    const logoPath = path.join(__dirname, '../../../frontend/public/logo.png');
+    // Fetch logo from frontend URL for maximum compatibility
     let logoBase64 = '';
+    const logoUrl = `${process.env.FRONTEND_URL}/logo.png`;
+
     try {
-        const logoBuffer = fs.readFileSync(logoPath);
-        logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+        const axios = require('axios');
+        const response = await axios.get(logoUrl, { responseType: 'arraybuffer' });
+        logoBase64 = `data:image/png;base64,${Buffer.from(response.data, 'binary').toString('base64')}`;
     } catch (err) {
-        console.error('Logo not found for PDF:', err.message);
+        console.error('Failed to fetch logo for PDF via HTTP:', err.message);
     }
 
     const htmlContent = `
@@ -317,6 +351,14 @@ const generateReportPDF = async (data, vectorList = []) => {
                     <div class="metric-value highlight">${data.orgStats.closeRate}%</div>
                 </div>
                 <div class="metric-card">
+                    <div class="metric-label">Follow-ups in Period</div>
+                    <div class="metric-value highlight">${data.orgStats.periodFollowUps}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Future Follow-ups</div>
+                    <div class="metric-value secondary">${data.orgStats.futureFollowUps}</div>
+                </div>
+                <div class="metric-card">
                     <div class="metric-label">Avg. Customer Rating</div>
                     <div class="metric-value warning">${data.orgStats.avgRating} ★</div>
                 </div>
@@ -331,7 +373,8 @@ const generateReportPDF = async (data, vectorList = []) => {
                         <th>Agent Name</th>
                         <th>Leads</th>
                         <th>Wins</th>
-                        <th>Losses</th>
+                        <th>Period F/U</th>
+                        <th>Total F/U</th>
                         <th>Win Rate</th>
                         <th>Rating</th>
                     </tr>
@@ -342,7 +385,8 @@ const generateReportPDF = async (data, vectorList = []) => {
                             <td style="font-weight: 700;">${s.name}</td>
                             <td>${s.total}</td>
                             <td style="color: #16a34a; font-weight: 700;">${s.won}</td>
-                            <td style="color: #dc2626;">${s.lost}</td>
+                            <td style="color: #009688;">${s.periodFollowUps}</td>
+                            <td style="color: #8dc63f;">${s.futureFollowUps}</td>
                             <td style="font-weight: 700;">${s.closeRate}%</td>
                             <td style="color: #fbb03b;">${s.avgRating} ★</td>
                         </tr>
@@ -390,6 +434,14 @@ const generateReportPDF = async (data, vectorList = []) => {
                     <div class="metric-card">
                         <div class="metric-label">Pipeline Value</div>
                         <div class="metric-value secondary">₹${s.pipelineValue.toLocaleString()}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Follow-ups in Period</div>
+                        <div class="metric-value highlight">${s.periodFollowUps}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Future Follow-ups</div>
+                        <div class="metric-value highlight">${s.futureFollowUps}</div>
                     </div>
                     ${vectors.feedback ? `
                     <div class="metric-card">

@@ -30,9 +30,9 @@ export default function ReportsPage() {
 
     const fetchSalesmen = async () => {
         try {
-            const response = await axios.get("/users");
+            const response = await axios.get("/users?limit=100");
             // Filter only salesmen
-            const list = response.data.data.filter(u => u.roles.includes("SALESMAN"));
+            const list = response.data.data.users.filter(u => u.roles.includes("SALESMAN"));
             setSalesmen(list);
         } catch (error) {
             console.error("Failed to fetch salesmen:", error);
