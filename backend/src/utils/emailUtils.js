@@ -18,24 +18,21 @@ const createTransporter = () => {
   const config = {
     host: host,
     port: port,
-    secure: isSecure, // true for 465, false for other ports
-    pool: true,
-    maxConnections: 3,
-    maxMessages: 100,
+    secure: isSecure, // true for 465, false for 587
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD || process.env.EMAIL_PASS,
     },
-    // Strict timeouts for cloud environments
-    connectionTimeout: 15000, // 15 seconds
-    greetingTimeout: 15000,
-    socketTimeout: 45000,
-    // TLS settings for better compatibility
+    // Use standard timeouts
+    connectionTimeout: 20000, 
+    greetingTimeout: 20000,
+    socketTimeout: 30000,
+    // Modern TLS settings
     tls: {
-      rejectUnauthorized: false, // Helps with some cloud proxy setups
-      ciphers: 'SSLv3'
+      rejectUnauthorized: false,
+      // Removed SSLv3 ciphers as they are blocked by Gmail/modern servers
     },
-    debug: true, // Always on for now to help the user via logs
+    debug: true, 
     logger: true,
   };
 
