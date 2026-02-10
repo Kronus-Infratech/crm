@@ -9,32 +9,48 @@ const emailQueueService = require('../services/emailQueueService');
  * Create email transporter
  */
 const createTransporter = () => {
+  const isGmail = process.env.EMAIL_USER?.endsWith('@gmail.com') || process.env.EMAIL_HOST?.includes('google');
+  
   const config = {
+    pool: true, // Use connection pooling
+    maxConnections: 3,
+    maxMessages: 100,
+    rateDelta: 1000,
+    rateLimit: 1, 
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD || process.env.EMAIL_PASS,
     },
+    // Add timeouts
+    connectionTimeout: 10000, 
+    greetingTimeout: 10000,
+    socketTimeout: 30000,
+    // Debugging
+    debug: process.env.NODE_ENV !== 'production',
+    logger: process.env.NODE_ENV !== 'production',
   };
 
-  // If using Gmail, 'service' is more reliable than manual host/port
-  if (process.env.EMAIL_USER?.endsWith('@gmail.com') || process.env.EMAIL_HOST?.includes('google')) {
+  if (isGmail) {
+    // For Gmail, we can use service OR explicit host/port. 
+    // Sometimes 465 is more reliable on cloud providers.
     config.service = 'gmail';
   } else {
     config.host = process.env.EMAIL_HOST;
-    config.port = process.env.EMAIL_PORT;
-    config.secure = process.env.EMAIL_PORT == 465;
+    config.port = parseInt(process.env.EMAIL_PORT);
+    config.secure = config.port === 465;
   }
 
   return nodemailer.createTransport(config);
 };
+
+// Singleton transporter
+const transporter = createTransporter();
 
 /**
  * Internal function to actually perform the sending
  * @param {object} options - Email options
  */
 const performSendEmail = async (options) => {
-  const transporter = createTransporter();
-
   const message = {
     from: `${options.fromName || 'Kronus Infratech & Consultants'} <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
     to: options.email,
@@ -56,6 +72,10 @@ emailQueueService.registerSendFunction(performSendEmail);
  * @param {object} options - Email options
  */
 const sendEmail = async (options) => {
+  if (!options.email) {
+    console.error('[EmailService] Attempted to send email but recipient address (options.email) is missing!', options.subject);
+    return { queued: false, error: 'Recipient address missing' };
+  }
   // Add to queue and return immediately (async)
   await emailQueueService.add(options);
   return { queued: true };
