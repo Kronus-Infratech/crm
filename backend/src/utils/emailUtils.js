@@ -10,26 +10,27 @@ const emailQueueService = require('../services/emailQueueService');
  */
 const createTransporter = () => {
   const host = (process.env.EMAIL_HOST).trim();
-  const port = parseInt(process.env.EMAIL_PORT?.trim());
+  const port = parseInt(process.env.EMAIL_PORT);
   const user = process.env.EMAIL_USER?.trim();
   const pass = (process.env.EMAIL_PASSWORD || process.env.EMAIL_PASS)?.trim();
+  
+  // Secure: true for 465 (Direct SSL), false for 587 (STARTTLS)
   const isSecure = port === 465;
 
-  console.log(`[EmailService] Initializing transporter: ${host}:${port} (Secure: ${isSecure})`);
+  console.log(`[EmailService] Connection Attempt: ${host}:${port} (Secure: ${isSecure})`);
 
   const config = {
-    host: host,
-    port: port,
+    host,
+    port,
     secure: isSecure,
     auth: {
       user: user,
       pass: pass,
     },
-    // Cloud-optimized connectivity
-    connectionTimeout: 30000, // 30s
-    greetingTimeout: 30000,
+    // Extensive timeouts for cloud network jumps
+    connectionTimeout: 45000, 
+    greetingTimeout: 45000,
     socketTimeout: 60000,
-    // Helping Gmail/Railway handshake
     tls: {
       rejectUnauthorized: false,
       minVersion: 'TLSv1.2'
@@ -38,8 +39,9 @@ const createTransporter = () => {
     logger: true,
   };
 
-  // If using Gmail, 'service' adds internal logic for cloud proxies
-  if (user?.endsWith('@gmail.com') || host.includes('google') || host.includes('gmail')) {
+  // IMPORTANT: For Port 587, you typically need to NOT use service: 'gmail' 
+  // because that helper forces port 465. Only use it for SSL port.
+  if (isSecure && (user?.endsWith('@gmail.com') || host.includes('google'))) {
     config.service = 'gmail';
   }
 
