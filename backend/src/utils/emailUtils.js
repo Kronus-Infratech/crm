@@ -9,8 +9,10 @@ const emailQueueService = require('../services/emailQueueService');
  * Create email transporter
  */
 const createTransporter = () => {
-  const host = process.env.EMAIL_HOST;
-  const port = parseInt(process.env.EMAIL_PORT);
+  const host = (process.env.EMAIL_HOST).trim();
+  const port = parseInt(process.env.EMAIL_PORT?.trim());
+  const user = process.env.EMAIL_USER?.trim();
+  const pass = (process.env.EMAIL_PASSWORD || process.env.EMAIL_PASS)?.trim();
   const isSecure = port === 465;
 
   console.log(`[EmailService] Initializing transporter: ${host}:${port} (Secure: ${isSecure})`);
@@ -18,23 +20,28 @@ const createTransporter = () => {
   const config = {
     host: host,
     port: port,
-    secure: isSecure, // true for 465, false for 587
+    secure: isSecure,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD || process.env.EMAIL_PASS,
+      user: user,
+      pass: pass,
     },
-    // Use standard timeouts
-    connectionTimeout: 20000, 
-    greetingTimeout: 20000,
-    socketTimeout: 30000,
-    // Modern TLS settings
+    // Cloud-optimized connectivity
+    connectionTimeout: 30000, // 30s
+    greetingTimeout: 30000,
+    socketTimeout: 60000,
+    // Helping Gmail/Railway handshake
     tls: {
       rejectUnauthorized: false,
-      // Removed SSLv3 ciphers as they are blocked by Gmail/modern servers
+      minVersion: 'TLSv1.2'
     },
-    debug: true, 
+    debug: true,
     logger: true,
   };
+
+  // If using Gmail, 'service' adds internal logic for cloud proxies
+  if (user?.endsWith('@gmail.com') || host.includes('google') || host.includes('gmail')) {
+    config.service = 'gmail';
+  }
 
   return nodemailer.createTransport(config);
 };
