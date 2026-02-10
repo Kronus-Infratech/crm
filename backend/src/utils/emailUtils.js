@@ -9,36 +9,35 @@ const emailQueueService = require('../services/emailQueueService');
  * Create email transporter
  */
 const createTransporter = () => {
-  const isGmail = process.env.EMAIL_USER?.endsWith('@gmail.com') || process.env.EMAIL_HOST?.includes('google');
-  
+  const host = process.env.EMAIL_HOST;
+  const port = parseInt(process.env.EMAIL_PORT);
+  const isSecure = port === 465;
+
+  console.log(`[EmailService] Initializing transporter: ${host}:${port} (Secure: ${isSecure})`);
+
   const config = {
-    pool: true, // Use connection pooling
+    host: host,
+    port: port,
+    secure: isSecure, // true for 465, false for other ports
+    pool: true,
     maxConnections: 3,
     maxMessages: 100,
-    rateDelta: 1000,
-    rateLimit: 1, 
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD || process.env.EMAIL_PASS,
     },
-    // Add timeouts
-    connectionTimeout: 10000, 
-    greetingTimeout: 10000,
-    socketTimeout: 30000,
-    // Debugging
-    debug: process.env.NODE_ENV !== 'production',
-    logger: process.env.NODE_ENV !== 'production',
+    // Strict timeouts for cloud environments
+    connectionTimeout: 15000, // 15 seconds
+    greetingTimeout: 15000,
+    socketTimeout: 45000,
+    // TLS settings for better compatibility
+    tls: {
+      rejectUnauthorized: false, // Helps with some cloud proxy setups
+      ciphers: 'SSLv3'
+    },
+    debug: true, // Always on for now to help the user via logs
+    logger: true,
   };
-
-  if (isGmail) {
-    // For Gmail, we can use service OR explicit host/port. 
-    // Sometimes 465 is more reliable on cloud providers.
-    config.service = 'gmail';
-  } else {
-    config.host = process.env.EMAIL_HOST;
-    config.port = parseInt(process.env.EMAIL_PORT);
-    config.secure = config.port === 465;
-  }
 
   return nodemailer.createTransport(config);
 };
