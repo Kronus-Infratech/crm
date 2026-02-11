@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
+const chromium = require('@sparticuz/chromium');
 const path = require('path');
 const fs = require('fs');
 const { ROLES } = require('../config/constants');
@@ -140,17 +141,19 @@ const generateReportPDF = async (data, vectorList = []) => {
     let browser;
     try {
         console.log(`[ReportGenerator] Launching Puppeteer from CWD: ${process.cwd()}`);
-        browser = await puppeteer.launch({
-            headless: true,
+        
+        // Determine if we are in a production environment (like Railway) or local
+        const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+        
+        const launchConfig = {
+            args: isProduction ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
+            defaultViewport: chromium.defaultViewport,
+            executablePath: isProduction ? await chromium.executablePath() : (process.env.PUPPETEER_EXECUTABLE_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'),
+            headless: isProduction ? chromium.headless : true,
             timeout: 60000,
-            ...(process.env.PUPPETEER_EXECUTABLE_PATH ? { executablePath: process.env.PUPPETEER_EXECUTABLE_PATH } : {}),
-            args: [
-                '--no-sandbox', 
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--font-render-hinting=none'
-            ]
-        });
+        };
+
+        browser = await puppeteer.launch(launchConfig);
     } catch (err) {
         console.error('Puppeteer launch failed:', err.message);
         throw new Error(`Failed to start report generator: ${err.message}`);
