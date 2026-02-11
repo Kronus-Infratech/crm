@@ -152,4 +152,34 @@ process.on('SIGTERM', async () => {
   });
 });
 
+// Test SMTP connectivity
+const net = require('net');
+
+function testSMTPConnection() {
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection(587, 'smtp.gmail.com');
+    
+    socket.on('connect', () => {
+      console.log('✅ SMTP port 587 is accessible');
+      socket.destroy();
+      resolve(true);
+    });
+    
+    socket.on('error', (err) => {
+      console.error('❌ SMTP connection failed:', err.message);
+      socket.destroy();
+      reject(err);
+    });
+    
+    socket.setTimeout(10000, () => {
+      console.error('❌ SMTP connection timeout');
+      socket.destroy();
+      reject(new Error('Connection timeout'));
+    });
+  });
+}
+
+// Run on startup
+testSMTPConnection().catch(console.error);
+
 module.exports = app;
