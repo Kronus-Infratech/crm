@@ -139,8 +139,10 @@ const getReportingData = async (filters = {}) => {
 const generateReportPDF = async (data, vectorList = []) => {
     let browser;
     try {
+        console.log(`[ReportGenerator] Launching Puppeteer from CWD: ${process.cwd()}`);
         browser = await puppeteer.launch({
             headless: true,
+            timeout: 60000,
             ...(process.env.PUPPETEER_EXECUTABLE_PATH ? { executablePath: process.env.PUPPETEER_EXECUTABLE_PATH } : {}),
             args: [
                 '--no-sandbox', 
