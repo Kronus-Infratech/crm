@@ -19,7 +19,7 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "seed": "node prisma/seed.mjs",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate && npx puppeteer browsers install chrome"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"

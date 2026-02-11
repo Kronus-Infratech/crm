@@ -9,133 +9,151 @@ const { formatDate } = require('../utils/dateUtils');
  * Aggregates reporting data based on filters
  */
 const getReportingData = async (filters = {}) => {
-    const { startDate, endDate, salesmanId } = filters;
+    try {
+        const { startDate, endDate, salesmanId } = filters;
+        
+        // Normalize dates to full days
+        let rangeStart = startDate ? new Date(startDate) : null;
+        let rangeEnd = endDate ? new Date(endDate) : null;
+        if (rangeStart) rangeStart.setHours(0, 0, 0, 0);
+        if (rangeEnd) rangeEnd.setHours(23, 59, 59, 999);
 
-    // Normalize dates to full days
-    let rangeStart = startDate ? new Date(startDate) : null;
-    let rangeEnd = endDate ? new Date(endDate) : null;
-    if (rangeStart) rangeStart.setHours(0, 0, 0, 0);
-    if (rangeEnd) rangeEnd.setHours(23, 59, 59, 999);
-
-    const now = new Date();
+        const now = new Date();
 
     // Build highly inclusive filter to get all relevant leads in one pass
-    const leadWhere = {
-        OR: []
-    };
+        const leadWhere = {
+            OR: []
+        };
 
-    if (rangeStart && rangeEnd) {
-        leadWhere.OR.push({ createdAt: { gte: rangeStart, lte: rangeEnd } });
-        leadWhere.OR.push({ followUpDate: { gte: rangeStart, lte: rangeEnd } });
-    }
-
+        if (rangeStart && rangeEnd) {
+            leadWhere.OR.push({ createdAt: { gte: rangeStart, lte: rangeEnd } });
+            leadWhere.OR.push({ followUpDate: { gte: rangeStart, lte: rangeEnd } });
+        }
+        
     // Always include leads with future follow-ups for pipeline health metrics
-    leadWhere.OR.push({ followUpDate: { gt: now } });
+        leadWhere.OR.push({ followUpDate: { gt: now } });
 
     // If no range, just get everything
-    if (leadWhere.OR.length === 0) delete leadWhere.OR;
+        if (leadWhere.OR.length === 0) delete leadWhere.OR;
 
-    if (salesmanId && salesmanId !== 'all') {
-        leadWhere.assignedToId = salesmanId;
-    }
+        if (salesmanId && salesmanId !== 'all' && salesmanId) {
+            leadWhere.assignedToId = salesmanId;
+        }
 
     // Fetch all relevant leads
-    const allLeads = await prisma.lead.findMany({
-        where: leadWhere,
-        select: {
-            status: true,
-            budgetTo: true,
-            feedbackRating: true,
-            assignedToId: true,
-            createdAt: true,
-            followUpDate: true
-        }
-    });
+        const allLeads = await prisma.lead.findMany({
+            where: leadWhere,
+            select: {
+                status: true,
+                budgetTo: true,
+                feedbackRating: true,
+                assignedToId: true,
+                createdAt: true,
+                followUpDate: true
+            }
+        });
 
-    const userWhere = {
-        roles: { hasSome: [ROLES.SALESMAN] },
-        isActive: true
-    };
-    if (salesmanId && salesmanId !== 'all') {
-        userWhere.id = salesmanId;
-    }
+        const userWhere = {
+            roles: { hasSome: [ROLES.SALESMAN] },
+            isActive: true
+        };
+        if (salesmanId && salesmanId !== 'all' && salesmanId) {
+            userWhere.id = salesmanId;
+        }
 
     // Fetch involved salesmen
-    const salesmen = await prisma.user.findMany({
-        where: userWhere,
-        select: {
-            id: true,
-            name: true,
-            email: true
-        }
-    });
+        const salesmen = await prisma.user.findMany({
+            where: userWhere,
+            select: {
+                id: true,
+                name: true,
+                email: true
+            }
+        });
 
-    const processLeads = (leads) => {
+        const processLeads = (leads) => {
         // 1. Growth Metrics: Based on leads CREATED in the period
-        const growthLeads = rangeStart && rangeEnd
-            ? leads.filter(l => l.createdAt >= rangeStart && l.createdAt <= rangeEnd)
-            : leads;
+            const growthLeads = rangeStart && rangeEnd
+                ? leads.filter(l => l.createdAt >= rangeStart && l.createdAt <= rangeEnd)
+                : leads;
 
-        const total = growthLeads.length;
-        const won = growthLeads.filter(l => l.status === 'CONVERTED').length;
-        const lost = growthLeads.filter(l => l.status === 'NOT_CONVERTED').length;
-        const pipelineValue = growthLeads
-            .filter(l => !['CONVERTED', 'NOT_CONVERTED'].includes(l.status))
-            .reduce((sum, l) => sum + (l.budgetTo || 0), 0);
+            const total = growthLeads.length;
+            const won = growthLeads.filter(l => l.status === 'CONVERTED').length;
+            const lost = growthLeads.filter(l => l.status === 'NOT_CONVERTED').length;
+            const pipelineValue = growthLeads
+                .filter(l => !['CONVERTED', 'NOT_CONVERTED'].includes(l.status))
+                .reduce((sum, l) => sum + (l.budgetTo || 0), 0);
 
         // Feedback calculation
-        const ratedLeads = growthLeads.filter(l => l.feedbackRating !== null);
-        const avgRatingValue = ratedLeads.length > 0
-            ? (ratedLeads.reduce((sum, l) => sum + l.feedbackRating, 0) / ratedLeads.length).toFixed(1)
-            : "N/A";
+            const ratedLeads = growthLeads.filter(l => l.feedbackRating !== null);
+            const avgRatingValue = ratedLeads.length > 0
+                ? (ratedLeads.reduce((sum, l) => sum + l.feedbackRating, 0) / ratedLeads.length).toFixed(1)
+                : "N/A";
 
         // 2. Activity Metrics: Based on ANY lead with a follow-up scheduled IN the period
-        const periodFollowUps = rangeStart && rangeEnd
-            ? leads.filter(l => l.followUpDate && new Date(l.followUpDate) >= rangeStart && new Date(l.followUpDate) <= rangeEnd).length
-            : leads.filter(l => l.followUpDate).length;
+            const periodFollowUps = rangeStart && rangeEnd
+                ? leads.filter(l => l.followUpDate && new Date(l.followUpDate) >= rangeStart && new Date(l.followUpDate) <= rangeEnd).length
+                : leads.filter(l => l.followUpDate).length;
 
         // 3. Pipeline Metrics: Based on ANY lead with a follow-up scheduled in the FUTURE (from now)
-        const futureFollowUps = leads.filter(l => l.followUpDate && new Date(l.followUpDate) > now).length;
+            const futureFollowUps = leads.filter(l => l.followUpDate && new Date(l.followUpDate) > now).length;
+
+            return {
+                total,
+                won,
+                lost,
+                pipelineValue,
+                closeRate: total > 0 ? ((won / total) * 100).toFixed(1) : "0.0",
+                loseRate: total > 0 ? ((lost / total) * 100).toFixed(1) : "0.0",
+                avgRating: avgRatingValue,
+                futureFollowUps,
+                periodFollowUps
+            };
+        };
+
+        const orgStats = processLeads(allLeads);
+        const salesmanStats = salesmen.map(s => {
+            const userLeads = allLeads.filter(l => l.assignedToId === s.id);
+            return {
+                name: s.name,
+                email: s.email,
+                ...processLeads(userLeads)
+            };
+        }).sort((a, b) => b.total - a.total);
 
         return {
-            total,
-            won,
-            lost,
-            pipelineValue,
-            closeRate: total > 0 ? ((won / total) * 100).toFixed(1) : "0.0",
-            loseRate: total > 0 ? ((lost / total) * 100).toFixed(1) : "0.0",
-            avgRating: avgRatingValue,
-            futureFollowUps,
-            periodFollowUps
+            orgStats,
+            salesmanStats,
+            generatedAt: now.toLocaleString(),
+            filterInfo: rangeStart && rangeEnd ? `${formatDate(rangeStart)} to ${formatDate(rangeEnd)}` : "Lifetime"
         };
-    };
-
-    const orgStats = processLeads(allLeads);
-    const salesmanStats = salesmen.map(s => {
-        const userLeads = allLeads.filter(l => l.assignedToId === s.id);
-        return {
-            name: s.name,
-            email: s.email,
-            ...processLeads(userLeads)
-        };
-    }).sort((a, b) => b.total - a.total);
-
-    return {
-        orgStats,
-        salesmanStats,
-        generatedAt: now.toLocaleString(),
-        filterInfo: rangeStart && rangeEnd ? `${formatDate(rangeStart)} to ${formatDate(rangeEnd)}` : "Lifetime"
-    };
+    } catch (error) {
+        console.error('Error in getReportingData:', error);
+        throw error;
+    }
 };
 
 /**
  * Generates PDF buffer using Puppeteer
  */
 const generateReportPDF = async (data, vectorList = []) => {
-    const browser = await puppeteer.launch({
-        headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    let browser;
+    try {
+        browser = await puppeteer.launch({
+            headless: true,
+            ...(process.env.PUPPETEER_EXECUTABLE_PATH ? { executablePath: process.env.PUPPETEER_EXECUTABLE_PATH } : {}),
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--font-render-hinting=none'
+            ]
+        });
+    } catch (err) {
+        console.error('Puppeteer launch failed:', err.message);
+        throw new Error(`Failed to start report generator: ${err.message}`);
+    }
+
     const page = await browser.newPage();
 
     const vectors = {

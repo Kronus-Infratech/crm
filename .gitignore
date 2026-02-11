@@ -1,1 +1,10 @@
 .DS_Store
+node_modules/
+.env
+dist/
+build/
+.next/
+.cache/
+backend/.cache/
+frontend/.cache/
+*.log
