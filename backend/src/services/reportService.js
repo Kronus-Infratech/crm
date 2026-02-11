@@ -12,7 +12,7 @@ const { formatDate } = require('../utils/dateUtils');
 const getReportingData = async (filters = {}) => {
     try {
         const { startDate, endDate, salesmanId } = filters;
-        
+
         // Normalize dates to full days
         let rangeStart = startDate ? new Date(startDate) : null;
         let rangeEnd = endDate ? new Date(endDate) : null;
@@ -21,7 +21,7 @@ const getReportingData = async (filters = {}) => {
 
         const now = new Date();
 
-    // Build highly inclusive filter to get all relevant leads in one pass
+        // Build highly inclusive filter to get all relevant leads in one pass
         const leadWhere = {
             OR: []
         };
@@ -30,18 +30,18 @@ const getReportingData = async (filters = {}) => {
             leadWhere.OR.push({ createdAt: { gte: rangeStart, lte: rangeEnd } });
             leadWhere.OR.push({ followUpDate: { gte: rangeStart, lte: rangeEnd } });
         }
-        
-    // Always include leads with future follow-ups for pipeline health metrics
+
+        // Always include leads with future follow-ups for pipeline health metrics
         leadWhere.OR.push({ followUpDate: { gt: now } });
 
-    // If no range, just get everything
+        // If no range, just get everything
         if (leadWhere.OR.length === 0) delete leadWhere.OR;
 
         if (salesmanId && salesmanId !== 'all' && salesmanId) {
             leadWhere.assignedToId = salesmanId;
         }
 
-    // Fetch all relevant leads
+        // Fetch all relevant leads
         const allLeads = await prisma.lead.findMany({
             where: leadWhere,
             select: {
@@ -62,7 +62,7 @@ const getReportingData = async (filters = {}) => {
             userWhere.id = salesmanId;
         }
 
-    // Fetch involved salesmen
+        // Fetch involved salesmen
         const salesmen = await prisma.user.findMany({
             where: userWhere,
             select: {
@@ -73,7 +73,7 @@ const getReportingData = async (filters = {}) => {
         });
 
         const processLeads = (leads) => {
-        // 1. Growth Metrics: Based on leads CREATED in the period
+            // 1. Growth Metrics: Based on leads CREATED in the period
             const growthLeads = rangeStart && rangeEnd
                 ? leads.filter(l => l.createdAt >= rangeStart && l.createdAt <= rangeEnd)
                 : leads;
@@ -85,18 +85,18 @@ const getReportingData = async (filters = {}) => {
                 .filter(l => !['CONVERTED', 'NOT_CONVERTED'].includes(l.status))
                 .reduce((sum, l) => sum + (l.budgetTo || 0), 0);
 
-        // Feedback calculation
+            // Feedback calculation
             const ratedLeads = growthLeads.filter(l => l.feedbackRating !== null);
             const avgRatingValue = ratedLeads.length > 0
                 ? (ratedLeads.reduce((sum, l) => sum + l.feedbackRating, 0) / ratedLeads.length).toFixed(1)
                 : "N/A";
 
-        // 2. Activity Metrics: Based on ANY lead with a follow-up scheduled IN the period
+            // 2. Activity Metrics: Based on ANY lead with a follow-up scheduled IN the period
             const periodFollowUps = rangeStart && rangeEnd
                 ? leads.filter(l => l.followUpDate && new Date(l.followUpDate) >= rangeStart && new Date(l.followUpDate) <= rangeEnd).length
                 : leads.filter(l => l.followUpDate).length;
 
-        // 3. Pipeline Metrics: Based on ANY lead with a follow-up scheduled in the FUTURE (from now)
+            // 3. Pipeline Metrics: Based on ANY lead with a follow-up scheduled in the FUTURE (from now)
             const futureFollowUps = leads.filter(l => l.followUpDate && new Date(l.followUpDate) > now).length;
 
             return {
@@ -141,10 +141,10 @@ const generateReportPDF = async (data, vectorList = []) => {
     let browser;
     try {
         console.log(`[ReportGenerator] Launching Puppeteer from CWD: ${process.cwd()}`);
-        
-        // Determine if we are in a production environment (like Railway) or local
-        const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
-        
+
+        // Determine if we are in a production environment (Railway, Vercel, etc.) or local
+        const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT || process.env.VERCEL;
+
         const launchConfig = {
             args: isProduction ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
             defaultViewport: chromium.defaultViewport,
@@ -160,6 +160,9 @@ const generateReportPDF = async (data, vectorList = []) => {
     }
 
     const page = await browser.newPage();
+
+    // Optimization: Disable JS for a static PDF to speed up rendering and prevent navigation hangs
+    await page.setJavaScriptEnabled(false);
 
     const vectors = {
         orgStats: vectorList.includes('orgStats'),
@@ -189,7 +192,7 @@ const generateReportPDF = async (data, vectorList = []) => {
             @page { size: A4; margin: 0; }
             * { box-sizing: border-box; }
             body { 
-                font-family: 'Inter', sans-serif; 
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; 
                 margin: 0; 
                 padding: 0; 
                 color: #1e293b;
