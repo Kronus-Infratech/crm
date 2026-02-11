@@ -83,8 +83,9 @@ const getReportingData = async (filters = {}) => {
             .filter(l => !['CONVERTED', 'NOT_CONVERTED'].includes(l.status))
             .reduce((sum, l) => sum + (l.budgetTo || 0), 0);
 
+        // Feedback calculation
         const ratedLeads = growthLeads.filter(l => l.feedbackRating !== null);
-        const avgRating = ratedLeads.length > 0
+        const avgRatingValue = ratedLeads.length > 0
             ? (ratedLeads.reduce((sum, l) => sum + l.feedbackRating, 0) / ratedLeads.length).toFixed(1)
             : "N/A";
 
@@ -103,7 +104,7 @@ const getReportingData = async (filters = {}) => {
             pipelineValue,
             closeRate: total > 0 ? ((won / total) * 100).toFixed(1) : "0.0",
             loseRate: total > 0 ? ((lost / total) * 100).toFixed(1) : "0.0",
-            avgRating,
+            avgRating: avgRatingValue,
             futureFollowUps,
             periodFollowUps
         };
