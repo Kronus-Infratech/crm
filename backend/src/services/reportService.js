@@ -138,9 +138,11 @@ const getReportingData = async (filters = {}) => {
  * Generates PDF buffer using jsPDF
  */
 const generateReportPDF = async (data, vectorList = []) => {
-    console.log(`[ReportGenerator] Generating PDF using jsPDF...`);
-
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+
     const vectors = {
         orgStats: vectorList.includes('orgStats'),
         rankings: vectorList.includes('rankings'),
@@ -148,183 +150,174 @@ const generateReportPDF = async (data, vectorList = []) => {
         feedback: vectorList.includes('feedback')
     };
 
-    // Helper for center-aligned text
-    const centerText = (text, y, fontSize = 12, color = [30, 41, 59]) => {
-        doc.setFontSize(fontSize);
-        doc.setTextColor(color[0], color[1], color[2]);
-        const textWidth = doc.getTextWidth(text);
-        const x = (doc.internal.pageSize.getWidth() - textWidth) / 2;
-        doc.text(text, x, y);
-    };
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    // Add Logo (LEFT aligned)
-    const logoUrl = `${process.env.FRONTEND_URL}/logo.png`;
+    // --- Pre-fetch Logo (fetch once, use everywhere) ---
+    let logoBase64 = null;
     try {
         const axios = require('axios');
-        const response = await axios.get(logoUrl, { responseType: 'arraybuffer' });
-        const logoBase64 = Buffer.from(response.data, 'binary').toString('base64');
-        doc.addImage(logoBase64, 'PNG', 15, 10, 70, 20); // x, y, width, height
+        const response = await axios.get(`${process.env.FRONTEND_URL}/logo.png`, { responseType: 'arraybuffer' });
+        logoBase64 = Buffer.from(response.data, 'binary').toString('base64');
     } catch (err) {
-        console.warn('Failed to fetch logo for PDF:', err.message);
+        // Silent fail for logo
     }
 
-    // RIGHT ALIGNED TEXT
-    const rightMargin = 15;
-    const rightX = pageWidth - rightMargin;
+    // --- Helper Functions ---
+    const drawCard = (x, y, w, h, label, value, color = [0, 150, 136]) => {
+        doc.setFillColor(248, 250, 252); // Light gray bg
+        doc.roundedRect(x, y, w, h, 3, 3, 'F');
+        doc.setDrawColor(226, 232, 240); // Border color
+        doc.roundedRect(x, y, w, h, 3, 3, 'D');
 
-    // Title
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(24);
-    doc.setTextColor(0, 150, 136);
-
-    doc.text("Organization Report", rightX, 20, { align: "right" });
-
-    // Subtext
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139);
-
-    doc.text(data.filterInfo, rightX, 26, { align: "right" });
-    doc.text(`Generated on: ${data.generatedAt}`, rightX, 31, { align: "right" });
-
-
-    // // Add Logo if available
-    // const logoUrl = `${process.env.FRONTEND_URL}/logo.png`;
-    // try {
-    //     const axios = require('axios');
-    //     const response = await axios.get(logoUrl, { responseType: 'arraybuffer' });
-    //     const logoBase64 = Buffer.from(response.data, 'binary').toString('base64');
-    //     doc.addImage(logoBase64, 'PNG', 15, 10, 70, 20); // x, y, width, height
-    // } catch (err) {
-    //     console.warn('Failed to fetch logo for PDF:', err.message);
-    // }
-
-    // // Title Section
-    // doc.setFont("helvetica", "bold");
-    // doc.setFontSize(24);
-    // doc.setTextColor(0, 150, 136); // Teal color matching CSS
-    // doc.text("Organization Report", 50, 20);
-
-    // doc.setFontSize(10);
-    // doc.setTextColor(100, 116, 139);
-    // doc.text(data.filterInfo, 50, 26);
-    // doc.text(`Generated on: ${data.generatedAt}`, 50, 31);
-
-    doc.setDrawColor(0, 150, 136);
-    doc.setLineWidth(1);
-    doc.line(15, 40, 195, 40);
-
-    let currentY = 55;
-
-    // 1. Organization Stats
-    if (vectors.orgStats) {
-        doc.setFontSize(16);
-        doc.setTextColor(30, 41, 59);
-        doc.text("Collective Performance", 15, currentY);
-        currentY += 10;
-
-        const stats = [
-            ["Total Leads", data.orgStats.total.toString()],
-            ["Pipeline Value", `INR ${data.orgStats.pipelineValue.toLocaleString()}`],
-            ["Avg. Close Rate", `${data.orgStats.closeRate}%`],
-            ["Period Follow-ups", data.orgStats.periodFollowUps.toString()],
-            ["Future Follow-ups", data.orgStats.futureFollowUps.toString()],
-            ["Avg. Customer Rating", `${data.orgStats.avgRating} / 5.0`]
-        ];
-
-        autoTable(doc, {
-            startY: currentY,
-            head: [['Metric', 'Value']],
-            body: stats,
-            theme: 'striped',
-            headStyles: { fillStyle: [0, 150, 136] },
-            margin: { left: 15, right: 15 }
-        });
-        currentY = doc.lastAutoTable.finalY + 20;
-    }
-
-    // 2. Salesman Rankings
-    if (vectors.rankings) {
-        if (currentY > 200) { doc.addPage(); currentY = 20; }
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139); // Gray text
+        doc.text(label.toUpperCase(), x + 5, y + 10);
 
         doc.setFontSize(16);
-        doc.setTextColor(30, 41, 59);
-        doc.text("Salesman Rankings", 15, currentY);
-        currentY += 10;
+        doc.setTextColor(color[0], color[1], color[2]);
+        doc.text(value, x + 5, y + 25);
+    };
 
-        const tableBody = data.salesmanStats.map((s, index) => [
-            `#${index + 1}`,
-            s.name,
-            s.total.toString(),
-            s.won.toString(),
-            `${s.closeRate}%`,
-            s.periodFollowUps.toString(),
-            `${s.avgRating} *`
-        ]);
+    const addHeader = (title) => {
+        if (logoBase64) {
+            doc.addImage(logoBase64, 'PNG', margin, 10, 60, 18);
+        }
 
-        autoTable(doc, {
-            startY: currentY,
-            head: [['Rank', 'Name', 'Leads', 'Wins', 'Rate', 'F/U', 'Rating']],
-            body: tableBody,
-            theme: 'grid',
-            headStyles: { fillColor: [0, 150, 136] },
-            margin: { left: 15, right: 15 }
-        });
-        currentY = doc.lastAutoTable.finalY + 20;
-    }
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.setTextColor(0, 150, 136); // Teal
+        doc.text(title, pageWidth - margin, 20, { align: "right" });
 
-    // 3. Agent Detailed Metrics
-    if (vectors.agentMetrics) {
-        for (const s of data.salesmanStats) {
-            doc.addPage();
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text(data.filterInfo, pageWidth - margin, 27, { align: "right" });
+        doc.text(`Generated: ${data.generatedAt}`, pageWidth - margin, 33, { align: "right" });
 
-            // Header for agent page
-            doc.setFontSize(22);
-            doc.setTextColor(0, 150, 136);
-            doc.text(`Agent Performance: ${s.name}`, 15, 25);
+        doc.setDrawColor(0, 150, 136);
+        doc.setLineWidth(1.5);
+        doc.line(margin, 40, pageWidth - margin, 40);
+    };
 
-            doc.setFontSize(11);
-            doc.setTextColor(100, 116, 139);
-            doc.text(s.email, 15, 32);
+    // --- Page 1: Organization Overview ---
+    if (vectors.orgStats || vectors.rankings) {
+        addHeader("Organization Report");
 
-            doc.line(15, 40, 195, 40);
+        let currentY = 55;
 
-            const agentStats = [
-                ["Metric", "Value"],
-                ["Total Assigned Leads", s.total.toString()],
-                ["Leads Won (Converted)", s.won.toString()],
-                ["Leads Lost", s.lost.toString()],
-                ["Win Rate", `${s.closeRate}%`],
-                ["Pipeline Potential", `INR ${s.pipelineValue.toLocaleString()}`],
-                ["Follow-ups in Period", s.periodFollowUps.toString()],
-                ["Future Scheduled Follow-ups", s.futureFollowUps.toString()],
-                ["Avg. Customer Rating", `${s.avgRating} / 5.0`]
-            ];
+        if (vectors.orgStats) {
+            doc.setFontSize(14);
+            doc.setTextColor(30, 41, 59);
+            doc.text("Collective Performance", margin, currentY);
+            currentY += 10;
+
+            const cardW = (pageWidth - (margin * 2) - 10) / 2;
+            const cardH = 35;
+
+            drawCard(margin, currentY, cardW, cardH, "Total Leads", data.orgStats.total.toString());
+            drawCard(margin + cardW + 10, currentY, cardW, cardH, "Pipeline Potential", `INR ${data.orgStats.pipelineValue.toLocaleString()}`, [141, 198, 63]);
+            currentY += cardH + 10;
+
+            drawCard(margin, currentY, cardW, cardH, "Conversion Rate", `${data.orgStats.closeRate}%`);
+            drawCard(margin + cardW + 10, currentY, cardW, cardH, "Avg. Feedback", `${data.orgStats.avgRating} / 5.0`, [251, 176, 59]);
+            currentY += cardH + 10;
+
+            drawCard(margin, currentY, cardW, cardH, "Follow-ups in Period", data.orgStats.periodFollowUps.toString());
+            drawCard(margin + cardW + 10, currentY, cardW, cardH, "Future Growth Pipeline", data.orgStats.futureFollowUps.toString(), [141, 198, 63]);
+            currentY += cardH + 15;
+        }
+
+        if (vectors.rankings) {
+            // if (currentY > 200) { doc.addPage(); currentY = 20; }
+            doc.setFontSize(14);
+            doc.setTextColor(30, 41, 59);
+            doc.text("Salesman Rankings", margin, currentY);
+            currentY += 8;
 
             autoTable(doc, {
-                startY: 50,
-                body: agentStats,
-                theme: 'plain',
-                styles: { fontSize: 12, cellPadding: 5 },
-                columnStyles: { 0: { fontStyle: 'bold', width: 80 } },
-                margin: { left: 15 }
+                startY: currentY,
+                head: [['Rank', 'Name', 'Leads', 'Wins', 'Rate', 'F/U']],
+                body: data.salesmanStats.map((s, i) => [`#${i + 1}`, s.name, s.total, s.won, `${s.closeRate}%`, s.periodFollowUps]),
+                theme: 'striped',
+                headStyles: { fillColor: [0, 150, 136], fontStyle: 'bold' },
+                styles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
             });
+            currentY = doc.lastAutoTable.finalY + 20;
         }
     }
 
-    // Footer on all pages (simplified)
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(`Kronus CRM Performance Report | Page ${i} of ${pageCount}`, 15, 285);
+    // --- Agent Detail Pages ---
+    if (vectors.agentMetrics) {
+        for (const s of data.salesmanStats) {
+            doc.addPage();
+            addHeader("Agent Performance");
+
+            doc.setFontSize(18);
+            doc.setTextColor(30, 41, 59);
+            doc.text(s.name, margin, 55);
+            doc.setFontSize(10);
+            doc.setTextColor(141, 198, 63);
+            doc.text(s.email, margin, 61);
+
+            let agentY = 70;
+            const cardW = (pageWidth - (margin * 2) - 10) / 2;
+            const cardH = 30;
+
+            drawCard(margin, agentY, cardW, cardH, "Assigned Leads", s.total.toString());
+            drawCard(margin + cardW + 10, agentY, cardW, cardH, "Leads Won", s.won.toString(), [141, 198, 63]);
+            agentY += cardH + 10;
+
+            drawCard(margin, agentY, cardW, cardH, "Conversion Rate", `${s.closeRate}%`);
+            drawCard(margin + cardW + 10, agentY, cardW, cardH, "Pipeline Value", `INR ${s.pipelineValue.toLocaleString()}`, [141, 198, 63]);
+            agentY += cardH + 10;
+
+            drawCard(margin, agentY, cardW, cardH, "Follow-ups in Period", s.periodFollowUps.toString());
+            drawCard(margin + cardW + 10, agentY, cardW, cardH, "Future Growth Pipeline", s.futureFollowUps.toString(), [141, 198, 63]);
+            agentY += cardH + 10;
+
+            drawCard(margin, agentY, cardW, cardH, "Customer Rating", `${s.avgRating} *`, [251, 176, 59]);
+            drawCard(margin + cardW + 10, agentY, cardW, cardH, "Leads Lost", s.lost.toString(), [220, 38, 38]);
+        }
     }
 
-    const pdfArrayBuffer = doc.output("arraybuffer");
-    return Buffer.from(pdfArrayBuffer);
+    // --- Page: Thank You ---
+    doc.addPage();
+    doc.setFillColor(0, 150, 136);
+    doc.rect(0, 0, pageWidth, 60, 'F');
+
+    const midX = pageWidth / 2;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(36);
+    doc.setTextColor(255, 255, 255);
+    doc.text("Thank You", midX, 40, { align: "center" });
+
+    doc.setFontSize(14);
+    doc.setTextColor(71, 85, 105);
+    const msg = [
+        "This report represents the collective hard work of our team.",
+        "We are building the future of Real Estate at Kronus Infratech.",
+        "Accuracy and integrity are at the heart of our operations."
+    ];
+    doc.text(msg.join("\n"), midX, 100, { align: "center", lineHeightFactor: 1.5 });
+
+    if (logoBase64) {
+        doc.addImage(logoBase64, 'PNG', midX - 40, 150, 80, 24);
+    }
+
+    doc.setFontSize(10);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`© ${new Date().getFullYear()} Kronus Infratech & Consultants`, midX, pageHeight - 20, { align: "center" });
+
+    // --- Pagination ---
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: "right" });
+    }
+
+    return Buffer.from(doc.output("arraybuffer"));
 };
 
 module.exports = {

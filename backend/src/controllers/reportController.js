@@ -14,7 +14,13 @@ const downloadReport = async (req, res, next) => {
         const vectorList = vectors ? vectors.split(',') : ['orgStats', 'rankings', 'agentMetrics', 'feedback'];
         const pdfBuffer = await generateReportPDF(data, vectorList);
 
-        const filename = `Kronus_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        // Naming scheme: [Date]_[Time]_[Timeline].pdf
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+        const timelineStr = data.filterInfo.replace(/\s+/g, '_').replace(/[\/\\]/g, '-');
+        
+        const filename = `Kronus_Report_${dateStr}_${timeStr}_${timelineStr}.pdf`;
 
         res.set({
             'Content-Type': 'application/pdf',
