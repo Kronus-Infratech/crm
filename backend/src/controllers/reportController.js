@@ -18,9 +18,10 @@ const downloadReport = async (req, res, next) => {
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
         const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-        const timelineStr = data.filterInfo.replace(/\s+/g, '_').replace(/[\/\\]/g, '-');
-        
-        const filename = `Kronus_Report_${dateStr}_${timeStr}_${timelineStr}.pdf`;
+        const timelineStr = data.filterInfo.replace(/\s+/g, '_').replace(/[\/\\]/g, '-').trim().replace(/_+$/, '');
+
+        // const filename = `Kronus_Report_${dateStr}_${timeStr}_${timelineStr}.pdf`;
+        const filename = `Kronus_Report_${timelineStr}.pdf`;
 
         res.set({
             'Content-Type': 'application/pdf',

@@ -296,7 +296,6 @@ const generateReportPDF = async (data, vectorList = []) => {
     const msg = [
         "This report represents the collective hard work of our team.",
         "We are building the future of Real Estate at Kronus Infratech.",
-        "Accuracy and integrity are at the heart of our operations."
     ];
     doc.text(msg.join("\n"), midX, 100, { align: "center", lineHeightFactor: 1.5 });
 

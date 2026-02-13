@@ -55,15 +55,26 @@ export default function ReportsPage() {
                 responseType: "blob"
             });
 
+            // Extract filename from the backend response header
+            const contentDisposition = response.headers['content-disposition'];
+            let filename = `Kronus_Report_${new Date().toISOString().split("T")[0]}.pdf`;
+            if (contentDisposition) {
+                // Modified regex to explicitly exclude trailing quotes if they exist
+                const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i) || contentDisposition.match(/filename=([^;]+)/i);
+                if (filenameMatch && filenameMatch[1]) {
+                    filename = filenameMatch[1].trim();
+                }
+            }
+
             // Create a link to download the file
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement("a");
             link.href = url;
-            const filename = `Kronus_Report_${new Date().toISOString().split("T")[0]}.pdf`;
             link.setAttribute("download", filename);
             document.body.appendChild(link);
             link.click();
             link.remove();
+            window.URL.revokeObjectURL(url);
 
             toast.success("Report generated successfully!");
         } catch (error) {
@@ -135,6 +146,42 @@ export default function ReportsPage() {
                             </div>
 
                             <div className="pt-4 border-t border-gray-100">
+                                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">Report Modules</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[
+                                        { id: 'orgStats', label: 'Org Overview' },
+                                        { id: 'rankings', label: 'Agent Rankings' },
+                                        { id: 'agentMetrics', label: 'Agent Details' },
+                                        { id: 'feedback', label: 'Customer Feedback' }
+                                    ].map(v => (
+                                        <label key={v.id} className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={vectors[v.id]}
+                                                onChange={() => setVectors(prev => ({ ...prev, [v.id]: !prev[v.id] }))}
+                                                className="w-4 h-4 rounded border-gray-300 text-[#009688] focus:ring-[#009688]"
+                                            />
+                                            <span className="text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors uppercase tracking-tight">{v.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-100">
+                                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">Agent Focus</label>
+                                <select
+                                    value={selectedSalesman}
+                                    onChange={(e) => setSelectedSalesman(e.target.value)}
+                                    className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#009688]/20 focus:border-[#009688] transition-all text-sm font-bold text-gray-700 bg-white"
+                                >
+                                    <option value="all">ALL ORGANIZATION</option>
+                                    {salesmen.map(s => (
+                                        <option key={s.id} value={s.id}>{s.name.toUpperCase()}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-100">
                                 <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">Custom Date Range</label>
                                 <div className="space-y-3">
                                     <div>
@@ -163,6 +210,7 @@ export default function ReportsPage() {
                                     className="w-full h-14 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-[#009688]/20"
                                     onClick={handleDownload}
                                     isLoading={loading}
+                                    disabled={!Object.values(vectors).some(Boolean)}
                                 >
                                     <HiDownload className="inline mr-2" size={20} />
                                     Generate PDF Report
