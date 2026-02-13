@@ -1,6 +1,6 @@
 const prisma = require('../config/database');
-const puppeteer = require('puppeteer-core');
-const chromium = require('@sparticuz/chromium');
+const { jsPDF } = require('jspdf');
+const autoTable = require('jspdf-autotable').default;
 const path = require('path');
 const fs = require('fs');
 const { ROLES } = require('../config/constants');
@@ -135,35 +135,12 @@ const getReportingData = async (filters = {}) => {
 };
 
 /**
- * Generates PDF buffer using Puppeteer
+ * Generates PDF buffer using jsPDF
  */
 const generateReportPDF = async (data, vectorList = []) => {
-    let browser;
-    try {
-        console.log(`[ReportGenerator] Launching Puppeteer from CWD: ${process.cwd()}`);
+    console.log(`[ReportGenerator] Generating PDF using jsPDF...`);
 
-        // Determine if we are in a production environment (Railway, Vercel, etc.) or local
-        const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT || process.env.VERCEL;
-
-        const launchConfig = {
-            args: isProduction ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
-            defaultViewport: chromium.defaultViewport,
-            executablePath: isProduction ? await chromium.executablePath() : (process.env.PUPPETEER_EXECUTABLE_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'),
-            headless: isProduction ? chromium.headless : true,
-            timeout: 60000,
-        };
-
-        browser = await puppeteer.launch(launchConfig);
-    } catch (err) {
-        console.error('Puppeteer launch failed:', err.message);
-        throw new Error(`Failed to start report generator: ${err.message}`);
-    }
-
-    const page = await browser.newPage();
-
-    // Optimization: Disable JS for a static PDF to speed up rendering and prevent navigation hangs
-    await page.setJavaScriptEnabled(false);
-
+    const doc = new jsPDF();
     const vectors = {
         orgStats: vectorList.includes('orgStats'),
         rankings: vectorList.includes('rankings'),
@@ -171,343 +148,183 @@ const generateReportPDF = async (data, vectorList = []) => {
         feedback: vectorList.includes('feedback')
     };
 
-    // Fetch logo from frontend URL for maximum compatibility
-    let logoBase64 = '';
-    const logoUrl = `${process.env.FRONTEND_URL}/logo.png`;
+    // Helper for center-aligned text
+    const centerText = (text, y, fontSize = 12, color = [30, 41, 59]) => {
+        doc.setFontSize(fontSize);
+        doc.setTextColor(color[0], color[1], color[2]);
+        const textWidth = doc.getTextWidth(text);
+        const x = (doc.internal.pageSize.getWidth() - textWidth) / 2;
+        doc.text(text, x, y);
+    };
 
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Add Logo (LEFT aligned)
+    const logoUrl = `${process.env.FRONTEND_URL}/logo.png`;
     try {
         const axios = require('axios');
         const response = await axios.get(logoUrl, { responseType: 'arraybuffer' });
-        logoBase64 = `data:image/png;base64,${Buffer.from(response.data, 'binary').toString('base64')}`;
+        const logoBase64 = Buffer.from(response.data, 'binary').toString('base64');
+        doc.addImage(logoBase64, 'PNG', 15, 10, 70, 20); // x, y, width, height
     } catch (err) {
-        console.error('Failed to fetch logo for PDF via HTTP:', err.message);
+        console.warn('Failed to fetch logo for PDF:', err.message);
     }
 
-    const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-            @page { size: A4; margin: 0; }
-            * { box-sizing: border-box; }
-            body { 
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; 
-                margin: 0; 
-                padding: 0; 
-                color: #1e293b;
-                line-height: 1.5;
-            }
-            .page {
-                padding: 60px;
-                page-break-after: always;
-                position: relative;
-                width: 100%;
-            }
-            .page:last-child {
-                page-break-after: auto !important;
-            }
-            .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 40px;
-                border-bottom: 4px solid #009688;
-                padding-bottom: 20px;
-            }
-            .logo-img { height: 50px; }
-            .report-title {
-                text-align: right;
-            }
-            .report-title h1 {
-                margin: 0;
-                font-size: 24px;
-                font-weight: 900;
-                text-transform: uppercase;
-                letter-spacing: 2px;
-                color: #009688;
-            }
-            .report-title p {
-                margin: 5px 0 0;
-                font-size: 12px;
-                font-weight: 700;
-                color: #64748b;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-            }
-            .section-title {
-                font-size: 18px;
-                font-weight: 900;
-                text-transform: uppercase;
-                margin-bottom: 30px;
-                color: #1e293b;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            .section-title::before {
-                content: "";
-                width: 4px;
-                height: 24px;
-                background: #009688;
-                display: inline-block;
-                border-radius: 2px;
-            }
-            .grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 20px;
-                margin-bottom: 40px;
-            }
-            .metric-card {
-                background: #f8fafc;
-                border: 1px solid #e2e8f0;
-                border-radius: 12px;
-                padding: 20px;
-                text-align: center;
-            }
-            .metric-label {
-                font-size: 10px;
-                font-weight: 900;
-                color: #64748b;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-bottom: 10px;
-            }
-            .metric-value {
-                font-size: 28px;
-                font-weight: 900;
-                color: #1e293b;
-            }
-            .metric-value.highlight { color: #009688; }
-            .metric-value.secondary { color: #8dc63f; }
-            .metric-value.warning { color: #fbb03b; }
-            
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
-            }
-            th {
-                background: #f1f5f9;
-                text-align: left;
-                padding: 12px;
-                font-size: 10px;
-                font-weight: 900;
-                text-transform: uppercase;
-                color: #64748b;
-                border-bottom: 2px solid #e2e8f0;
-            }
-            td {
-                padding: 12px;
-                font-size: 13px;
-                border-bottom: 1px solid #f1f5f9;
-            }
-            .salesman-page-header {
-                background: #4a4a4a;
-                color: white;
-                padding: 40px;
-                border-radius: 20px;
-                margin-bottom: 40px;
-            }
-            .salesman-name {
-                font-size: 32px;
-                font-weight: 900;
-                margin: 0;
-                letter-spacing: -1px;
-            }
-            .salesman-email {
-                font-size: 14px;
-                font-weight: 700;
-                color: #8dc63f;
-                margin-top: 5px;
-            }
-            .thank-you {
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-            }
-            .thank-you h1 {
-                font-size: 48px;
-                font-weight: 900;
-                color: #009688;
-                margin-bottom: 20px;
-            }
-            .footer-info {
-                position: absolute;
-                bottom: 40px;
-                left: 60px;
-                right: 60px;
-                text-align: center;
-                font-size: 10px;
-                font-weight: 700;
-                color: #94a3b8;
-                border-top: 1px solid #f1f5f9;
-                padding-top: 20px;
-            }
-        </style>
-    </head>
-    <body>
-        <!-- Page 1: Org Wide -->
-        ${vectors.orgStats || vectors.rankings ? `
-        <div class="page">
-            <div class="header">
-                <img src="${logoBase64}" class="logo-img" />
-                <div class="report-title">
-                    <h1>Organization Report</h1>
-                    <p>${data.filterInfo}</p>
-                </div>
-            </div>
+    // RIGHT ALIGNED TEXT
+    const rightMargin = 15;
+    const rightX = pageWidth - rightMargin;
 
-            ${vectors.orgStats ? `
-            <div class="section-title">Collective Performance</div>
-            <div class="grid">
-                <div class="metric-card">
-                    <div class="metric-label">Total Leads</div>
-                    <div class="metric-value highlight">${data.orgStats.total}</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Pipeline Value</div>
-                    <div class="metric-value secondary">₹${data.orgStats.pipelineValue.toLocaleString()}</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Avg. Close Rate</div>
-                    <div class="metric-value highlight">${data.orgStats.closeRate}%</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Follow-ups in Period</div>
-                    <div class="metric-value highlight">${data.orgStats.periodFollowUps}</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Future Follow-ups</div>
-                    <div class="metric-value secondary">${data.orgStats.futureFollowUps}</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Avg. Customer Rating</div>
-                    <div class="metric-value warning">${data.orgStats.avgRating} ★</div>
-                </div>
-            </div>
-            ` : ''}
+    // Title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(24);
+    doc.setTextColor(0, 150, 136);
 
-            ${vectors.rankings ? `
-            <div class="section-title">Salesman Rankings</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Agent Name</th>
-                        <th>Leads</th>
-                        <th>Wins</th>
-                        <th>Period F/U</th>
-                        <th>Total F/U</th>
-                        <th>Win Rate</th>
-                        <th>Rating</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${data.salesmanStats.map(s => `
-                        <tr>
-                            <td style="font-weight: 700;">${s.name}</td>
-                            <td>${s.total}</td>
-                            <td style="color: #16a34a; font-weight: 700;">${s.won}</td>
-                            <td style="color: #009688;">${s.periodFollowUps}</td>
-                            <td style="color: #8dc63f;">${s.futureFollowUps}</td>
-                            <td style="font-weight: 700;">${s.closeRate}%</td>
-                            <td style="color: #fbb03b;">${s.avgRating} ★</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-            ` : ''}
-        </div>
-        ` : ''}
+    doc.text("Organization Report", rightX, 20, { align: "right" });
 
-        <!-- Page 2 to N+1: Salesmen -->
-        ${vectors.agentMetrics ? data.salesmanStats.map(s => `
-            <div class="page">
-                <div class="header">
-                    <img src="${logoBase64}" class="logo-img" />
-                    <div class="report-title">
-                        <h1>Agent Report</h1>
-                        <p>${data.filterInfo}</p>
-                    </div>
-                </div>
+    // Subtext
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
 
-                <div class="salesman-page-header">
-                    <h2 class="salesman-name">${s.name}</h2>
-                    <p class="salesman-email">${s.email}</p>
-                </div>
+    doc.text(data.filterInfo, rightX, 26, { align: "right" });
+    doc.text(`Generated on: ${data.generatedAt}`, rightX, 31, { align: "right" });
 
-                <div class="section-title">Individual Metrics</div>
-                <div class="grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Assigned Leads</div>
-                        <div class="metric-value">${s.total}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Conversion Rate</div>
-                        <div class="metric-value highlight">${s.closeRate}%</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Leads Won</div>
-                        <div class="metric-value secondary">${s.won}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Leads Lost</div>
-                        <div class="metric-value" style="color: #dc2626;">${s.lost}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Pipeline Value</div>
-                        <div class="metric-value secondary">₹${s.pipelineValue.toLocaleString()}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Follow-ups in Period</div>
-                        <div class="metric-value highlight">${s.periodFollowUps}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Future Follow-ups</div>
-                        <div class="metric-value highlight">${s.futureFollowUps}</div>
-                    </div>
-                    ${vectors.feedback ? `
-                    <div class="metric-card">
-                        <div class="metric-label">Customer Feedback</div>
-                        <div class="metric-value warning">${s.avgRating} ★</div>
-                    </div>
-                    ` : ''}
-                </div>
-            </div>
-        `).join('') : ''}
 
-        <!-- Final Page: Thank You -->
-        <div class="page">
-            <div class="thank-you">
-                <img src="${logoBase64}" style="height: 100px; margin-bottom: 40px;" />
-                <h1>Thank You</h1>
-                <p style="font-size: 18px; color: #64748b; font-weight: 700; max-width: 400px; margin: 0 auto;">
-                    We are building the future of Real Estate at Kronus Infratech. 
-                    This report represents the collective hard work of our entire team.
-                </p>
-                <div style="margin-top: 60px; width: 60px; height: 4px; background: #8dc63f; border-radius: 2px;"></div>
-            </div>
-            <div class="footer-info">
-                © ${new Date().getFullYear()} Kronus Infratech & Consultants
-            </div>
-        </div>
-    </body>
-    </html>
-    `;
+    // // Add Logo if available
+    // const logoUrl = `${process.env.FRONTEND_URL}/logo.png`;
+    // try {
+    //     const axios = require('axios');
+    //     const response = await axios.get(logoUrl, { responseType: 'arraybuffer' });
+    //     const logoBase64 = Buffer.from(response.data, 'binary').toString('base64');
+    //     doc.addImage(logoBase64, 'PNG', 15, 10, 70, 20); // x, y, width, height
+    // } catch (err) {
+    //     console.warn('Failed to fetch logo for PDF:', err.message);
+    // }
 
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '0', right: '0', bottom: '0', left: '0' }
-    });
+    // // Title Section
+    // doc.setFont("helvetica", "bold");
+    // doc.setFontSize(24);
+    // doc.setTextColor(0, 150, 136); // Teal color matching CSS
+    // doc.text("Organization Report", 50, 20);
 
-    await browser.close();
-    return pdfBuffer;
+    // doc.setFontSize(10);
+    // doc.setTextColor(100, 116, 139);
+    // doc.text(data.filterInfo, 50, 26);
+    // doc.text(`Generated on: ${data.generatedAt}`, 50, 31);
+
+    doc.setDrawColor(0, 150, 136);
+    doc.setLineWidth(1);
+    doc.line(15, 40, 195, 40);
+
+    let currentY = 55;
+
+    // 1. Organization Stats
+    if (vectors.orgStats) {
+        doc.setFontSize(16);
+        doc.setTextColor(30, 41, 59);
+        doc.text("Collective Performance", 15, currentY);
+        currentY += 10;
+
+        const stats = [
+            ["Total Leads", data.orgStats.total.toString()],
+            ["Pipeline Value", `INR ${data.orgStats.pipelineValue.toLocaleString()}`],
+            ["Avg. Close Rate", `${data.orgStats.closeRate}%`],
+            ["Period Follow-ups", data.orgStats.periodFollowUps.toString()],
+            ["Future Follow-ups", data.orgStats.futureFollowUps.toString()],
+            ["Avg. Customer Rating", `${data.orgStats.avgRating} / 5.0`]
+        ];
+
+        autoTable(doc, {
+            startY: currentY,
+            head: [['Metric', 'Value']],
+            body: stats,
+            theme: 'striped',
+            headStyles: { fillStyle: [0, 150, 136] },
+            margin: { left: 15, right: 15 }
+        });
+        currentY = doc.lastAutoTable.finalY + 20;
+    }
+
+    // 2. Salesman Rankings
+    if (vectors.rankings) {
+        if (currentY > 200) { doc.addPage(); currentY = 20; }
+
+        doc.setFontSize(16);
+        doc.setTextColor(30, 41, 59);
+        doc.text("Salesman Rankings", 15, currentY);
+        currentY += 10;
+
+        const tableBody = data.salesmanStats.map((s, index) => [
+            `#${index + 1}`,
+            s.name,
+            s.total.toString(),
+            s.won.toString(),
+            `${s.closeRate}%`,
+            s.periodFollowUps.toString(),
+            `${s.avgRating} *`
+        ]);
+
+        autoTable(doc, {
+            startY: currentY,
+            head: [['Rank', 'Name', 'Leads', 'Wins', 'Rate', 'F/U', 'Rating']],
+            body: tableBody,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 150, 136] },
+            margin: { left: 15, right: 15 }
+        });
+        currentY = doc.lastAutoTable.finalY + 20;
+    }
+
+    // 3. Agent Detailed Metrics
+    if (vectors.agentMetrics) {
+        for (const s of data.salesmanStats) {
+            doc.addPage();
+
+            // Header for agent page
+            doc.setFontSize(22);
+            doc.setTextColor(0, 150, 136);
+            doc.text(`Agent Performance: ${s.name}`, 15, 25);
+
+            doc.setFontSize(11);
+            doc.setTextColor(100, 116, 139);
+            doc.text(s.email, 15, 32);
+
+            doc.line(15, 40, 195, 40);
+
+            const agentStats = [
+                ["Metric", "Value"],
+                ["Total Assigned Leads", s.total.toString()],
+                ["Leads Won (Converted)", s.won.toString()],
+                ["Leads Lost", s.lost.toString()],
+                ["Win Rate", `${s.closeRate}%`],
+                ["Pipeline Potential", `INR ${s.pipelineValue.toLocaleString()}`],
+                ["Follow-ups in Period", s.periodFollowUps.toString()],
+                ["Future Scheduled Follow-ups", s.futureFollowUps.toString()],
+                ["Avg. Customer Rating", `${s.avgRating} / 5.0`]
+            ];
+
+            autoTable(doc, {
+                startY: 50,
+                body: agentStats,
+                theme: 'plain',
+                styles: { fontSize: 12, cellPadding: 5 },
+                columnStyles: { 0: { fontStyle: 'bold', width: 80 } },
+                margin: { left: 15 }
+            });
+        }
+    }
+
+    // Footer on all pages (simplified)
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Kronus CRM Performance Report | Page ${i} of ${pageCount}`, 15, 285);
+    }
+
+    const pdfArrayBuffer = doc.output("arraybuffer");
+    return Buffer.from(pdfArrayBuffer);
 };
 
 module.exports = {
