@@ -1,6 +1,6 @@
 {
   "name": "kronus-email-service",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Standalone email microservice for Kronus CRM",
   "main": "src/index.js",
   "type": "commonjs",
