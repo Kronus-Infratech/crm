@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const prisma = require('../config/database');
 const { HTTP_STATUS, ROLES } = require('../config/constants');
 const { generatePassword } = require('../utils/cryptoUtils');
-const { sendWelcomeEmail } = require('../services/emailClient');
+const emailClient = require('../services/emailClient');
 
 /**
  * @desc    Get user profile
@@ -258,7 +258,7 @@ const createUser = async (req, res, next) => {
 
     // Send welcome email with temporary password
     try {
-      await sendWelcomeEmail(user.email, user.name, tempPassword);
+      await emailClient.sendWelcomeEmail(user.email, user.name, tempPassword);
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError);
       // Don't fail the request if email fails

@@ -3,7 +3,7 @@ const prisma = require('../config/database');
 const { HTTP_STATUS, ROLES } = require('../config/constants');
 const { generateToken, generateRefreshToken } = require('../utils/tokenUtils');
 const { generateResetToken, hashToken } = require('../utils/cryptoUtils');
-const { sendPasswordResetEmail } = require('../services/emailClient');
+const emailClient = require('../services/emailClient');
 
 /**
  * @desc    Register new user
@@ -208,7 +208,7 @@ const forgotPassword = async (req, res, next) => {
 
     try {
       // Send email
-      await sendPasswordResetEmail(user.email, resetUrl, user.name);
+      await emailClient.sendPasswordResetEmail(user.email, resetUrl, user.name);
 
       res.status(HTTP_STATUS.OK).json({
         success: true,

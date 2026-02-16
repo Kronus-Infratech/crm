@@ -1,7 +1,7 @@
 const prisma = require('../config/database');
 const crypto = require('crypto');
 const { HTTP_STATUS, ROLES } = require('../config/constants');
-const { sendLeadAssignmentEmail, sendLeadWelcomeEmail, sendLeadFeedbackEmail, sendLedgerOpenedEmail, sendCEONotificationEmail } = require('../services/emailClient');
+const emailClient = require('../services/emailClient');
 const { formatDate } = require('../utils/dateUtils');
 
 /**
@@ -310,7 +310,7 @@ const createLead = async (req, res, next) => {
 
     // Send email to assignee if assigned
     if (lead.assignedTo) {
-      sendLeadAssignmentEmail(
+      emailClient.sendLeadAssignmentEmail(
         lead.assignedTo.email,
         lead.assignedTo.name,
         lead.name,
@@ -320,7 +320,7 @@ const createLead = async (req, res, next) => {
 
     // Send welcome email to lead if email is present
     if (lead.email) {
-      sendLeadWelcomeEmail(lead.email, lead.name)
+      emailClient.sendLeadWelcomeEmail(lead.email, lead.name)
         .catch(err => console.error('Failed to send welcome email:', err));
     }
 
@@ -551,7 +551,7 @@ const updateLead = async (req, res, next) => {
 
       // If assigned user changed, send email
       if (updateData.assignedToId && updateData.assignedToId !== existingLead.assignedToId) {
-        sendLeadAssignmentEmail(
+        emailClient.sendLeadAssignmentEmail(
           lead.assignedTo.email,
           lead.assignedTo.name,
           lead.name,
@@ -566,7 +566,7 @@ const updateLead = async (req, res, next) => {
         updateData.status !== existingLead.status
       ) {
         if (lead.email) {
-          sendLeadFeedbackEmail(lead.email, lead.name, updateData.status, lead.feedbackToken)
+          emailClient.sendLeadFeedbackEmail(lead.email, lead.name, updateData.status, lead.feedbackToken)
             .catch(err => console.error('Failed to send feedback email:', err));
         }
 
@@ -576,7 +576,7 @@ const updateLead = async (req, res, next) => {
           ? `Lead converted successfully. Value: ${lead.budgetTo || 'N/A'}`
           : `Lead marked as NOT CONVERTED. Check activities for notes.`;
 
-        sendCEONotificationEmail(lead.name, lead.id, updateData.status, salesmanName, additionalInfo)
+        emailClient.sendCEONotificationEmail(lead.name, lead.id, updateData.status, salesmanName, additionalInfo)
           .catch(err => console.error('Failed to send CEO email:', err));
 
         // If CONVERTED, also notify Finance
@@ -587,7 +587,7 @@ const updateLead = async (req, res, next) => {
             select: { email: true }
           }).then(financeUsers => {
             const financeEmails = financeUsers.map(u => u.email);
-            sendLedgerOpenedEmail(financeEmails, lead.name, lead.id, salesmanName)
+            emailClient.sendLedgerOpenedEmail(financeEmails, lead.name, lead.id, salesmanName)
               .catch(err => console.error('Failed to send Finance email:', err));
           });
         }
@@ -928,7 +928,7 @@ const assignLead = async (req, res, next) => {
 
     // Send email to assignee
     if (assignedToId && updatedLead.assignedTo) {
-      sendLeadAssignmentEmail(
+      emailClient.sendLeadAssignmentEmail(
         updatedLead.assignedTo.email,
         updatedLead.assignedTo.name,
         updatedLead.name,
@@ -1101,7 +1101,7 @@ const createExternalLead = async (req, res, next) => {
       });
 
       // Send Email Notification
-      sendLeadAssignmentEmail(
+      emailClient.sendLeadAssignmentEmail(
         assignedUserEmail,
         assignedUserName,
         lead.name,
@@ -1243,7 +1243,7 @@ const createMagicBricksLead = async (req, res, next) => {
       });
 
       // Send Email Notification
-      sendLeadAssignmentEmail(
+      emailClient.sendLeadAssignmentEmail(
         assignedUserEmail,
         assignedUserName,
         lead.name,

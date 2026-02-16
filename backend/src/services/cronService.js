@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const prisma = require('../config/database');
-const { sendFollowUpReminderEmail, sendEmail } = require('../services/emailClient');
+const emailClient = require('../services/emailClient');
 const { getReportingData, generateReportPDF } = require('./reportService');
 
 /**
@@ -100,7 +100,7 @@ const processFollowUpReminders = async (type) => {
 
     // Send emails to each agent
     const emailPromises = Object.values(agentGroups).map(group =>
-      sendFollowUpReminderEmail(
+      emailClient.sendFollowUpReminderEmail(
         group.agent.email,
         group.agent.name,
         group.leads,
@@ -141,7 +141,7 @@ const processMissedFollowUps = async () => {
       return;
     }
 
-    const { sendCEONotificationEmail } = require('../services/emailClient');
+
 
     // Notify CEO for each missed lead
     // (In a high volume system, we might want to aggregate these, but for now individual is more surgical)
@@ -149,7 +149,7 @@ const processMissedFollowUps = async () => {
       const salesmanName = lead.assignedTo?.name || 'Unassigned';
       const delayDays = Math.floor((new Date() - new Date(lead.followUpDate)) / (1000 * 60 * 60 * 24));
 
-      await sendCEONotificationEmail(
+      await emailClient.sendCEONotificationEmail(
         lead.name,
         lead.id,
         'MISSED_FOLLOWUP',
@@ -209,7 +209,7 @@ const sendAutomatedReport = async (type) => {
             </div>
         `;
 
-    await sendEmail({
+    await emailClient.sendEmail({
       email: 'ceo@kronusinfra.org',
       subject: subject,
       html: html,
