@@ -12,6 +12,10 @@ const { logger } = require('./utils/logger');
 // Initialize express app
 const app = express();
 
+// Trust proxy - required when behind load balancer/reverse proxy (AWS Lambda, nginx, etc.)
+// This allows express-rate-limit to correctly identify users via X-Forwarded-For header
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(cors());
