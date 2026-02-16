@@ -112,6 +112,27 @@ export default function AIInsights() {
                     </div>
                 ))}
 
+                {/* Suggestions - Centered when chat is empty */}
+                {messages.length === 1 && (
+                    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
+                        {suggestions.map((s, i) => (
+                            <button
+                                key={i}
+                                onClick={() => { setInput(s); }}
+                                className="text-left p-4 rounded-xl border border-dashed border-gray-300 hover:border-[#009688] hover:bg-[#009688]/5 transition-all group flex items-start gap-3"
+                            >
+                                <div className="p-2 bg-gray-100 rounded-lg text-gray-500 group-hover:text-[#009688] group-hover:bg-white transition-colors">
+                                    <HiLightBulb size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-700 group-hover:text-[#009688]">{s}</p>
+                                    <p className="text-xs text-gray-400 mt-1">Click to ask</p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {loading && (
                     <div className="flex gap-3 animate-pulse">
                         <div className="w-8 h-8 rounded-full bg-white border border-brand-spanish-gray/20 flex items-center justify-center text-[#009688]">
@@ -129,20 +150,6 @@ export default function AIInsights() {
 
             {/* Input Area */}
             <div className="p-4 bg-white border-t border-gray-100">
-                {messages.length === 1 && (
-                    <div className="flex flex-wrap gap-2 mb-4 justify-center">
-                        {suggestions.map((s, i) => (
-                            <button
-                                key={i}
-                                onClick={() => { setInput(s); }}
-                                className="text-[11px] font-bold uppercase tracking-wider bg-[#009688]/10 text-[#009688] px-3 py-1.5 rounded-full hover:bg-[#009688]/20 transition-colors border border-[#009688]/20"
-                            >
-                                <HiLightBulb className="inline-block mr-1 mb-0.5" /> {s}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
                 <form onSubmit={handleSend} className="relative max-w-4xl mx-auto flex gap-2">
                     <input
                         type="text"

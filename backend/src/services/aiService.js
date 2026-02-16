@@ -3,154 +3,186 @@ const prisma = require("../config/database");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Define the "Tools" (functions AI can call)
+// --- 1. Define the Schema for the AI (Simplified) ---
+// This helps the AI understand the database structure without needing to read the full Prisma schema file every time.
+const DB_SCHEMA = {
+    User: {
+        fields: ["id", "email", "name", "phone", "roles", "department", "designation", "lastLoginAt", "createdAt"], 
+        // Excluded: password, resetPasswordToken
+        relations: ["createdLeads", "assignedLeads", "activities", "transactions"]
+    },
+    Lead: {
+        fields: ["id", "name", "email", "phone", "property", "source", "status", "priority", "budgetFrom", "budgetTo", "followUpDate", "createdAt", "updatedAt", "financeStatus", "ledgerStatus", "feedbackRating"],
+        relations: ["createdBy", "assignedTo", "activities", "documents", "inventoryItem"]
+    },
+    InventoryItem: {
+        fields: ["id", "plotNumber", "size", "ratePerSqYard", "totalPrice", "status", "project", "facing", "roadWidth", "propertyType", "transactionType", "ownerName", "block", "askingPrice", "listingDate"],
+        relations: ["project", "leads", "createdBy"]
+    },
+    Project: {
+        fields: ["id", "name", "location", "description"],
+        relations: ["inventory", "city"]
+    },
+    Activity: {
+        fields: ["id", "type", "title", "description", "date", "createdAt"],
+        relations: ["user", "lead"]
+    },
+    Transaction: {
+        fields: ["id", "type", "amount", "date", "source", "description"],
+        relations: ["handledBy"]
+    },
+    Event: {
+        fields: ["id", "title", "description", "start", "end", "type"],
+        relations: ["user", "lead"]
+    }
+};
+
+// --- 2. Define Tools ---
 const tools = [
     {
         functionDeclarations: [
             {
-                name: "getLatestLeads",
-                description: "Retrieve the most recent leads from the CRM to analyze trends and interest.",
-                parameters: {
-                    type: "OBJECT",
-                    properties: {
-                        limit: {
-                            type: "NUMBER",
-                            description: "Number of leads to fetch (default 10, max 50)."
-                        }
-                    }
-                }
-            },
-            {
-                name: "getInventoryStats",
-                description: "Get statistics about property inventory, including sold vs available counts and hot areas.",
+                name: "getDatabaseSchema",
+                description: "Get the structure of the database (models, fields, and relationships). Use this first to understand what data is available.",
                 parameters: {
                     type: "OBJECT",
                     properties: {}
                 }
             },
             {
-                name: "getLeadGrowth",
-                description: "Fetch lead count growth over the last 30 days to identify market momentum.",
-                parameters: {
-                    type: "OBJECT",
-                    properties: {}
-                }
-            },
-            {
-                name: "getAvailableInventory",
-                description: "Fetch all currently available properties and plots to find potential matches for leads.",
+                name: "runDatabaseQuery",
+                description: "Execute a read-only database query. Use this to fetch data, count records, or aggregate statistics.",
                 parameters: {
                     type: "OBJECT",
                     properties: {
-                        limit: {
-                            type: "NUMBER",
-                            description: "Number of inventory items to fetch (default 20, max 100)."
+                        model: {
+                            type: "STRING",
+                            description: "The name of the model to query (e.g., 'Lead', 'User', 'InventoryItem')."
+                        },
+                        action: {
+                            type: "STRING",
+                            description: "The action to perform. Allowed: 'findMany', 'findFirst', 'findUnique', 'count', 'aggregate', 'groupBy'."
+                        },
+                        query: {
+                            type: "OBJECT",
+                            description: "The Prisma query object containing 'where', 'select', 'orderBy', 'take', 'skip'. (MAX limit is 50)."
                         }
-                    }
+                    },
+                    required: ["model", "action", "query"]
                 }
             }
         ]
     }
 ];
 
-// Implementation of the tools
+// --- 3. Tool Implementation ---
 const toolHandlers = {
-    getLatestLeads: async ({ limit = 10 }) => {
-        const leads = await prisma.lead.findMany({
-            take: Math.min(limit, 50),
-            orderBy: { createdAt: "desc" },
-            select: {
-                id: true,
-                name: true,
-                source: true,
-                status: true,
-                property: true,
-                budgetFrom: true,
-                budgetTo: true,
-                createdAt: true
+    getDatabaseSchema: async () => {
+        return DB_SCHEMA;
+    },
+
+    runDatabaseQuery: async ({ model, action, query }) => {
+        // --- Security & Validation ---
+        
+        // 1. Validate Model
+        const allowedModels = Object.keys(DB_SCHEMA);
+        if (!allowedModels.includes(model)) {
+            return { error: `Invalid model: ${model}. Allowed models: ${allowedModels.join(", ")}` };
+        }
+
+        // 2. Validate Action (Read-Only)
+        const allowedActions = ["findMany", "findFirst", "findUnique", "count", "aggregate", "groupBy"];
+        if (!allowedActions.includes(action)) {
+            return { error: `Invalid action: ${action}. Only read operations are allowed.` };
+        }
+
+        // 3. Enforce Limits & Cleanup Query
+        const safeQuery = { ...query };
+
+        // Enforce limit on 'take' for list queries
+        if (action === "findMany") {
+            if (!safeQuery.take || safeQuery.take > 50) {
+                safeQuery.take = 50; // Max limit
             }
-        });
-        return leads;
-    },
+        }
 
-    getInventoryStats: async () => {
-        const [counts, projects] = await prisma.$transaction([
-            prisma.inventoryItem.groupBy({
-                by: ["status"],
-                _count: { _all: true }
-            }),
-            prisma.project.findMany({
-                select: {
-                    name: true,
-                    _count: { select: { inventory: true } }
-                }
-            })
-        ]);
+        // Prevent selecting sensitive fields for User
+        if (model === "User" && safeQuery.select) {
+            delete safeQuery.select.password;
+            delete safeQuery.select.resetPasswordToken;
+            delete safeQuery.select.resetPasswordExpire;
+        }
 
-        // Also get most interested property from leads (rough proxy for 'hot')
-        const hotProperties = await prisma.lead.groupBy({
-            by: ["property"],
-            _count: { _all: true },
-            orderBy: { _count: { property: "desc" } },
-            take: 5
-        });
+        // --- Execution ---
+        try {
+            // Convert PascalCase (e.g., 'InventoryItem') to camelCase (e.g., 'inventoryItem') for Prisma
+            const prismaModelName = model.charAt(0).toLowerCase() + model.slice(1);
 
-        return { counts, projects, hotProperties };
-    },
+            if (!prisma[prismaModelName]) {
+                 return { error: `Prisma model '${prismaModelName}' not found.` };
+            }
 
-    getLeadGrowth: async () => {
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            // e.g., prisma.lead.findMany(query)
+            const result = await prisma[prismaModelName][action](safeQuery);
 
-        const leads = await prisma.lead.findMany({
-            where: { createdAt: { gte: thirtyDaysAgo } },
-            select: { createdAt: true }
-        });
+            // Post-processing for safety (redact if select was not used but fields returned)
+            if (model === "User" && result) {
+                const redactUser = (u) => {
+                    if (u) {
+                        delete u.password;
+                        delete u.resetPasswordToken;
+                        delete u.resetPasswordExpire;
+                    }
+                    return u;
+                };
 
-        return { totalLast30Days: leads.length };
-    },
-
-    getAvailableInventory: async ({ limit = 20 }) => {
-        const inventory = await prisma.inventoryItem.findMany({
-            where: { status: "AVAILABLE" },
-            take: Math.min(limit, 100),
-            include: {
-                project: {
-                    select: { name: true, location: true }
+                if (Array.isArray(result)) {
+                    result.forEach(redactUser);
+                } else {
+                    redactUser(result);
                 }
             }
-        });
-        return inventory;
+
+            return result;
+        } catch (error) {
+            console.error(`[AI] Database Query Error (${model}.${action}):`, error.message);
+            return { error: `Database query failed: ${error.message}` };
+        }
     }
 };
 
+// --- 4. System Instruction ---
 const systemInstruction = `
     ### ROLE & OBJECTIVE
-    You are the dedicated AI Data Analyst for CRM of Kronus Infratech and Consultants. Your goal is to transform raw business data into actionable intelligence. Do NOT simply list numbers—analyze them to help agents close deals and managers optimize performance. Your tone is professional, proactive, and analytical.
+    You are the **AI Business Analyst** for Kronus Infratech.
+    Your goal is to answer questions about sales, inventory, and leads in **plain, professional business language**. 
+    **NEVER** use technical terms like "Prisma", "database schema", "query failed", "count of 1", or "ID".
+    
+    ### CRITICAL RULES
+    1.  **Explain "Why":** When you present a list (e.g., "Top Properties"), you **MUST** explain the criteria you used (e.g., "These projects have the highest number of interested leads this month").
+    2.  **Infer "Hot" or "Popular":** 
+        - "Hot" usually means **Most Leads** (check \`Lead\` table grouped by \`property\`) or **Most Sales** (check \`InventoryItem\` where status is 'SOLD').
+        - Do NOT just list random or large properties. Run a query to find the *most popular* ones first.
+        - Example: To find hot properties, count leads by 'property' string.
+    3.  **Handle Ambiguity Gracefully:** If data is unclear (e.g., no clear popular size), say "Demand is quite varied right now" instead of "The query returned 1 for everything."
+    4.  **No Explaining the Tool:** Don't say "I will run a database query." Just say "Let me analyze the current market interest." and do it.
 
-    ### TOOL USAGE PROTOCOL
-    1. **Always Verify:** Trigger tools first. Never guess data.
-    2. **Pattern Recognition:** After fetching data, automatically look for:
-       - **Low-Velocity Sources:** Which lead sources (e.g., MagicBricks) are currently most active?
-       - **Demand Gaps:** Which properties have high lead interest but low stock?
-       - **Smart Matching (NEW):** When users ask for "matches" or "potential deals," call **getLatestLeads** and **getAvailableInventory**. Manually compare lead budgets (budgetFrom/budgetTo) against property prices (totalPrice) and property interests against project names.
-
-    ### RESPONSE STRUCTURE
-    1. **Direct Answer:** Start with a brief, high-level answer to the user's question.
-    2. **Structured Data:** Use **Markdown Tables** for all lists of leads or properties.
-    3. **Smart Matches (💡 Potential Deals):** If matching was requested, provide a table mapping Leads to specific Inventory Items based on:
-       - **Budget Fit:** Lead budget (budgetFrom/budgetTo) >= Property price (totalPrice).
-       - **Interest Match:** Lead's interested property/project matching the inventory project name.
-    4. **AI Intelligence (💡 Critical Insights):** Provide 2-3 bullet points of trends, alerts, or opportunities.
-
-    ### FORMATTING RULES
-    - Use **Bold** for metrics, property names, and lead sources.
-    - Use Markdown Tables for data.
-    - Keep responses concise but information-rich.
+    ### TOOL USAGE
+    1. **Check Schema First:** Use \`getDatabaseSchema\` if you are unsure about field names.
+    2. **Smart Querying:**
+       - **"Hot Properties":** Group leads by \`property\` to see where demand is.
+       - **"Sales Performance":** Check \`InventoryItem\` with status='SOLD' or \`Transaction\` table.
+    
+    ### RESPONSE FORMAT
+    - **Direct Answer:** "The most popular project right now is Sunrise City."
+    - **The "Why":** "...because it has received 45 inquiries in the last 30 days."
+    - **Data Table:** (If applicable)
+    - **Insight:** "This suggests a trend towards affordable plots."
 `;
 
 const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
+    // model: "gemini-2.5-pro",
+    model: "gemini-3-pro-preview",
     tools: tools,
     systemInstruction: systemInstruction
 });
@@ -158,6 +190,8 @@ const model = genAI.getGenerativeModel({
 const generateInsight = async (userMessage, history = []) => {
     try {
         let cleanHistory = [...history];
+        
+        // Remove 'model' role if it's the first message (Gemini API requirement sometimes)
         if (cleanHistory.length > 0 && cleanHistory[0].role === 'model') {
             cleanHistory.shift();
         }
@@ -165,7 +199,7 @@ const generateInsight = async (userMessage, history = []) => {
         const chat = model.startChat({
             history: cleanHistory,
             generationConfig: {
-                maxOutputTokens: 1000,
+                maxOutputTokens: 2000, // Increased for larger data responses
             },
         });
 
@@ -177,24 +211,25 @@ const generateInsight = async (userMessage, history = []) => {
         console.log(`[AI] Initial function calls:`, calls ? calls.length : 0);
 
         let callCount = 0;
-        while (calls && calls.length > 0 && callCount < 5) {
+        // Allow up to 10 generic tool calls for complex reasoning chains
+        while (calls && calls.length > 0 && callCount < 10) {
             callCount++;
             const toolResults = {};
 
             for (const call of calls) {
                 const handler = toolHandlers[call.name];
                 if (handler) {
-                    console.log(`[AI] Executing tool: ${call.name} with:`, call.args);
+                    console.log(`[AI] Executing tool: ${call.name}`);
                     try {
                         const data = await handler(call.args);
                         toolResults[call.name] = data;
-                        console.log(`[AI] Tool ${call.name} returned data.`);
+                        // console.log(`[AI] Tool ${call.name} returned data:`, JSON.stringify(data).substring(0, 100) + "...");
                     } catch (toolError) {
                         console.error(`[AI] Tool Error (${call.name}):`, toolError);
-                        toolResults[call.name] = { error: "Database retrieval failed." };
+                        toolResults[call.name] = { error: "Action failed." };
                     }
                 } else {
-                    console.warn(`[AI] Model called unknown tool: ${call.name}`);
+                    console.warn(`[AI] Unknown tool: ${call.name}`);
                 }
             }
 
@@ -217,12 +252,9 @@ const generateInsight = async (userMessage, history = []) => {
     } catch (error) {
         console.error("Gemini API Error:", error);
         if (error.message?.includes("429")) {
-            return "I'm currently receiving too many requests. Please wait a moment and try again.";
+            return "I'm currently receiving too many requests. Please wait a moment.";
         }
-        if (error.message?.includes("404")) {
-            return "The AI service is currently unavailable. Please try again later or contact support.";
-        }
-        return "I'm sorry, I'm having trouble connecting to my intelligence engine. Please try again in a moment.";
+        return "I'm having trouble analyzing the data right now. Please try again.";
     }
 };
 
