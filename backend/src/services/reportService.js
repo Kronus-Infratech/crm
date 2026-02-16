@@ -138,7 +138,7 @@ const getReportingData = async (filters = {}) => {
  * Generates PDF buffer using jsPDF
  */
 const generateReportPDF = async (data, vectorList = []) => {
-    const doc = new jsPDF();
+    const doc = new jsPDF({ compress: true });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
@@ -179,7 +179,7 @@ const generateReportPDF = async (data, vectorList = []) => {
 
     const addHeader = (title) => {
         if (logoBase64) {
-            doc.addImage(logoBase64, 'PNG', margin, 10, 60, 18);
+            doc.addImage(logoBase64, 'PNG', margin, 10, 60, 18, undefined, 'FAST');
         }
 
         doc.setFont("helvetica", "bold");
@@ -300,7 +300,7 @@ const generateReportPDF = async (data, vectorList = []) => {
     doc.text(msg.join("\n"), midX, 100, { align: "center", lineHeightFactor: 1.5 });
 
     if (logoBase64) {
-        doc.addImage(logoBase64, 'PNG', midX - 40, 150, 80, 24);
+        doc.addImage(logoBase64, 'PNG', midX - 40, 150, 80, 24, undefined, 'FAST');
     }
 
     doc.setFontSize(10);

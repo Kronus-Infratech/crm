@@ -21,8 +21,8 @@ app.use(helmet());
 app.use(cors());
 
 // Body parser middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Rate limiting - 100 requests per minute per IP
 const limiter = rateLimit({

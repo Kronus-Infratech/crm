@@ -10,7 +10,7 @@ const router = express.Router();
  */
 router.post('/send', async (req, res, next) => {
     try {
-        const { to, subject, html, text, fromName } = req.body;
+        const { to, subject, html, text, fromName, attachments } = req.body;
 
         if (!to || !subject || !html) {
             return res.status(400).json({
@@ -19,7 +19,7 @@ router.post('/send', async (req, res, next) => {
             });
         }
 
-        const result = await sendEmail({ to, subject, html, text, fromName });
+        const result = await sendEmail({ to, subject, html, text, fromName, attachments });
 
         res.status(200).json({
             success: true,

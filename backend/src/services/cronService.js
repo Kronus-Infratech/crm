@@ -187,25 +187,13 @@ const sendAutomatedReport = async (type) => {
     const pdfBuffer = await generateReportPDF(data, fullVectors);
 
     const dateString = now.toISOString().split('T')[0];
-    const subject = `[KRONUS] ${type} Business Intelligence Report - ${dateString}`;
+    const subject = `[CRM] ${type} Business Report - ${dateString}`;
 
     const html = `
-            <div style="font-family: sans-serif; padding: 20px; color: #333;">
-                <h2 style="color: #009688;">Kronus Infratech & Consultants</h2>
-                <p>Sir,</p>
-                <p>Please find attached the <strong>${type} Business Intelligence Report</strong> for the period ending ${dateString}.</p>
-                <p>This report includes:</p>
-                <ul style="line-height: 1.6;">
-                    <li>Organization-wide conversion metrics</li>
-                    <li>Pipeline valuation</li>
-                    <li>Individual salesman performance breakdowns</li>
-                    <li>Customer satisfaction ratings</li>
-                </ul>
-                <p>The report is generated automatically by the Kronus CRM Intelligence Suite.</p>
-                <br>
-                <p style="font-size: 12px; color: #666; border-top: 1px solid #eee; padding-top: 10px;">
-                    © ${now.getFullYear()} Kronus Infratech & Consultants
-                </p>
+            <div style="font-family: sans-serif; color: #333;">
+                <p>Hey,</p>
+                <p>Please find attached the <strong>${type} Business Report</strong> for the period ending ${dateString}.</p>
+                <p>The report is generated automatically by the Kronus CRM.</p>
             </div>
         `;
 

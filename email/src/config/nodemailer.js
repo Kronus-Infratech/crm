@@ -22,10 +22,10 @@ const createTransporter = () => {
       user: user,
       pass: pass,
     },
-    // Reduced timeouts for serverless environments (Vercel)
-    connectionTimeout: 10000,  // 10 seconds (was 45s)
-    greetingTimeout: 10000,    // 10 seconds (was 45s)
-    socketTimeout: 15000,      // 15 seconds (was 60s)
+    // Adjusted limits for handling large attachments (PDF reports)
+    connectionTimeout: 20000,  // 20 seconds
+    greetingTimeout: 20000,    // 20 seconds
+    socketTimeout: 30000,      // 30 seconds
     tls: {
       rejectUnauthorized: false,
       minVersion: 'TLSv1.2'

@@ -19,7 +19,9 @@ class EmailClient {
                 'Content-Type': 'application/json',
                 'X-API-Key': this.apiKey
             },
-            timeout: 10000 // 10 second timeout
+            timeout: 60000, // 60 second timeout
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity
         });
     }
 
@@ -29,12 +31,39 @@ class EmailClient {
      */
     async sendEmail(options) {
         try {
+            // Handle attachments serialization if present
+            let processedAttachments = [];
+            if (options.attachments && Array.isArray(options.attachments)) {
+                processedAttachments = options.attachments.map(att => {
+                    let content = att.content;
+
+                    if (content) {
+                        // Ensure content is a Buffer
+                        if (!Buffer.isBuffer(content) && (content instanceof ArrayBuffer || ArrayBuffer.isView(content))) {
+                            content = Buffer.from(content);
+                        }
+
+                        if (Buffer.isBuffer(content)) {
+                            const base64 = content.toString('base64');
+
+                            // Use path with Data URI - this is robust for JSON transport
+                            return {
+                                filename: att.filename,
+                                path: `data:${att.contentType || 'application/pdf'};base64,${base64}`
+                            };
+                        }
+                    }
+                    return att;
+                });
+            }
+
             const response = await this.client.post('/api/email/send', {
                 to: options.email || options.to,
                 subject: options.subject,
                 html: options.html,
                 text: options.text,
-                fromName: options.fromName
+                fromName: options.fromName,
+                attachments: processedAttachments
             });
 
             return response.data;
