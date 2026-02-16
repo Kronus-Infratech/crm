@@ -71,11 +71,12 @@ class EmailQueueService {
                     console.error(`[EmailQueue] Attempt ${job.attempts}/${MAX_RETRIES} failed for ${job.to || job.email}:`, error.message);
 
                     if (job.attempts < MAX_RETRIES) {
-                        // Re-queue with exponential backoff (1m, 5m, 15m...)
-                        const delay = Math.pow(5, job.attempts) * 60 * 1000;
+                        // For serverless (Vercel), retry immediately instead of exponential backoff
+                        // Vercel functions don't persist, so delayed retries won't work
+                        const delay = 2000; // 2 seconds between retries
                         job.nextRetry = Date.now() + delay;
 
-                        console.log(`[EmailQueue] Re-queuing email to ${job.to || job.email} for retry in ${delay / 1000}s`);
+                        console.log(`[EmailQueue] Re-queuing email to ${job.to || job.email} for immediate retry in ${delay / 1000}s`);
                         this.queue.shift();
                         this.queue.push(job);
                         this.stats.retrying++;

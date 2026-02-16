@@ -22,10 +22,10 @@ const createTransporter = () => {
       user: user,
       pass: pass,
     },
-    // Extensive timeouts for cloud network jumps
-    connectionTimeout: 45000, 
-    greetingTimeout: 45000,
-    socketTimeout: 60000,
+    // Reduced timeouts for serverless environments (Vercel)
+    connectionTimeout: 10000,  // 10 seconds (was 45s)
+    greetingTimeout: 10000,    // 10 seconds (was 45s)
+    socketTimeout: 15000,      // 15 seconds (was 60s)
     tls: {
       rejectUnauthorized: false,
       minVersion: 'TLSv1.2'
