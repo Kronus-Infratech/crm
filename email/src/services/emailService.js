@@ -58,9 +58,14 @@ const sendEmail = async (options) => {
     return { queued: false, error: 'Recipient address missing' };
   }
   
-  // Add to queue and return immediately (async)
-  await queueService.add(options);
-  return { queued: true };
+  // Add to queue and wait for completion (critical for Vercel/Serverless)
+  try {
+    await queueService.add(options);
+    return { queued: true };
+  } catch (error) {
+    console.error('[EmailService] Failed to process email queue:', error);
+    return { queued: false, error: error.message };
+  }
 };
 
 /**

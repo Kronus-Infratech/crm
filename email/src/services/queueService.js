@@ -34,8 +34,8 @@ class EmailQueueService {
         this.queue.push(job);
         console.log(`[EmailQueue] Job added. Queue size: ${this.queue.length}`);
 
-        // Trigger processing without awaiting it (fire and forget)
-        this.processQueue();
+        // In serverless, we must await the processing to ensure it completes before function freezes
+        return this.processQueue();
     }
 
     /**
