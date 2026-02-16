@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const prisma = require('../config/database');
 const { HTTP_STATUS, ROLES } = require('../config/constants');
 const { generatePassword } = require('../utils/cryptoUtils');
-const { sendWelcomeEmail } = require('../utils/emailUtils');
+const { sendWelcomeEmail } = require('../services/emailClient');
 
 /**
  * @desc    Get user profile

@@ -3,7 +3,7 @@ const prisma = require('../config/database');
 const { HTTP_STATUS, ROLES } = require('../config/constants');
 const { generateToken, generateRefreshToken } = require('../utils/tokenUtils');
 const { generateResetToken, hashToken } = require('../utils/cryptoUtils');
-const { sendPasswordResetEmail } = require('../utils/emailUtils');
+const { sendPasswordResetEmail } = require('../services/emailClient');
 
 /**
  * @desc    Register new user

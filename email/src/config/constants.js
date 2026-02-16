@@ -1,0 +1,23 @@
+/**
+ * Email template types
+ */
+const EMAIL_TEMPLATES = {
+    PASSWORD_RESET: 'PASSWORD_RESET',
+    WELCOME: 'WELCOME',
+    LEAD_ASSIGNMENT: 'LEAD_ASSIGNMENT',
+    FOLLOW_UP_REMINDER: 'FOLLOW_UP_REMINDER',
+    LEAD_WELCOME: 'LEAD_WELCOME',
+    LEAD_FEEDBACK: 'LEAD_FEEDBACK',
+    LEDGER_OPENED: 'LEDGER_OPENED',
+    CEO_NOTIFICATION: 'CEO_NOTIFICATION'
+};
+
+/**
+ * Default email sender
+ */
+const DEFAULT_FROM_NAME = 'Kronus Infratech & Consultants';
+
+module.exports = {
+    EMAIL_TEMPLATES,
+    DEFAULT_FROM_NAME
+};

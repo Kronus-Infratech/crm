@@ -1,7 +1,7 @@
 const prisma = require('../config/database');
 const crypto = require('crypto');
 const { HTTP_STATUS, ROLES } = require('../config/constants');
-const { sendLeadAssignmentEmail, sendLeadWelcomeEmail, sendLeadFeedbackEmail, sendLedgerOpenedEmail, sendCEONotificationEmail } = require('../utils/emailUtils');
+const { sendLeadAssignmentEmail, sendLeadWelcomeEmail, sendLeadFeedbackEmail, sendLedgerOpenedEmail, sendCEONotificationEmail } = require('../services/emailClient');
 const { formatDate } = require('../utils/dateUtils');
 
 /**

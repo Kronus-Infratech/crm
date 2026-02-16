@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const prisma = require('../config/database');
-const { sendFollowUpReminderEmail, sendEmail } = require('../utils/emailUtils');
+const { sendFollowUpReminderEmail, sendEmail } = require('../services/emailClient');
 const { getReportingData, generateReportPDF } = require('./reportService');
 
 /**
@@ -141,7 +141,7 @@ const processMissedFollowUps = async () => {
       return;
     }
 
-    const { sendCEONotificationEmail } = require('../utils/emailUtils');
+    const { sendCEONotificationEmail } = require('../services/emailClient');
 
     // Notify CEO for each missed lead
     // (In a high volume system, we might want to aggregate these, but for now individual is more surgical)
