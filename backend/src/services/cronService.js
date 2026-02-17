@@ -133,6 +133,9 @@ const processMissedFollowUps = async () => {
       },
       include: {
         assignedTo: true,
+      },
+      orderBy: {
+        followUpDate: 'asc' // Oldest missed first
       }
     });
 
@@ -141,21 +144,64 @@ const processMissedFollowUps = async () => {
       return;
     }
 
+    // Group into chunks to respect email size limits and readability
+    const CHUNK_SIZE = 50;
+    const chunks = [];
+    for (let i = 0; i < missedLeads.length; i += CHUNK_SIZE) {
+      chunks.push(missedLeads.slice(i, i + CHUNK_SIZE));
+    }
 
+    console.log(`Sending ${chunks.length} consolidated email(s) for ${missedLeads.length} missed leads.`);
 
-    // Notify CEO for each missed lead
-    // (In a high volume system, we might want to aggregate these, but for now individual is more surgical)
-    for (const lead of missedLeads) {
-      const salesmanName = lead.assignedTo?.name || 'Unassigned';
-      const delayDays = Math.floor((new Date() - new Date(lead.followUpDate)) / (1000 * 60 * 60 * 24));
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const dateString = new Date().toLocaleDateString();
+      const partSuffix = chunks.length > 1 ? ` - Part ${i + 1}/${chunks.length}` : '';
+      const subject = `[CRM] Missed Follow-Ups Summary (${dateString})${partSuffix}`;
 
-      await emailClient.sendCEONotificationEmail(
-        lead.name,
-        lead.id,
-        'MISSED_FOLLOWUP',
-        salesmanName,
-        `Follow-up was scheduled for ${lead.followUpDate.toLocaleDateString()}. It is now delayed by ${delayDays} day(s).`
-      ).catch(err => console.error(`Failed to notify CEO about missed lead ${lead.id}:`, err));
+      // Generate HTML Table
+      const rows = chunk.map(lead => {
+        const delayDays = Math.floor((new Date() - new Date(lead.followUpDate)) / (1000 * 60 * 60 * 24));
+        const salesman = lead.assignedTo?.name || 'Unassigned';
+        return `
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 8px;">${lead.name}</td>
+                    <td style="padding: 8px;">${lead.phone || 'N/A'}</td>
+                    <td style="padding: 8px;">${salesman}</td>
+                    <td style="padding: 8px;">${new Date(lead.followUpDate).toLocaleDateString()}</td>
+                    <td style="padding: 8px; color: #d32f2f;">${delayDays} days</td>
+                </tr>
+            `;
+      }).join('');
+
+      const html = `
+            <div style="font-family: sans-serif; color: #333;">
+                <p>The following leads have missed their scheduled follow-up dates:</p>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; border: 1px solid #eee;">
+                    <thead style="background-color: #f5f5f5;">
+                        <tr>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Lead Name</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Mobile</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Assigned To</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Due Date</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Delay</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+                <p style="font-size: 0.9em; color: #666; margin-top: 20px;">
+                    Total missed in this batch: ${chunk.length}
+                </p>
+            </div>
+        `;
+
+      await emailClient.sendEmail({
+        email: 'ceo@kronusinfra.org',
+        subject,
+        html
+      });
     }
 
     console.log(`Processed ${missedLeads.length} missed follow-ups.`);
