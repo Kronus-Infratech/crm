@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const { HTTP_STATUS } = require('../config/constants');
+const { generateEmbedding } = require('../utils/embedding');
 
 /**
  * @desc    Get all projects (Property Areas)
@@ -57,6 +58,21 @@ const createProject = async (req, res, next) => {
       }
     });
 
+    // Generate Embedding (Async)
+    (async () => {
+      try {
+        const textToEmbed = `
+                Project: ${project.name}
+                Location: ${project.location || ""}
+                Description: ${project.description || ""}
+            `.trim().replace(/\s+/g, " ");
+        const embedding = await generateEmbedding(textToEmbed);
+        if (embedding) {
+          await prisma.project.update({ where: { id: project.id }, data: { descriptionEmbedding: embedding } });
+        }
+      } catch (e) { console.error("Error generating project embedding:", e); }
+    })();
+
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: project,
@@ -87,6 +103,27 @@ const updateProject = async (req, res, next) => {
       where: { id },
       data: { name, location, description, cityId: cityId || undefined }
     });
+
+    // Update Embedding (Async)
+    (async () => {
+      try {
+        // Re-fetch to get complete data if needed, or just use what we updated if sufficient. 
+        // Ideally fetch fresh to be safe.
+        const freshProject = await prisma.project.findUnique({ where: { id: project.id }, include: { city: true } });
+        if (freshProject) {
+          const textToEmbed = `
+                    Project: ${freshProject.name}
+                    Location: ${freshProject.location || ""}
+                    Description: ${freshProject.description || ""}
+                    City: ${freshProject.city?.name || ""}
+                `.trim().replace(/\s+/g, " ");
+          const embedding = await generateEmbedding(textToEmbed);
+          if (embedding) {
+            await prisma.project.update({ where: { id: project.id }, data: { descriptionEmbedding: embedding } });
+          }
+        }
+      } catch (e) { console.error("Error updating project embedding:", e); }
+    })();
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
@@ -253,6 +290,38 @@ const createInventoryItem = async (req, res, next) => {
       }
     });
 
+    // Generate Embedding (Async)
+    (async () => {
+      try {
+        // Need project name for better context, fetch it
+        const fullItem = await prisma.inventoryItem.findUnique({ where: { id: newItem.id }, include: { project: true } });
+        if (fullItem) {
+          const features = [
+            fullItem.gatedColony ? "Gated Colony" : "",
+            fullItem.corner ? "Corner Plot" : "",
+            fullItem.construction ? "With Construction" : "",
+            fullItem.boundaryWalls ? "Boundary Walls" : "",
+          ].filter(Boolean).join(", ");
+
+          const textToEmbed = `
+                    Type: ${fullItem.propertyType}
+                    Plot: ${fullItem.plotNumber}
+                    Size: ${fullItem.size || "N/A"}
+                    Price: ${fullItem.totalPrice || fullItem.askingPrice || "N/A"}
+                    Location: ${fullItem.project?.name || "Unknown Project"}
+                    Features: ${features}
+                    Description: ${fullItem.description || ""}
+                    Condition: ${fullItem.condition}
+                `.trim().replace(/\s+/g, " ");
+
+          const embedding = await generateEmbedding(textToEmbed);
+          if (embedding) {
+            await prisma.inventoryItem.update({ where: { id: fullItem.id }, data: { descriptionEmbedding: embedding } });
+          }
+        }
+      } catch (e) { console.error("Error generating inventory embedding:", e); }
+    })();
+
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: newItem,
@@ -297,6 +366,37 @@ const updateInventoryItem = async (req, res, next) => {
         images: data.images !== undefined ? data.images : undefined,
       }
     });
+
+    // Update Embedding (Async)
+    (async () => {
+      try {
+        const fullItem = await prisma.inventoryItem.findUnique({ where: { id: updatedItem.id }, include: { project: true } });
+        if (fullItem) {
+          const features = [
+            fullItem.gatedColony ? "Gated Colony" : "",
+            fullItem.corner ? "Corner Plot" : "",
+            fullItem.construction ? "With Construction" : "",
+            fullItem.boundaryWalls ? "Boundary Walls" : "",
+          ].filter(Boolean).join(", ");
+
+          const textToEmbed = `
+                    Type: ${fullItem.propertyType}
+                    Plot: ${fullItem.plotNumber}
+                    Size: ${fullItem.size || "N/A"}
+                    Price: ${fullItem.totalPrice || fullItem.askingPrice || "N/A"}
+                    Location: ${fullItem.project?.name || "Unknown Project"}
+                    Features: ${features}
+                    Description: ${fullItem.description || ""}
+                    Condition: ${fullItem.condition}
+                `.trim().replace(/\s+/g, " ");
+
+          const embedding = await generateEmbedding(textToEmbed);
+          if (embedding) {
+            await prisma.inventoryItem.update({ where: { id: fullItem.id }, data: { descriptionEmbedding: embedding } });
+          }
+        }
+      } catch (e) { console.error("Error updating inventory embedding:", e); }
+    })();
 
     res.status(HTTP_STATUS.OK).json({
       success: true,

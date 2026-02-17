@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { HTTP_STATUS, ROLES } = require('../config/constants');
 const emailClient = require('../services/emailClient');
 const { formatDate } = require('../utils/dateUtils');
+const { generateEmbedding } = require('../utils/embedding');
 
 /**
  * @desc    Get all leads (with pagination, search, and filters)
@@ -324,6 +325,30 @@ const createLead = async (req, res, next) => {
         .catch(err => console.error('Failed to send welcome email:', err));
     }
 
+    // Generate Embedding (Async)
+    (async () => {
+      try {
+        const textToEmbed = `
+                Lead: ${lead.name}
+                Property Interest: ${lead.property || "Any"}
+                Source: ${lead.source}
+                Status: ${lead.status}
+                Budget: ${lead.budgetFrom || 0} - ${lead.budgetTo || "Max"}
+                Notes: ${lead.financeNotes || ""}
+            `.trim().replace(/\s+/g, " ");
+
+        const embedding = await generateEmbedding(textToEmbed);
+        if (embedding) {
+          await prisma.lead.update({
+            where: { id: lead.id },
+            data: { notesEmbedding: embedding }
+          });
+        }
+      } catch (e) {
+        console.error("Error generating lead embedding:", e);
+      }
+    })();
+
     res.status(HTTP_STATUS.CREATED).json({
       success: true,
       message: 'Lead created successfully',
@@ -605,6 +630,39 @@ const updateLead = async (req, res, next) => {
           leadId: lead.id,
         },
       });
+    }
+
+    // Update Embedding if relevant fields changed (Async)
+    const embeddingFields = ['name', 'property', 'source', 'status', 'budgetFrom', 'budgetTo', 'financeNotes'];
+    const shouldUpdateEmbedding = embeddingFields.some(f => updateData[f] !== undefined);
+
+    if (shouldUpdateEmbedding) {
+      (async () => {
+        try {
+          // Fetch fresh data including what might not have been in updateData
+          const freshLead = await prisma.lead.findUnique({ where: { id: lead.id } });
+          if (freshLead) {
+            const textToEmbed = `
+                        Lead: ${freshLead.name}
+                        Property Interest: ${freshLead.property || "Any"}
+                        Source: ${freshLead.source}
+                        Status: ${freshLead.status}
+                        Budget: ${freshLead.budgetFrom || 0} - ${freshLead.budgetTo || "Max"}
+                        Notes: ${freshLead.financeNotes || ""}
+                    `.trim().replace(/\s+/g, " ");
+
+            const embedding = await generateEmbedding(textToEmbed);
+            if (embedding) {
+              await prisma.lead.update({
+                where: { id: lead.id },
+                data: { notesEmbedding: embedding }
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Error updating lead embedding:", e);
+        }
+      })();
     }
 
     res.status(HTTP_STATUS.OK).json({

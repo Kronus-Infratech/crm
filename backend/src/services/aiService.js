@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const prisma = require("../config/database");
+const { generateEmbedding } = require("../utils/embedding");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -7,16 +8,23 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // This helps the AI understand the database structure without needing to read the full Prisma schema file every time.
 const DB_SCHEMA = {
     User: {
-        fields: ["id", "email", "name", "phone", "roles", "department", "designation", "lastLoginAt", "createdAt"], 
+        fields: ["id", "email", "name", "phone", "roles", "department", "designation", "lastLoginAt", "createdAt"],
         // Excluded: password, resetPasswordToken
         relations: ["createdLeads", "assignedLeads", "activities", "transactions"]
     },
     Lead: {
         fields: ["id", "name", "email", "phone", "property", "source", "status", "priority", "budgetFrom", "budgetTo", "followUpDate", "createdAt", "updatedAt", "financeStatus", "ledgerStatus", "feedbackRating"],
+        // Enums:
+        // status: 'NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'SITE_VISIT', 'NEGOTIATION', 'DOCUMENTATION', 'CONVERTED', 'NOT_CONVERTED'
+        // priority: 'LOW', 'MEDIUM', 'HIGH', 'URGENT'
+        // source: 'WEBSITE', 'REFERRAL', 'INSTAGRAM', 'YOUTUBE', 'EMAIL', 'WHATSAPP', 'NINETY_NINE_ACRES', 'MAGICBRICKS', 'OLX', 'COLD_OUTREACH', 'WALK_IN'
         relations: ["createdBy", "assignedTo", "activities", "documents", "inventoryItem"]
     },
     InventoryItem: {
         fields: ["id", "plotNumber", "size", "ratePerSqYard", "totalPrice", "status", "project", "facing", "roadWidth", "propertyType", "transactionType", "ownerName", "block", "askingPrice", "listingDate"],
+        // Enums:
+        // status: 'AVAILABLE', 'BLOCKED', 'SOLD'
+        // condition: 'NEW', 'RESALE'
         relations: ["project", "leads", "createdBy"]
     },
     Project: {
@@ -47,6 +55,28 @@ const tools = [
                 parameters: {
                     type: "OBJECT",
                     properties: {}
+                }
+            },
+            {
+                name: "vectorSearch",
+                description: "Perform a semantic search to find items based on meaning (e.g., 'spacious villas near park', 'leads looking for luxury flats'). Use this for fuzzy matching or when exact filters are not enough.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        collection: {
+                            type: "STRING",
+                            description: "The collection to search. Options: 'inventory_items', 'projects', 'leads'."
+                        },
+                        query: {
+                            type: "STRING",
+                            description: "The user's search query (e.g., 'luxury apartment in south city')."
+                        },
+                        limit: {
+                            type: "INTEGER",
+                            description: "Number of results to return (default 5)."
+                        }
+                    },
+                    required: ["collection", "query"]
                 }
             },
             {
@@ -81,9 +111,83 @@ const toolHandlers = {
         return DB_SCHEMA;
     },
 
+    vectorSearch: async ({ collection, query, limit = 5 }) => {
+        try {
+            const embedding = await generateEmbedding(query);
+            if (!embedding) return { error: "Failed to generate embedding for query." };
+
+            let modelName = "";
+            let path = "";
+            let projectStage = {};
+
+            if (collection === "inventory_items") {
+                modelName = "inventoryItem";
+                path = "descriptionEmbedding";
+                projectStage = {
+                    plotNumber: 1,
+                    size: 1,
+                    totalPrice: 1,
+                    askingPrice: 1,
+                    status: 1,
+                    propertyType: 1,
+                    condition: 1,
+                    description: 1
+                };
+            } else if (collection === "projects") {
+                modelName = "project";
+                path = "descriptionEmbedding";
+                projectStage = {
+                    name: 1,
+                    location: 1,
+                    description: 1
+                };
+            } else if (collection === "leads") {
+                modelName = "lead";
+                path = "notesEmbedding";
+                projectStage = {
+                    name: 1,
+                    status: 1,
+                    budgetFrom: 1,
+                    budgetTo: 1,
+                    property: 1,
+                    financeNotes: 1
+                };
+            } else {
+                return { error: "Invalid collection. Use 'inventory_items', 'projects', or 'leads'." };
+            }
+
+            // Execute Vector Search using aggregateRaw
+            const results = await prisma[modelName].aggregateRaw({
+                pipeline: [
+                    {
+                        $vectorSearch: {
+                            index: "vector_index",
+                            path: path,
+                            queryVector: embedding,
+                            numCandidates: 100,
+                            limit: limit
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 1,
+                            ...projectStage,
+                            score: { $meta: "vectorSearchScore" }
+                        }
+                    }
+                ]
+            });
+
+            return results;
+        } catch (error) {
+            console.error("[AI] Vector Search Error:", error);
+            return { error: "Vector search failed. Ensure Atlas Vector Index is configured." };
+        }
+    },
+
     runDatabaseQuery: async ({ model, action, query }) => {
         // --- Security & Validation ---
-        
+
         // 1. Validate Model
         const allowedModels = Object.keys(DB_SCHEMA);
         if (!allowedModels.includes(model)) {
@@ -119,7 +223,7 @@ const toolHandlers = {
             const prismaModelName = model.charAt(0).toLowerCase() + model.slice(1);
 
             if (!prisma[prismaModelName]) {
-                 return { error: `Prisma model '${prismaModelName}' not found.` };
+                return { error: `Prisma model '${prismaModelName}' not found.` };
             }
 
             // e.g., prisma.lead.findMany(query)
@@ -170,8 +274,11 @@ const systemInstruction = `
     ### TOOL USAGE
     1. **Check Schema First:** Use \`getDatabaseSchema\` if you are unsure about field names.
     2. **Smart Querying:**
-       - **"Hot Properties":** Group leads by \`property\` to see where demand is.
-       - **"Sales Performance":** Check \`InventoryItem\` with status='SOLD' or \`Transaction\` table.
+       - **"Show me luxury villas":** Use \`vectorSearch(collection='inventory_items', query='luxury villas')\`.
+       - **"Find leads interested in commercial plots":** Use \`vectorSearch(collection='leads', query='commercial plots')\`.
+       - **"Count of SOLD items":** Use \`runDatabaseQuery(model='InventoryItem', action='count', query={ where: { status: 'SOLD' } })\`.
+       - **"Specific Lead details":** Use \`runDatabaseQuery\` with \`where: { name: ... }\` for exact lookup.
+    3. **Combine Tools:** You can run a vector search to find relevant items, then use their IDs to query more details if needed.
     
     ### RESPONSE FORMAT
     - **Direct Answer:** "The most popular project right now is Sunrise City."
@@ -190,7 +297,7 @@ const model = genAI.getGenerativeModel({
 const generateInsight = async (userMessage, history = []) => {
     try {
         let cleanHistory = [...history];
-        
+
         // Remove 'model' role if it's the first message (Gemini API requirement sometimes)
         if (cleanHistory.length > 0 && cleanHistory[0].role === 'model') {
             cleanHistory.shift();

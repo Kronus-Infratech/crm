@@ -108,6 +108,9 @@ model Lead {
   paymentLedgerEntries  PaymentLedgerEntry[]
   documentLedgerEntries DocumentLedgerEntry[]
   
+  // AI Embeddings
+  notesEmbedding Float[]  @default([])
+  
   @@map("leads")
 }
 
@@ -323,6 +326,7 @@ model Project {
   name        String   @unique
   location    String?
   description String?
+  descriptionEmbedding Float[] @default([])
   
   cityId      String?  @db.ObjectId
   city        City?    @relation(fields: [cityId], references: [id])
@@ -384,6 +388,9 @@ model InventoryItem {
   
   // Media
   images            String[]   @default([])
+
+  // AI Embeddings
+  descriptionEmbedding Float[]  @default([])
 
   // Tracking
   createdById       String?     @db.ObjectId
