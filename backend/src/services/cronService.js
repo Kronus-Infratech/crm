@@ -163,6 +163,7 @@ const processMissedFollowUps = async () => {
       const rows = chunk.map(lead => {
         const delayDays = Math.floor((new Date() - new Date(lead.followUpDate)) / (1000 * 60 * 60 * 24));
         const salesman = lead.assignedTo?.name || 'Unassigned';
+        const leadLink = `${process.env.FRONTEND_URL}/leads/${lead.id}`;
         return `
                 <tr style="border-bottom: 1px solid #ddd;">
                     <td style="padding: 8px;">${lead.name}</td>
@@ -170,6 +171,7 @@ const processMissedFollowUps = async () => {
                     <td style="padding: 8px;">${salesman}</td>
                     <td style="padding: 8px;">${new Date(lead.followUpDate).toLocaleDateString()}</td>
                     <td style="padding: 8px; color: #d32f2f;">${delayDays} days</td>
+                    <td style="padding: 8px;"><a href="${leadLink}" style="color: #009688; text-decoration: underline; font-size: 11px; font-weight: bold;">VIEW</a></td>
                 </tr>
             `;
       }).join('');
@@ -185,6 +187,7 @@ const processMissedFollowUps = async () => {
                             <th style="padding: 10px; border-bottom: 2px solid #ddd;">Assigned To</th>
                             <th style="padding: 10px; border-bottom: 2px solid #ddd;">Due Date</th>
                             <th style="padding: 10px; border-bottom: 2px solid #ddd;">Delay</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Action</th>
                         </tr>
                     </thead>
                     <tbody>

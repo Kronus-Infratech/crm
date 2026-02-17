@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { HiPlus, HiSearch, HiLockClosed, HiChevronLeft, HiChevronRight, HiCurrencyRupee } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/src/services/api";
@@ -29,6 +30,7 @@ function useDebounce(value, delay) {
 }
 
 export default function LeadsPage() {
+    const router = useRouter();
     const [leads, setLeads] = useState([]);
     const [stats, setStats] = useState({});
     const [loading, setLoading] = useState(true);
@@ -358,7 +360,7 @@ export default function LeadsPage() {
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         className="hover:bg-gray-50/50 transition-colors cursor-pointer text-sm"
-                                        onClick={() => setSelectedLead(lead)}
+                                        onClick={() => router.push(`/leads/${lead.id}`)}
                                     >
                                         <td className="px-4 py-4 font-medium text-gray-900">
                                             {lead.name}

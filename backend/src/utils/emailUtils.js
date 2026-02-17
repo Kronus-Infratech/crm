@@ -13,7 +13,7 @@ const createTransporter = () => {
   const port = parseInt(process.env.EMAIL_PORT);
   const user = process.env.EMAIL_USER?.trim();
   const pass = (process.env.EMAIL_PASSWORD || process.env.EMAIL_PASS)?.trim();
-  
+
   // Secure: true for 465 (Direct SSL), false for 587 (STARTTLS)
   const isSecure = port === 465;
 
@@ -28,7 +28,7 @@ const createTransporter = () => {
       pass: pass,
     },
     // Extensive timeouts for cloud network jumps
-    connectionTimeout: 45000, 
+    connectionTimeout: 45000,
     greetingTimeout: 45000,
     socketTimeout: 60000,
     tls: {
@@ -291,7 +291,7 @@ const sendLeadAssignmentEmail = async (userEmail, userName, leadName, leadId) =>
 
     <p>Check the lead details and history on your dashboard:</p>
     <div style="text-align: center;">
-      <a href="${process.env.FRONTEND_URL}/leads" class="button">View Lead Details</a>
+      <a href="${process.env.FRONTEND_URL}/leads/${leadId}" class="button">View Lead Details</a>
     </div>
     
     <p>Success is where preparation and opportunity meet. Good luck!</p>
@@ -301,7 +301,7 @@ const sendLeadAssignmentEmail = async (userEmail, userName, leadName, leadId) =>
     email: userEmail,
     subject: 'New Lead Assigned: ' + leadName,
     html: baseTemplate(content),
-    text: `Hi ${userName}, a new lead (${leadName}) has been assigned to you. Access it here: ${process.env.FRONTEND_URL}/leads`,
+    text: `Hi ${userName}, a new lead (${leadName}) has been assigned to you. Access it here: ${process.env.FRONTEND_URL}/leads/${leadId}`,
   });
 };
 
@@ -314,6 +314,7 @@ const sendFollowUpReminderEmail = async (agentEmail, agentName, leads, timeConte
       <p style="margin: 0; font-weight: 800; color: #4a4a4a; font-size: 16px;">${lead.name}</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; color: #666666;"><strong>Property:</strong> ${lead.property || 'Not specified'}</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; color: #009688;"><strong>Phone:</strong> ${lead.phone}</p>
+      <p style="margin: 8px 0 0 0; font-size: 12px;"><a href="${process.env.FRONTEND_URL}/leads/${lead.id}" style="color: #4f46e5; text-decoration: underline; font-weight: 600;">View Lead Details &rarr;</a></p>
     </div>
   `).join('');
 
@@ -488,7 +489,7 @@ const sendCEONotificationEmail = async (leadName, leadId, type, salesmanName, ad
     </div>
 
     <div style="text-align: center;">
-      <a href="${process.env.FRONTEND_URL}/leads" class="button">View Lead Data</a>
+      <a href="${process.env.FRONTEND_URL}/leads/${leadId}" class="button">View Lead Details</a>
     </div>
   `;
 
