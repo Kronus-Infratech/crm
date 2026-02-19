@@ -288,8 +288,8 @@ const systemInstruction = `
 `;
 
 const model = genAI.getGenerativeModel({
-    // model: "gemini-2.5-pro",
-    model: "gemini-3-pro-preview",
+    model: "gemini-2.5-pro",
+    // model: "gemini-3-pro-preview",
     tools: tools,
     systemInstruction: systemInstruction
 });
