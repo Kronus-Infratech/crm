@@ -186,7 +186,7 @@ const createMapProperty = async (req, res, next) => {
                 coordinates,
                 center: computedCenter,
                 color: color || '#009688',
-                inventoryItemId: inventoryItemId || null,
+                ...(inventoryItemId ? { inventoryItemId } : {}),
                 createdById: req.user.id
             },
             include: {
@@ -211,6 +211,12 @@ const createMapProperty = async (req, res, next) => {
             message: 'Map property created successfully'
         });
     } catch (error) {
+        if (error.code === 'P2002' && error.meta?.target?.includes('inventoryItemId')) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: 'This inventory item is already linked to a map property'
+            });
+        }
         next(error);
     }
 };
@@ -285,6 +291,12 @@ const updateMapProperty = async (req, res, next) => {
             message: 'Map property updated successfully'
         });
     } catch (error) {
+        if (error.code === 'P2002' && error.meta?.target?.includes('inventoryItemId')) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: 'This inventory item is already linked to another map property'
+            });
+        }
         next(error);
     }
 };

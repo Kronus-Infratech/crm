@@ -15,6 +15,8 @@ import {
     HiOfficeBuilding,
     HiSave,
     HiChevronDown,
+    HiExclamation,
+    HiMenuAlt2,
 } from "react-icons/hi";
 import { toast } from "react-hot-toast";
 import dynamic from "next/dynamic";
@@ -23,8 +25,10 @@ import { useSearchParams } from "next/navigation";
 import Heading from "@/src/components/ui/Heading";
 import Button from "@/src/components/ui/Button";
 import Modal from "@/src/components/ui/Modal";
+import InventoryDetail from "@/src/components/inventory/InventoryDetail";
 import api from "@/src/services/api";
 import { formatNumber } from "@/src/utils/formatters";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 // Dynamically import LeafletMap to avoid SSR issues
 const LeafletMap = dynamic(
@@ -49,8 +53,11 @@ const STATUS_COLORS = {
 
 export default function MapPage() {
     const searchParams = useSearchParams();
+    const { user } = useAuth();
     const urlInventoryId = searchParams.get("inventoryId");      // View existing map property by inventory
     const urlLinkInventoryId = searchParams.get("linkInventoryId"); // Pre-link inventory when marking
+
+    const canDelete = user?.roles?.some((r) => ["ADMIN", "DIRECTOR", "EXECUTIVE"].includes(r));
 
     const [properties, setProperties] = useState([]);
     const [inventoryItems, setInventoryItems] = useState([]);
@@ -73,9 +80,24 @@ export default function MapPage() {
     const [inventorySearch, setInventorySearch] = useState("");
     const [showInventoryDropdown, setShowInventoryDropdown] = useState(false);
 
+    // Delete confirmation modal
+    const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [propertyToDelete, setPropertyToDelete] = useState(null);
+
+    // Inventory detail modal (for eye button)
+    const [isInventoryDetailOpen, setInventoryDetailOpen] = useState(false);
+    const [viewingInventoryItem, setViewingInventoryItem] = useState(null);
+
     // Sidebar state
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false); // closed by default on mobile
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Open sidebar by default on desktop
+    useEffect(() => {
+        if (typeof window !== "undefined" && window.innerWidth >= 768) {
+            setSidebarOpen(true);
+        }
+    }, []);
 
     // Fetch map properties
     const fetchProperties = useCallback(async () => {
@@ -207,18 +229,30 @@ export default function MapPage() {
         }
     };
 
-    // Delete property
-    const handleDeleteProperty = async (prop) => {
-        if (!window.confirm(`Delete "${prop.name}" from map? This cannot be undone.`)) return;
+    // Delete property - open modal
+    const openDeleteModal = (prop) => {
+        setPropertyToDelete(prop);
+        setDeleteModalOpen(true);
+    };
 
+    const handleConfirmDelete = async () => {
+        if (!propertyToDelete) return;
         try {
-            await api.delete(`/map/properties/${prop.id}`);
+            await api.delete(`/map/properties/${propertyToDelete.id}`);
             toast.success("Property removed from map");
             setSelectedProperty(null);
+            setDeleteModalOpen(false);
+            setPropertyToDelete(null);
             fetchProperties();
         } catch (error) {
             toast.error("Failed to delete property");
         }
+    };
+
+    // Open inventory detail from sidebar eye button
+    const openInventoryDetail = (inventoryItem) => {
+        setViewingInventoryItem(inventoryItem);
+        setInventoryDetailOpen(true);
     };
 
     // Open edit modal
@@ -263,7 +297,8 @@ export default function MapPage() {
         );
     });
 
-    const PropertyForm = ({ onSubmit, submitLabel }) => (
+    // Reusable form JSX (NOT a component fn — avoids remount/focus loss)
+    const renderPropertyForm = (onSubmit, submitLabel) => (
         <div className="space-y-4">
             <div>
                 <label className="block text-xs font-black text-brand-dark-gray uppercase tracking-wider mb-1">
@@ -421,16 +456,23 @@ export default function MapPage() {
     );
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <Heading level={2}>Property Map</Heading>
-                    <p className="text-gray-500 mt-1 font-medium">
+                    <p className="text-gray-500 mt-1 font-medium text-sm">
                         Mark property boundaries and link them to inventory.
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        className="md:hidden p-2 bg-white border border-gray-200 rounded-lg text-brand-dark-gray hover:bg-gray-50"
+                        title="Toggle sidebar"
+                    >
+                        <HiMenuAlt2 size={20} />
+                    </button>
                     <Button
                         onClick={() => {
                             setIsDrawing(!isDrawing);
@@ -446,11 +488,11 @@ export default function MapPage() {
                     >
                         {isDrawing ? (
                             <>
-                                <HiX size={18} /> Cancel Drawing
+                                <HiX size={18} /> Cancel
                             </>
                         ) : (
                             <>
-                                <HiCursorClick size={18} /> Mark Property
+                                <HiCursorClick size={18} /> <span className="hidden sm:inline">Mark</span> Property
                             </>
                         )}
                     </Button>
@@ -458,11 +500,11 @@ export default function MapPage() {
             </div>
 
             {/* Map + Sidebar Layout */}
-            <div className="flex gap-4 h-[calc(100vh-220px)]">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 h-auto md:h-[calc(100vh-220px)]">
                 {/* Sidebar - Property List */}
                 <div
-                    className={`${sidebarOpen ? "w-80 min-w-[320px]" : "w-0"
-                        } transition-all duration-300 overflow-hidden`}
+                    className={`${sidebarOpen ? "w-full md:w-80 md:min-w-[320px] h-64 md:h-full" : "h-0 md:h-full md:w-0"
+                        } transition-all duration-300 overflow-hidden shrink-0`}
                 >
                     <div className="h-full bg-white rounded-xl border border-brand-spanish-gray/20 shadow-sm flex flex-col">
                         {/* Sidebar header */}
@@ -490,7 +532,7 @@ export default function MapPage() {
                                 <div className="p-8 text-center text-brand-spanish-gray">
                                     <HiMap size={32} className="mx-auto mb-2 opacity-30" />
                                     <p className="text-xs font-medium">No properties marked yet</p>
-                                    <p className="text-[10px] mt-1">Click "Mark Property" to get started</p>
+                                    <p className="text-[10px] mt-1">Click &quot;Mark Property&quot; to get started</p>
                                 </div>
                             ) : (
                                 filteredProperties.map((prop) => {
@@ -501,8 +543,8 @@ export default function MapPage() {
                                         <div
                                             key={prop.id}
                                             className={`p-3 rounded-lg cursor-pointer transition-all border ${isActive
-                                                    ? "bg-[#009688]/5 border-[#009688]/30 shadow-sm"
-                                                    : "border-transparent hover:bg-gray-50 hover:border-gray-100"
+                                                ? "bg-[#009688]/5 border-[#009688]/30 shadow-sm"
+                                                : "border-transparent hover:bg-gray-50 hover:border-gray-100"
                                                 }`}
                                             onClick={() => {
                                                 setHighlightPropertyId(isActive ? null : prop.id);
@@ -550,6 +592,18 @@ export default function MapPage() {
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-0.5 shrink-0 ml-2">
+                                                    {inv && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                openInventoryDetail(inv);
+                                                            }}
+                                                            className="p-1.5 text-brand-spanish-gray hover:text-[#009688] hover:bg-[#009688]/10 rounded transition-all"
+                                                            title="View Inventory"
+                                                        >
+                                                            <HiEye size={14} />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -560,16 +614,18 @@ export default function MapPage() {
                                                     >
                                                         <HiPencil size={14} />
                                                     </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDeleteProperty(prop);
-                                                        }}
-                                                        className="p-1.5 text-brand-spanish-gray hover:text-red-500 hover:bg-red-500/10 rounded transition-all"
-                                                        title="Delete"
-                                                    >
-                                                        <HiTrash size={14} />
-                                                    </button>
+                                                    {canDelete && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                openDeleteModal(prop);
+                                                            }}
+                                                            className="p-1.5 text-brand-spanish-gray hover:text-red-500 hover:bg-red-500/10 rounded transition-all"
+                                                            title="Delete"
+                                                        >
+                                                            <HiTrash size={14} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -589,19 +645,20 @@ export default function MapPage() {
                 </div>
 
                 {/* Map */}
-                <div className="flex-1 relative">
-                    {/* Toggle sidebar button */}
+                <div className="flex-1 relative h-[calc(100vh-340px)] md:h-full min-h-87.5">
+                    {/* Toggle sidebar button - desktop only */}
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="absolute top-3 left-3 z-1000 bg-white shadow-lg rounded-lg p-2 hover:bg-gray-50 transition-colors border border-gray-200"
+                        className="hidden md:block absolute top-20 left-3 z-5 bg-white shadow-lg rounded-lg p-2 hover:bg-gray-50 transition-colors border border-gray-200"
                         title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
                     >
                         <HiMap size={18} className="text-brand-dark-gray" />
                     </button>
 
                     {isDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-1000 bg-[#009688] text-white px-4 py-2 rounded-full shadow-lg text-xs font-bold uppercase tracking-wider animate-pulse">
-                            Click on map to draw boundary • Click first point to close
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-5 bg-[#009688] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full shadow-lg text-[10px] md:text-xs font-bold uppercase tracking-wider animate-pulse text-center">
+                            <span className="hidden sm:inline">Click on map to draw boundary • Click first point to close</span>
+                            <span className="sm:hidden">Tap to draw • Tap first point to close</span>
                         </div>
                     )}
 
@@ -629,7 +686,7 @@ export default function MapPage() {
                 }}
                 title="Save Property Boundary"
             >
-                <PropertyForm onSubmit={handleSaveProperty} submitLabel="Save Property" />
+                {renderPropertyForm(handleSaveProperty, "Save Property")}
             </Modal>
 
             {/* Edit Property Modal */}
@@ -641,7 +698,62 @@ export default function MapPage() {
                 }}
                 title="Edit Map Property"
             >
-                <PropertyForm onSubmit={handleEditProperty} submitLabel="Update Property" />
+                {renderPropertyForm(handleEditProperty, "Update Property")}
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setPropertyToDelete(null);
+                }}
+                title="Delete Property"
+                size="sm"
+            >
+                <div className="space-y-4">
+                    <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-100">
+                        <HiExclamation className="text-red-500 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <p className="text-sm font-bold text-brand-dark-gray">
+                                Are you sure you want to delete &quot;{propertyToDelete?.name}&quot;?
+                            </p>
+                            <p className="text-xs text-brand-spanish-gray mt-1">
+                                This will remove the property boundary from the map. This action cannot be undone.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => {
+                                setDeleteModalOpen(false);
+                                setPropertyToDelete(null);
+                            }}
+                            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-brand-dark-gray hover:bg-gray-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleConfirmDelete}
+                            className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition-colors"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Inventory Detail Modal (from eye button) */}
+            <Modal
+                isOpen={isInventoryDetailOpen}
+                onClose={() => {
+                    setInventoryDetailOpen(false);
+                    setViewingInventoryItem(null);
+                }}
+                title="Plot Details"
+                size="lg"
+            >
+                <InventoryDetail item={viewingInventoryItem} />
             </Modal>
         </div>
     );

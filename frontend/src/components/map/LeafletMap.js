@@ -251,8 +251,12 @@ export default function LeafletMap({
     }, [highlightPropertyId, properties, mapReady]);
 
     return (
-        <div className="relative w-full h-full">
+        <div className="relative w-full h-full" style={{ zIndex: 0 }}>
             <div ref={mapRef} className="w-full h-full rounded-xl" style={{ minHeight: "500px" }} />
+            {/* Search box inside the map */}
+            {mapReady && (
+                <MapSearchControl map={mapInstanceRef.current} />
+            )}
             <style jsx global>{`
                 .map-property-label {
                 background: none !important;
@@ -261,8 +265,98 @@ export default function LeafletMap({
                 .leaflet-draw-toolbar {
                 display: none !important;
                 }
+                .leaflet-pane {
+                z-index: 1 !important;
+                }
+                .leaflet-top, .leaflet-bottom {
+                z-index: 2 !important;
+                }
+                .leaflet-popup-pane {
+                z-index: 3 !important;
+                }
+                .leaflet-tooltip-pane {
+                z-index: 3 !important;
+                }
             `}
             </style>
+        </div>
+    );
+}
+
+// Inline geocoding search component rendered on top of the map
+function MapSearchControl({ map }) {
+    const [query, setQuery] = useState("");
+    const [results, setResults] = useState([]);
+    const [searching, setSearching] = useState(false);
+    const debounceRef = useRef(null);
+
+    const handleSearch = useCallback((q) => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        setQuery(q);
+        if (!q || q.length < 3) {
+            setResults([]);
+            return;
+        }
+        debounceRef.current = setTimeout(async () => {
+            setSearching(true);
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&countrycodes=in`
+                );
+                const data = await res.json();
+                setResults(data);
+            } catch {
+                setResults([]);
+            } finally {
+                setSearching(false);
+            }
+        }, 400);
+    }, []);
+
+    const handleSelect = (r) => {
+        if (map) {
+            const lat = parseFloat(r.lat);
+            const lon = parseFloat(r.lon);
+            map.flyTo([lat, lon], 17, { duration: 1.2 });
+        }
+        setQuery(r.display_name.split(",")[0]);
+        setResults([]);
+    };
+
+    return (
+        <div
+            className="absolute top-3 right-20 z-5"
+            style={{ width: 280 }}
+        >
+            <div className="relative">
+                <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    placeholder="Search location..."
+                    className="w-full px-3 py-2 pl-9 text-sm bg-white border border-gray-200 rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-[#009688]/30 focus:border-[#009688] text-gray-800 font-medium"
+                />
+                <svg className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                {searching && (
+                    <div className="absolute right-2.5 top-2.5 w-4 h-4 border-2 border-[#009688] border-t-transparent rounded-full animate-spin" />
+                )}
+            </div>
+            {results.length > 0 && (
+                <div className="mt-1 bg-white rounded-lg shadow-xl border border-gray-100 max-h-52 overflow-y-auto">
+                    {results.map((r, i) => (
+                        <button
+                            key={i}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#009688]/5 hover:text-[#009688] transition-colors border-b border-gray-50 last:border-0"
+                            onClick={() => handleSelect(r)}
+                        >
+                            <p className="font-semibold text-xs truncate">{r.display_name.split(",")[0]}</p>
+                            <p className="text-[10px] text-gray-400 truncate">{r.display_name}</p>
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
