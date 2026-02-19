@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { HiPlus, HiSearch, HiLockClosed, HiChevronLeft, HiChevronRight, HiCurrencyRupee } from "react-icons/hi";
+import { HiPlus, HiSearch, HiLockClosed, HiChevronLeft, HiChevronRight, HiCurrencyRupee, HiClock, HiExclamation } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/src/services/api";
 import { toast } from "react-hot-toast";
@@ -46,6 +46,10 @@ export default function LeadsPage() {
     const [sortOrder, setSortOrder] = useState("desc");
     const [assignedToFilter, setAssignedToFilter] = useState("");
     const [salesmen, setSalesmen] = useState([]);
+
+    // Overdue filter toggle
+    const [showOverdueOnly, setShowOverdueOnly] = useState(false);
+    const [overdueCount, setOverdueCount] = useState(0);
 
     // Debounced search term
     const debouncedSearch = useDebounce(searchTerm, 500);
@@ -140,19 +144,23 @@ export default function LeadsPage() {
                 source: sourceFilter || undefined,
                 assignedToId: assignedToFilter || undefined,
                 sortBy: sortBy,
-                sortOrder: sortOrder
+                sortOrder: sortOrder,
+                overdue: showOverdueOnly ? 'true' : undefined,
             };
 
             const response = await api.get("/leads", { params });
             setLeads(response.data.data.leads);
             setStats(response.data.data.pagination);
             setTotalPages(response.data.data.pagination.totalPages);
+            if (response.data.data.overdueCount !== undefined) {
+                setOverdueCount(response.data.data.overdueCount);
+            }
         } catch (error) {
             console.error("Failed to fetch leads", error);
         } finally {
             setLoading(false);
         }
-    }, [page, debouncedSearch, statusFilter, sourceFilter, assignedToFilter, sortBy, sortOrder]);
+    }, [page, debouncedSearch, statusFilter, sourceFilter, assignedToFilter, sortBy, sortOrder, showOverdueOnly]);
 
     useEffect(() => {
         fetchLeads();
@@ -160,7 +168,7 @@ export default function LeadsPage() {
 
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, statusFilter, sourceFilter, assignedToFilter]);
+    }, [debouncedSearch, statusFilter, sourceFilter, assignedToFilter, showOverdueOnly]);
 
     // Handlers
     const handleSort = (field) => {
@@ -202,6 +210,28 @@ export default function LeadsPage() {
         }
     };
 
+    // Compute duplicate phone numbers from current leads list
+    const duplicatePhones = (() => {
+        const phoneCounts = {};
+        leads.forEach((lead) => {
+            if (lead.phone) {
+                const p = lead.phone.replace(/\s+/g, '');
+                phoneCounts[p] = (phoneCounts[p] || 0) + 1;
+            }
+        });
+        const dupes = new Set();
+        Object.entries(phoneCounts).forEach(([phone, count]) => {
+            if (count > 1) dupes.add(phone);
+        });
+        return dupes;
+    })();
+
+    // Filter leads for overdue toggle is now done server-side
+    const displayLeads = leads;
+
+    // Overdue count comes from backend (across all accessible leads)
+    // overdueCount state is set in fetchLeads
+
     const SortIcon = ({ field }) => {
         if (sortBy !== field) return <span className="w-4 inline-block">-</span>;
         return sortOrder === "asc" ? <span className="inline-block ml-1">▲</span> : <span className="inline-block ml-1">▼</span>;
@@ -214,17 +244,33 @@ export default function LeadsPage() {
                     <Heading level={2}>Leads</Heading>
                     <p className="text-gray-600 font-bold uppercase tracking-widest text-[10px]">Active Operations Pipeline</p>
                 </div>
-                <div className="flex gap-4">
-                    <Button 
-                        variant="ghost" 
-                        icon={<HiDownload />} 
+                <div className="flex gap-3 flex-wrap">
+                    <button
+                        onClick={() => setShowOverdueOnly(!showOverdueOnly)}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all border-2 ${showOverdueOnly
+                                ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/20'
+                                : 'bg-white text-red-500 border-red-200 hover:border-red-400 hover:bg-red-50'
+                            }`}
+                    >
+                        <HiClock size={16} />
+                        Overdue
+                        {overdueCount > 0 && (
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-5 text-center ${showOverdueOnly ? 'bg-white text-red-500' : 'bg-red-500 text-white'
+                                }`}>
+                                {overdueCount}
+                            </span>
+                        )}
+                    </button>
+                    <Button
+                        variant="ghost"
+                        icon={<HiDownload />}
                         onClick={() => setIsExportOpen(true)}
                         className="font-black uppercase tracking-widest text-xs border-2 border-brand-teal/20 text-brand-teal hover:bg-brand-teal/5"
                     >
                         Export
                     </Button>
-                    <Button 
-                        icon={<HiPlus />} 
+                    <Button
+                        icon={<HiPlus />}
                         onClick={() => setIsCreateOpen(true)}
                         className="font-black uppercase tracking-widest text-xs px-6 shadow-xl shadow-brand-teal/20"
                     >
@@ -296,9 +342,9 @@ export default function LeadsPage() {
             </div>
 
             {/* Table */}
-            <Card className="overflow-hidden p-0 border border-gray-200 shadow-sm relative min-h-[330px]">
+            <Card className="overflow-hidden p-0 border border-gray-200 shadow-sm relative min-h-82.5">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[800px]">
+                    <table className="w-full text-left border-collapse min-w-200">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider">
                                 <th className="px-4 py-4 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('name')}>
@@ -343,107 +389,122 @@ export default function LeadsPage() {
                                 )}
                             </AnimatePresence>
 
-                            {!loading && leads.length === 0 ? (
+                            {!loading && displayLeads.length === 0 ? (
                                 <tr>
                                     <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
                                         <div className="flex flex-col items-center gap-2">
-                                            <HiSearch size={24} className="text-gray-300" />
-                                            <p>No leads found matching your criteria.</p>
+                                            {showOverdueOnly ? (
+                                                <>
+                                                    <HiClock size={24} className="text-green-400" />
+                                                    <p>No overdue follow-ups. You&apos;re all caught up!</p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <HiSearch size={24} className="text-gray-300" />
+                                                    <p>No leads found matching your criteria.</p>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
                             ) : (
-                                leads.map((lead) => (
-                                    <motion.tr
-                                        key={lead.id}
-                                        layoutId={lead.id}
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="hover:bg-gray-50/50 transition-colors cursor-pointer text-sm"
-                                        onClick={() => router.push(`/leads/${lead.id}`)}
-                                    >
-                                        <td className="px-4 py-4 font-medium text-gray-900">
-                                            {lead.name}
-                                        </td>
-                                        <td className="px-4 py-4 text-gray-600">{lead.property || "-"}</td>
-                                        <td className="px-4 py-4 text-gray-600 text-xs">{lead.source?.replace(/_/g, ' ') || "-"}</td>
-                                        <td className="px-4 py-4">
-                                            <StatusBadge status={lead.status} ledgerStatus={lead.ledgerStatus} />
-                                        </td>
-                                        <td className="px-4 py-4 font-semibold text-gray-900 whitespace-nowrap">
-                                            ₹{formatNumber(lead.budgetFrom)} - ₹{formatNumber(lead.budgetTo)}
-                                        </td>
-                                        <td className="px-4 py-4 text-brand-spanish-gray">
-                                            {lead.followUpDate ? (
-                                                <div className="flex flex-col">
-                                                    <span>{formatDate(lead.followUpDate)}</span>
-                                                    {new Date(lead.followUpDate) < new Date() && lead.status !== 'CONVERTED' && lead.status !== 'NOT_CONVERTED' && (
-                                                        <span className="text-[10px] text-red-500 font-bold uppercase">Overdue</span>
-                                                    )}
-                                                </div>
-                                            ) : "-"}
-                                        </td>
-                                        <td className="px-4 py-4 text-gray-600">
-                                            {lead.assignedTo ? lead.assignedTo.name : <span className="text-gray-400 italic">Unassigned</span>}
-                                        </td>
-                                        <td className="px-4 py-4 text-gray-600">
-                                            {formatDate(lead.createdAt)}
-                                        </td>
-                                        <td className="px-4 py-4 text-right flex justify-end gap-2">
-                                            {lead.status === 'CONVERTED' && (
-                                                <Link href={`/leads/${lead.id}/ledger`} onClick={(e) => e.stopPropagation()}>
+                                displayLeads.map((lead) => {
+                                    const isDuplicate = lead.phone && duplicatePhones.has(lead.phone.replace(/\s+/g, ''));
+                                    return (
+                                        <motion.tr
+                                            key={lead.id}
+                                            layoutId={lead.id}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className={`hover:bg-gray-50/50 transition-colors cursor-pointer text-sm ${isDuplicate ? 'bg-red-50/70' : ''}`}
+                                            onClick={() => router.push(`/leads/${lead.id}`)}
+                                        >
+                                            <td className="px-4 py-4 font-medium text-gray-900">
+                                                {lead.name}
+                                                {isDuplicate && (
+                                                    <span className="block text-[9px] text-red-500 font-black uppercase tracking-wider mt-0.5">Duplicate</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-4 text-gray-600">{lead.property || "-"}</td>
+                                            <td className="px-4 py-4 text-gray-600 text-xs">{lead.source?.replace(/_/g, ' ') || "-"}</td>
+                                            <td className="px-4 py-4">
+                                                <StatusBadge status={lead.status} ledgerStatus={lead.ledgerStatus} />
+                                            </td>
+                                            <td className="px-4 py-4 font-semibold text-gray-900 whitespace-nowrap">
+                                                ₹{formatNumber(lead.budgetFrom)} - ₹{formatNumber(lead.budgetTo)}
+                                            </td>
+                                            <td className="px-4 py-4 text-brand-spanish-gray">
+                                                {lead.followUpDate ? (
+                                                    <div className="flex flex-col">
+                                                        <span>{formatDate(lead.followUpDate)}</span>
+                                                        {new Date(lead.followUpDate) < new Date() && lead.status !== 'CONVERTED' && lead.status !== 'NOT_CONVERTED' && (
+                                                            <span className="text-[10px] text-red-500 font-bold uppercase">Overdue</span>
+                                                        )}
+                                                    </div>
+                                                ) : "-"}
+                                            </td>
+                                            <td className="px-4 py-4 text-gray-600">
+                                                {lead.assignedTo ? lead.assignedTo.name : <span className="text-gray-400 italic">Unassigned</span>}
+                                            </td>
+                                            <td className="px-4 py-4 text-gray-600">
+                                                {formatDate(lead.createdAt)}
+                                            </td>
+                                            <td className="px-4 py-4 text-right flex justify-end gap-2">
+                                                {lead.status === 'CONVERTED' && (
+                                                    <Link href={`/leads/${lead.id}/ledger`} onClick={(e) => e.stopPropagation()}>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="xs"
+                                                            className="border-[#8DC63F] text-[#8DC63F] hover:bg-[#8DC63F]/10 px-2 py-1 text-xs"
+                                                            icon={<HiCurrencyRupee />}
+                                                        >
+                                                            Ledger
+                                                        </Button>
+                                                    </Link>
+                                                )}
+                                                {isLeadClosed(lead.status) ? (
                                                     <Button
-                                                        variant="outline"
+                                                        variant="primary"
                                                         size="xs"
-                                                        className="border-[#8DC63F] text-[#8DC63F] hover:bg-[#8DC63F]/10 px-2 py-1 text-xs"
-                                                        icon={<HiCurrencyRupee />}
+                                                        className={`px-2 py-1 text-xs font-bold rounded-lg ${lead.ledgerStatus === 'CLOSED' ? 'bg-brand-spanish-gray/30 text-brand-spanish-gray cursor-not-allowed' : 'bg-[#8DC63F] text-white hover:bg-[#7AB336]'}`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (lead.ledgerStatus !== 'CLOSED') {
+                                                                handleReopenLead(lead);
+                                                            }
+                                                        }}
+                                                        disabled={lead.ledgerStatus === 'CLOSED'}
                                                     >
-                                                        Ledger
+                                                        Reopen
                                                     </Button>
-                                                </Link>
-                                            )}
-                                            {isLeadClosed(lead.status) ? (
+                                                ) : (
+                                                    <Button
+                                                        variant="primary"
+                                                        size="xs"
+                                                        className="bg-red-500 text-white hover:bg-[#8D644A] px-2 py-1 text-xs font-bold rounded-lg"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setClosingLead(lead);
+                                                        }}
+                                                    >
+                                                        Close
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant="primary"
                                                     size="xs"
-                                                    className={`px-2 py-1 text-xs font-bold rounded-lg ${lead.ledgerStatus === 'CLOSED' ? 'bg-brand-spanish-gray/30 text-brand-spanish-gray cursor-not-allowed' : 'bg-[#8DC63F] text-white hover:bg-[#7AB336]'}`}
+                                                    className="px-2 py-1 text-xs bg-[#009688] hover:bg-[#00796B] font-bold rounded-lg"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        if (lead.ledgerStatus !== 'CLOSED') {
-                                                            handleReopenLead(lead);
-                                                        }
-                                                    }}
-                                                    disabled={lead.ledgerStatus === 'CLOSED'}
-                                                >
-                                                    Reopen
-                                                </Button>
-                                            ) : (
-                                                <Button
-                                                    variant="primary"
-                                                    size="xs"
-                                                    className="bg-red-500 text-white hover:bg-[#8D644A] px-2 py-1 text-xs font-bold rounded-lg"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setClosingLead(lead);
+                                                        setEditingLead(lead);
                                                     }}
                                                 >
-                                                    Close
+                                                    Edit
                                                 </Button>
-                                            )}
-                                            <Button
-                                                variant="primary"
-                                                size="xs"
-                                                className="px-2 py-1 text-xs bg-[#009688] hover:bg-[#00796B] font-bold rounded-lg"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingLead(lead);
-                                                }}
-                                            >
-                                                Edit
-                                            </Button>
-                                        </td>
-                                    </motion.tr>
-                                ))
+                                            </td>
+                                        </motion.tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
@@ -454,22 +515,60 @@ export default function LeadsPage() {
                     <span>
                         Page {stats.currentPage || 1} of {Math.max(1, totalPages)} <span className="text-gray-400 mx-1">|</span> {stats.totalItems || 0} items
                     </span>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-1.5">
                         <Button
                             variant="outline"
                             size="sm"
                             disabled={page === 1 || loading}
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                         >
-                            <HiChevronLeft /> Previous
+                            <HiChevronLeft /> <span className="hidden sm:inline">Previous</span>
                         </Button>
+                        {(() => {
+                            const pages = [];
+                            const tp = Math.max(1, totalPages);
+                            let start = Math.max(1, page - 2);
+                            let end = Math.min(tp, start + 4);
+                            start = Math.max(1, end - 4);
+
+                            if (start > 1) {
+                                pages.push(
+                                    <button key={1} onClick={() => setPage(1)} className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${page === 1 ? 'bg-[#009688] text-white shadow-md' : 'hover:bg-gray-200 text-gray-600'}`}>1</button>
+                                );
+                                if (start > 2) pages.push(<span key="start-dots" className="text-gray-400 text-xs px-0.5">…</span>);
+                            }
+
+                            for (let i = start; i <= end; i++) {
+                                if (i === 1 && start > 1) continue;
+                                if (i === tp && end < tp) continue;
+                                pages.push(
+                                    <button
+                                        key={i}
+                                        onClick={() => setPage(i)}
+                                        disabled={loading}
+                                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${page === i ? 'bg-[#009688] text-white shadow-md' : 'hover:bg-gray-200 text-gray-600'}`}
+                                    >
+                                        {i}
+                                    </button>
+                                );
+                            }
+
+                            if (end < tp) {
+                                if (end < tp - 1) pages.push(<span key="end-dots" className="text-gray-400 text-xs px-0.5">…</span>);
+                                pages.push(
+                                    <button key={tp} onClick={() => setPage(tp)} className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${page === tp ? 'bg-[#009688] text-white shadow-md' : 'hover:bg-gray-200 text-gray-600'}`}>{tp}</button>
+                                );
+                            }
+
+                            return pages;
+                        })()}
                         <Button
                             variant="outline"
                             size="sm"
                             disabled={page === totalPages || loading}
                             onClick={() => setPage(p => Math.min(totalPages || 1, p + 1))}
                         >
-                            Next <HiChevronRight />
+                            <span className="hidden sm:inline">Next</span> <HiChevronRight />
                         </Button>
                     </div>
                 </div>
@@ -549,7 +648,7 @@ export default function LeadsPage() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Reason / Note (Optional)</label>
                         <textarea
-                            className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary min-h-[80px]"
+                            className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary min-h-20"
                             placeholder="e.g. Price was too high..."
                             value={closeReason}
                             onChange={(e) => setCloseReason(e.target.value)}
@@ -592,7 +691,7 @@ export default function LeadsPage() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Reason (Required)</label>
                         <textarea
-                            className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary min-h-[80px]"
+                            className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary min-h-20"
                             placeholder="e.g. Client contacted us again..."
                             value={reopenReason}
                             onChange={(e) => setReopenReason(e.target.value)}
@@ -614,9 +713,9 @@ export default function LeadsPage() {
                 </div>
             </Modal>
             {/* Export Modal */}
-            <ExportModal 
-                isOpen={isExportOpen} 
-                onClose={() => setIsExportOpen(false)} 
+            <ExportModal
+                isOpen={isExportOpen}
+                onClose={() => setIsExportOpen(false)}
                 currentData={leads}
                 filters={{
                     search: debouncedSearch,

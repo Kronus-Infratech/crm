@@ -25,6 +25,7 @@ const getLeads = async (req, res, next) => {
       sortOrder = 'desc',
       startDate,
       endDate,
+      overdue,
     } = req.query;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -49,6 +50,10 @@ const getLeads = async (req, res, next) => {
           gte: new Date(startDate),
           lte: new Date(endDate),
         },
+      }),
+      ...(overdue === 'true' && {
+        followUpDate: { lt: new Date() },
+        status: { notIn: ['CONVERTED', 'NOT_CONVERTED'] },
       }),
     };
 
@@ -75,8 +80,17 @@ const getLeads = async (req, res, next) => {
       }
     }
 
+    // Build overdue count filter (same privilege restrictions)
+    const overdueWhere = {
+      followUpDate: { lt: new Date() },
+      status: { notIn: ['CONVERTED', 'NOT_CONVERTED'] },
+    };
+    if (!isPrivileged) {
+      overdueWhere.assignedToId = req.user.id;
+    }
+
     // Get leads with pagination
-    const [leads, total] = await Promise.all([
+    const [leads, total, overdueCount] = await Promise.all([
       prisma.lead.findMany({
         where,
         skip,
@@ -108,6 +122,7 @@ const getLeads = async (req, res, next) => {
         },
       }),
       prisma.lead.count({ where }),
+      prisma.lead.count({ where: overdueWhere }),
     ]);
 
     // Filter financeNotes for non-authorized roles
@@ -129,6 +144,7 @@ const getLeads = async (req, res, next) => {
           totalItems: total,
           itemsPerPage: parseInt(limit),
         },
+        overdueCount,
       },
     });
   } catch (error) {
