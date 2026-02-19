@@ -30,18 +30,19 @@ import api from "@/src/services/api";
 import { formatNumber } from "@/src/utils/formatters";
 import { useAuth } from "@/src/contexts/AuthContext";
 
-// Dynamically import LeafletMap to avoid SSR issues
-const LeafletMap = dynamic(
-    () => import("@/src/components/map/LeafletMap"),
+// Dynamically import GoogleMapComponent to avoid SSR issues with google maps
+const GoogleMapComponent = dynamic(
+    () => import("@/src/components/map/GoogleMapComponent"),
     {
-        ssr: false, loading: () => (
+        ssr: false,
+        loading: () => (
             <div className="w-full h-[calc(100vh-220px)] bg-gray-50 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200">
                 <div className="text-center">
                     <div className="w-10 h-10 border-4 border-[#009688] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                    <p className="text-brand-spanish-gray font-medium">Loading map...</p>
+                    <p className="text-brand-spanish-gray font-medium">Loading Google Maps...</p>
                 </div>
             </div>
-        )
+        ),
     }
 );
 
@@ -51,11 +52,11 @@ const STATUS_COLORS = {
     BLOCKED: "#FBB03B",
 };
 
-export default function MapPage() {
+export default function GoogleMapPage() {
     const searchParams = useSearchParams();
     const { user } = useAuth();
-    const urlInventoryId = searchParams.get("inventoryId");      // View existing map property by inventory
-    const urlLinkInventoryId = searchParams.get("linkInventoryId"); // Pre-link inventory when marking
+    const urlInventoryId = searchParams.get("inventoryId");
+    const urlLinkInventoryId = searchParams.get("linkInventoryId");
 
     const canDelete = user?.roles?.some((r) => ["ADMIN", "DIRECTOR", "EXECUTIVE"].includes(r));
 
@@ -84,12 +85,12 @@ export default function MapPage() {
     const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
     const [propertyToDelete, setPropertyToDelete] = useState(null);
 
-    // Inventory detail modal (for eye button)
+    // Inventory detail modal
     const [isInventoryDetailOpen, setInventoryDetailOpen] = useState(false);
     const [viewingInventoryItem, setViewingInventoryItem] = useState(null);
 
     // Sidebar state
-    const [sidebarOpen, setSidebarOpen] = useState(false); // closed by default on mobile
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
     // Open sidebar by default on desktop
@@ -130,7 +131,7 @@ export default function MapPage() {
         fetchInventory();
     }, [fetchProperties, fetchInventory]);
 
-    // Handle URL params: auto-highlight inventory property or pre-link
+    // Handle URL params
     useEffect(() => {
         if (!loading && properties.length > 0 && urlInventoryId) {
             const prop = properties.find((p) => p.inventoryItemId === urlInventoryId);
@@ -143,7 +144,6 @@ export default function MapPage() {
 
     useEffect(() => {
         if (urlLinkInventoryId && inventoryItems.length > 0) {
-            // Pre-fill the form with this inventory item when user starts drawing
             setFormData((prev) => ({ ...prev, inventoryItemId: urlLinkInventoryId }));
             toast("Draw a boundary on the map to mark this property", {
                 icon: "📍",
@@ -157,7 +157,6 @@ export default function MapPage() {
         setDrawnCoordinates(coordinates);
         setIsDrawing(false);
         const prefillInventoryId = urlLinkInventoryId || "";
-        // Try to auto-fill name from the linked inventory
         let autoName = "";
         if (prefillInventoryId) {
             const inv = inventoryItems.find((i) => i.id === prefillInventoryId);
@@ -229,7 +228,7 @@ export default function MapPage() {
         }
     };
 
-    // Delete property - open modal
+    // Delete property
     const openDeleteModal = (prop) => {
         setPropertyToDelete(prop);
         setDeleteModalOpen(true);
@@ -249,7 +248,7 @@ export default function MapPage() {
         }
     };
 
-    // Open inventory detail from sidebar eye button
+    // Open inventory detail
     const openInventoryDetail = (inventoryItem) => {
         setViewingInventoryItem(inventoryItem);
         setInventoryDetailOpen(true);
@@ -274,7 +273,6 @@ export default function MapPage() {
 
     // Filter available inventory for linking
     const availableInventory = inventoryItems.filter((item) => {
-        // Don't show items already linked (except current one being edited)
         if (linkedInventoryIds.has(item.id) && item.id !== formData.inventoryItemId) return false;
         if (!inventorySearch) return true;
         const q = inventorySearch.toLowerCase();
@@ -336,7 +334,9 @@ export default function MapPage() {
                             key={c}
                             type="button"
                             onClick={() => setFormData({ ...formData, color: c })}
-                            className={`w-8 h-8 rounded-full border-2 transition-all ${formData.color === c ? "border-brand-dark-gray scale-110 shadow-md" : "border-transparent"
+                            className={`w-8 h-8 rounded-full border-2 transition-all ${formData.color === c
+                                    ? "border-brand-dark-gray scale-110 shadow-md"
+                                    : "border-transparent"
                                 }`}
                             style={{ backgroundColor: c }}
                         />
@@ -417,7 +417,8 @@ export default function MapPage() {
                                                                 {item.project?.name || "Unknown"} - Plot {item.plotNumber}
                                                             </p>
                                                             <p className="text-[10px] text-brand-spanish-gray">
-                                                                {item.size} {item.block ? `• Block ${item.block}` : ""} • {item.propertyType}
+                                                                {item.size} {item.block ? `• Block ${item.block}` : ""} •{" "}
+                                                                {item.propertyType}
                                                             </p>
                                                         </div>
                                                         <span
@@ -460,9 +461,9 @@ export default function MapPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <Heading level={2}>Property Map</Heading>
+                    <Heading level={2}>Google Maps</Heading>
                     <p className="text-gray-500 mt-1 font-medium text-sm">
-                        Mark property boundaries and link them to inventory.
+                        Mark property boundaries with satellite & street views.
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -500,10 +501,10 @@ export default function MapPage() {
             </div>
 
             {/* Map + Sidebar Layout */}
-            <div className="flex flex-col md:flex-row gap-3 md:gap-4 h-auto md:h-[calc(100vh-220px)]">
+            <div className="flex flex-col md:flex-row gap-2 sm:gap-3 md:gap-4 h-[calc(100vh-160px)] sm:h-[calc(100vh-180px)] md:h-[calc(100vh-200px)]">
                 {/* Sidebar - Property List */}
                 <div
-                    className={`${sidebarOpen ? "w-full md:w-80 md:min-w-[320px] h-64 md:h-full" : "h-0 md:h-full md:w-0"
+                    className={`${sidebarOpen ? "w-full md:w-80 md:min-w-[320px] h-48 sm:h-56 md:h-full" : "h-0 md:h-full md:w-0"
                         } transition-all duration-300 overflow-hidden shrink-0`}
                 >
                     <div className="h-full bg-white rounded-xl border border-brand-spanish-gray/20 shadow-sm flex flex-col">
@@ -543,8 +544,8 @@ export default function MapPage() {
                                         <div
                                             key={prop.id}
                                             className={`p-3 rounded-lg cursor-pointer transition-all border ${isActive
-                                                ? "bg-[#009688]/5 border-[#009688]/30 shadow-sm"
-                                                : "border-transparent hover:bg-gray-50 hover:border-gray-100"
+                                                    ? "bg-[#009688]/5 border-[#009688]/30 shadow-sm"
+                                                    : "border-transparent hover:bg-gray-50 hover:border-gray-100"
                                                 }`}
                                             onClick={() => {
                                                 setHighlightPropertyId(isActive ? null : prop.id);
@@ -634,7 +635,7 @@ export default function MapPage() {
                             )}
                         </div>
 
-                        {/* Sidebar Footer - Stats */}
+                        {/* Sidebar Footer */}
                         <div className="p-3 border-t border-gray-100 bg-gray-50/50">
                             <div className="flex items-center justify-between text-[10px] uppercase tracking-widest font-black text-brand-spanish-gray">
                                 <span>{properties.length} Properties</span>
@@ -645,24 +646,24 @@ export default function MapPage() {
                 </div>
 
                 {/* Map */}
-                <div className="flex-1 relative h-[calc(100vh-340px)] md:h-full min-h-87.5">
+                <div className="flex-1 relative min-h-62.5 sm:min-h-87.5">
                     {/* Toggle sidebar button - desktop only */}
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="hidden md:block absolute top-20 left-3 z-5 bg-white shadow-lg rounded-lg p-2 hover:bg-gray-50 transition-colors border border-gray-200"
+                        className="hidden md:block absolute top-4 left-3 z-10 bg-white shadow-lg rounded-lg p-2 hover:bg-gray-50 transition-colors border border-gray-200"
                         title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
                     >
                         <HiMap size={18} className="text-brand-dark-gray" />
                     </button>
 
                     {isDrawing && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-5 bg-[#009688] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full shadow-lg text-[10px] md:text-xs font-bold uppercase tracking-wider animate-pulse text-center">
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-[#009688] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full shadow-lg text-[10px] md:text-xs font-bold uppercase tracking-wider animate-pulse text-center">
                             <span className="hidden sm:inline">Click on map to draw boundary • Click first point to close</span>
                             <span className="sm:hidden">Tap to draw • Tap first point to close</span>
                         </div>
                     )}
 
-                    <LeafletMap
+                    <GoogleMapComponent
                         properties={properties}
                         onPropertyCreated={handlePropertyCreated}
                         onPropertyClick={(prop) => {
@@ -743,7 +744,7 @@ export default function MapPage() {
                 </div>
             </Modal>
 
-            {/* Inventory Detail Modal (from eye button) */}
+            {/* Inventory Detail Modal */}
             <Modal
                 isOpen={isInventoryDetailOpen}
                 onClose={() => {

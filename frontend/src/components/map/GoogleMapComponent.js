@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { toast } from "react-hot-toast";
 import {
     GoogleMap,
     useJsApiLoader,
     Polygon,
     InfoWindow,
-    DrawingManager,
     Autocomplete,
 } from "@react-google-maps/api";
 
@@ -16,7 +16,7 @@ const STATUS_COLORS = {
     BLOCKED: "#FBB03B",
 };
 
-const MAP_LIBRARIES = ["drawing", "places"];
+const MAP_LIBRARIES = ["drawing", "places", "marker"];
 
 const DEFAULT_CENTER = { lat: 28.996119, lng: 77.081654 };
 
@@ -41,10 +41,18 @@ export default function GoogleMapComponent({
     });
 
     const mapRef = useRef(null);
-    const drawingManagerRef = useRef(null);
     const autocompleteRef = useRef(null);
     const [activeInfoWindow, setActiveInfoWindow] = useState(null); // property id
     const [mapType, setMapType] = useState("hybrid");
+
+    // Track vertex markers placed during manual drawing
+    const vertexMarkersRef = useRef([]);
+    const drawingPolygonRef = useRef(null);
+    const guideLineRef = useRef(null);
+    const drawingPathRef = useRef([]);
+    const mapClickListenerRef = useRef(null);
+    const mouseMoveListenerRef = useRef(null);
+    const firstMarkerClickListenerRef = useRef(null);
 
     // Map options
     const mapOptions = useMemo(
@@ -79,37 +87,245 @@ export default function GoogleMapComponent({
         mapRef.current = map;
     }, []);
 
-    // Handle drawing manager load
-    const onDrawingManagerLoad = useCallback((dm) => {
-        drawingManagerRef.current = dm;
+    // Clear all drawing artifacts
+    const clearDrawingArtifacts = useCallback(() => {
+        vertexMarkersRef.current.forEach((m) => m.cleanup());
+        vertexMarkersRef.current = [];
+        if (drawingPolygonRef.current) {
+            drawingPolygonRef.current.setMap(null);
+            drawingPolygonRef.current = null;
+        }
+        if (guideLineRef.current) {
+            guideLineRef.current.setMap(null);
+            guideLineRef.current = null;
+        }
+        drawingPathRef.current = [];
+        if (firstMarkerClickListenerRef.current) {
+            window.google.maps.event.removeListener(firstMarkerClickListenerRef.current);
+            firstMarkerClickListenerRef.current = null;
+        }
     }, []);
 
-    // Handle polygon complete (drawn by user)
-    const onPolygonComplete = useCallback(
-        (polygon) => {
-            const path = polygon.getPath();
-            const coordinates = [];
-            for (let i = 0; i < path.getLength(); i++) {
-                const point = path.getAt(i);
-                coordinates.push([point.lng(), point.lat()]);
+    // Create a square vertex marker with optional "close" indicator for first point
+    const createVertexMarker = useCallback((latLng, color, map, isFirst = false) => {
+        // Use a custom overlay for the square marker
+        class SquareMarker extends window.google.maps.OverlayView {
+            constructor(pos, col, first) {
+                super();
+                this.pos = pos;
+                this.col = col;
+                this.isFirst = first;
+                this.div = null;
             }
-            // Close the polygon
-            if (coordinates.length > 0) {
-                coordinates.push(coordinates[0]);
+            onAdd() {
+                this.div = document.createElement("div");
+                this.div.style.position = "absolute";
+                const size = this.isFirst ? "14px" : "12px";
+                this.div.style.width = size;
+                this.div.style.height = size;
+                this.div.style.backgroundColor = this.isFirst ? "white" : this.col;
+                this.div.style.border = this.isFirst ? `3px solid ${this.col}` : "2px solid white";
+                this.div.style.borderRadius = this.isFirst ? "50%" : "0";
+                this.div.style.boxShadow = "0 1px 4px rgba(0,0,0,0.4)";
+                this.div.style.transform = "translate(-50%, -50%)";
+                this.div.style.pointerEvents = "none";
+                this.div.style.zIndex = "999";
+                this.div.style.cursor = this.isFirst ? "pointer" : "default";
+                this.getPanes().overlayMouseTarget.appendChild(this.div);
+            }
+            draw() {
+                const proj = this.getProjection();
+                if (!proj) return;
+                const p = proj.fromLatLngToDivPixel(
+                    new window.google.maps.LatLng(this.pos.lat(), this.pos.lng())
+                );
+                if (p) {
+                    this.div.style.left = p.x + "px";
+                    this.div.style.top = p.y + "px";
+                }
+            }
+            onRemove() {
+                if (this.div) {
+                    this.div.parentNode?.removeChild(this.div);
+                    this.div = null;
+                }
+            }
+        }
+
+        const sq = new SquareMarker(latLng, color, isFirst);
+        sq.setMap(map);
+
+        // For the first marker, also create an invisible but clickable google marker
+        // so we can detect clicks on it to close the polygon
+        let clickMarker = null;
+        if (isFirst) {
+            clickMarker = new window.google.maps.Marker({
+                position: latLng,
+                map,
+                icon: {
+                    path: window.google.maps.SymbolPath.CIRCLE,
+                    scale: 12,
+                    fillColor: "transparent",
+                    fillOpacity: 0,
+                    strokeWeight: 0,
+                },
+                clickable: true,
+                zIndex: 1000,
+                cursor: "pointer",
+            });
+        }
+
+        return {
+            clickMarker,
+            cleanup: () => {
+                sq.setMap(null);
+                if (clickMarker) clickMarker.setMap(null);
+            },
+        };
+    }, []);
+
+    // Finish the polygon drawing
+    const finishDrawing = useCallback(() => {
+        const map = mapRef.current;
+        const path = drawingPathRef.current;
+        if (path.length < 3) {
+            toast.error("Need at least 3 points to form a boundary");
+            return;
+        }
+
+        const coordinates = path.map((p) => [p.lng(), p.lat()]);
+        coordinates.push(coordinates[0]); // close polygon
+
+        clearDrawingArtifacts();
+        if (map) map.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+
+        if (onPropertyCreated) {
+            onPropertyCreated(coordinates);
+        }
+        if (setIsDrawing) {
+            setIsDrawing(false);
+        }
+    }, [clearDrawingArtifacts, onPropertyCreated, setIsDrawing]);
+
+    // Manual drawing mode: Leaflet-style
+    // - Click to add vertices (square markers)
+    // - Mouse move shows a dashed guide line from last vertex to cursor
+    // - First vertex is a circle "close" target; clicking it finishes the polygon
+    useEffect(() => {
+        if (!mapRef.current || !isLoaded) return;
+        const map = mapRef.current;
+
+        // Clean up previous listeners
+        if (mapClickListenerRef.current) {
+            window.google.maps.event.removeListener(mapClickListenerRef.current);
+            mapClickListenerRef.current = null;
+        }
+        if (mouseMoveListenerRef.current) {
+            window.google.maps.event.removeListener(mouseMoveListenerRef.current);
+            mouseMoveListenerRef.current = null;
+        }
+        if (firstMarkerClickListenerRef.current) {
+            window.google.maps.event.removeListener(firstMarkerClickListenerRef.current);
+            firstMarkerClickListenerRef.current = null;
+        }
+
+        if (!isDrawing) {
+            clearDrawingArtifacts();
+            map.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+            return;
+        }
+
+        // Enable drawing mode
+        map.setOptions({ draggableCursor: "crosshair", disableDoubleClickZoom: true });
+
+        const handleClick = (e) => {
+            if (!e.latLng) return;
+            const latLng = e.latLng;
+            const isFirst = drawingPathRef.current.length === 0;
+
+            drawingPathRef.current.push(latLng);
+
+            // Add square vertex marker (circle for first point)
+            const markerObj = createVertexMarker(latLng, drawColor, map, isFirst);
+            vertexMarkersRef.current.push(markerObj);
+
+            // If this is the first marker, attach a click listener to close polygon
+            if (isFirst && markerObj.clickMarker) {
+                firstMarkerClickListenerRef.current = markerObj.clickMarker.addListener("click", () => {
+                    if (drawingPathRef.current.length >= 3) {
+                        finishDrawing();
+                    }
+                });
             }
 
-            // Remove the drawn polygon (it will be rendered from state after save)
-            polygon.setMap(null);
+            // Update or create the preview polygon
+            if (drawingPolygonRef.current) {
+                drawingPolygonRef.current.setPath(drawingPathRef.current);
+            } else {
+                drawingPolygonRef.current = new window.google.maps.Polygon({
+                    paths: drawingPathRef.current,
+                    fillColor: drawColor,
+                    fillOpacity: 0.15,
+                    strokeColor: drawColor,
+                    strokeWeight: 3,
+                    editable: false,
+                    clickable: false,
+                    map,
+                });
+            }
+        };
 
-            if (onPropertyCreated) {
-                onPropertyCreated(coordinates);
+        const handleMouseMove = (e) => {
+            if (!e.latLng || drawingPathRef.current.length === 0) return;
+
+            const lastPoint = drawingPathRef.current[drawingPathRef.current.length - 1];
+            const firstPoint = drawingPathRef.current[0];
+            const guidePath = [lastPoint, e.latLng, firstPoint];
+
+            if (guideLineRef.current) {
+                guideLineRef.current.setPath(guidePath);
+            } else {
+                guideLineRef.current = new window.google.maps.Polyline({
+                    path: guidePath,
+                    strokeColor: drawColor,
+                    strokeWeight: 2,
+                    strokeOpacity: 0.5,
+                    icons: [
+                        {
+                            icon: {
+                                path: "M 0,-1 0,1",
+                                strokeOpacity: 0.6,
+                                scale: 3,
+                            },
+                            offset: "0",
+                            repeat: "12px",
+                        },
+                    ],
+                    clickable: false,
+                    map,
+                });
             }
-            if (setIsDrawing) {
-                setIsDrawing(false);
+        };
+
+        mapClickListenerRef.current = map.addListener("click", handleClick);
+        mouseMoveListenerRef.current = map.addListener("mousemove", handleMouseMove);
+
+        return () => {
+            if (mapClickListenerRef.current) {
+                window.google.maps.event.removeListener(mapClickListenerRef.current);
+                mapClickListenerRef.current = null;
             }
-        },
-        [onPropertyCreated, setIsDrawing]
-    );
+            if (mouseMoveListenerRef.current) {
+                window.google.maps.event.removeListener(mouseMoveListenerRef.current);
+                mouseMoveListenerRef.current = null;
+            }
+            if (firstMarkerClickListenerRef.current) {
+                window.google.maps.event.removeListener(firstMarkerClickListenerRef.current);
+                firstMarkerClickListenerRef.current = null;
+            }
+            map.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+        };
+    }, [isDrawing, isLoaded, drawColor, clearDrawingArtifacts, createVertexMarker, finishDrawing]);
 
     // Fly to highlighted property
     useEffect(() => {
@@ -180,7 +396,7 @@ export default function GoogleMapComponent({
                 mapTypeId={mapType}
             >
                 {/* Search Box */}
-                <div className="absolute top-3 left-14 z-10" style={{ width: 300 }}>
+                <div className="absolute top-3 left-2 sm:left-14 z-10 w-50 sm:w-75">
                     <Autocomplete
                         onLoad={onAutocompleteLoad}
                         onPlaceChanged={onPlaceChanged}
@@ -213,25 +429,7 @@ export default function GoogleMapComponent({
                     </svg>
                 </div>
 
-                {/* Drawing Manager - only active when isDrawing */}
-                {isDrawing && (
-                    <DrawingManager
-                        onLoad={onDrawingManagerLoad}
-                        onPolygonComplete={onPolygonComplete}
-                        options={{
-                            drawingMode: window.google?.maps?.drawing?.OverlayType?.POLYGON,
-                            drawingControl: false,
-                            polygonOptions: {
-                                fillColor: drawColor,
-                                fillOpacity: 0.25,
-                                strokeColor: drawColor,
-                                strokeWeight: 3,
-                                editable: false,
-                                clickable: true,
-                            },
-                        }}
-                    />
-                )}
+                {/* Drawing is handled via manual click listeners — no DrawingManager needed */}
 
                 {/* Render property polygons */}
                 {properties.map((prop) => {

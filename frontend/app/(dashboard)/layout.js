@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }) {
         { name: "Leads", href: "/leads", icon: HiBriefcase },
         { name: "Inventory", href: "/inventory", icon: HiOfficeBuilding },
         { name: "Map", href: "/map", icon: HiMap },
-        { name: "Google Map", href: "/google-map", icon: HiGlobe },
+        // { name: "Google Map", href: "/google-map", icon: HiGlobe },
         { name: "Finance", href: "/finance", icon: HiCurrencyRupee, allowedRoles: ["ADMIN", "EXECUTIVE", "DIRECTOR", "FINANCE"] },
         { name: "HR", href: "/hr", icon: HiUsers, allowedRoles: ["ADMIN", "HR"] },
         { name: "Calendar", href: "/calendar", icon: HiCalendar },
