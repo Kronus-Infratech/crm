@@ -129,7 +129,7 @@ export default function InventoryTable({
                     {item._count?.leads || 0} Leads
                   </span>
                 </td>
-                <td className="px-4 py-3 text-gray-600 max-w-[120px] truncate" title={item.ownerName}>
+                <td className="px-4 py-3 text-gray-600 max-w-30 truncate" title={item.ownerName}>
                   {item.ownerName || "-"}
                 </td>
                 <td className="px-4 py-3 text-center sticky right-0 bg-white group-hover:bg-gray-50 z-10 border-l border-gray-50">

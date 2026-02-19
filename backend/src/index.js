@@ -22,6 +22,7 @@ const leaveRoutes = require('./routes/leaveRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const ledgerRoutes = require('./routes/ledgerRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const mapRoutes = require('./routes/mapRoutes');
 const { initCronJobs } = require('./services/cronService');
 
 // Initialize express app
@@ -76,6 +77,7 @@ app.use('/api/leaves', leaveRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/ledger', ledgerRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/map', mapRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -97,6 +99,7 @@ app.get('/', (req, res) => {
       upload: '/api/upload',
       ledger: '/api/ledger',
       reports: '/api/reports',
+      map: '/api/map',
     },
   });
 });

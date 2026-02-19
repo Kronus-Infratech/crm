@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import api from "@/src/services/api";
 import { formatNumber, formatDate } from "@/src/utils/formatters";
-import { HiUser, HiPhone, HiCalendar, HiCheckCircle, HiCurrencyRupee, HiLocationMarker, HiTag, HiInformationCircle, HiExternalLink, HiUpload, HiClock } from "react-icons/hi";
+import { HiUser, HiPhone, HiCalendar, HiCheckCircle, HiCurrencyRupee, HiLocationMarker, HiTag, HiInformationCircle, HiExternalLink, HiUpload, HiClock, HiMap } from "react-icons/hi";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function InventoryDetail({ item: initialItem }) {
+  const router = useRouter();
   const [item, setItem] = useState(initialItem);
   const [loading, setLoading] = useState(false);
+  const [hasMapProperty, setHasMapProperty] = useState(false);
 
   useEffect(() => {
     const fetchFullDetails = async () => {
@@ -24,7 +27,18 @@ export default function InventoryDetail({ item: initialItem }) {
       }
     };
 
+    const checkMapProperty = async () => {
+      if (!initialItem?.id) return;
+      try {
+        await api.get(`/map/properties/by-inventory/${initialItem.id}`);
+        setHasMapProperty(true);
+      } catch {
+        setHasMapProperty(false);
+      }
+    };
+
     fetchFullDetails();
+    checkMapProperty();
   }, [initialItem?.id]);
 
   if (!item) return null;
@@ -116,10 +130,23 @@ export default function InventoryDetail({ item: initialItem }) {
           <p className="text-[10px] font-black text-[#009688] uppercase tracking-widest">Selected Property</p>
           <h3 className="text-xl font-black text-brand-dark-gray">{item.project?.name || 'Inventory Item'}</h3>
         </div>
-        <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${item.status === 'AVAILABLE' ? 'bg-[#009688]/10 text-[#009688] border-[#009688]/30' :
-          item.status === 'SOLD' ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-[#FBB03B]/10 text-[#FBB03B] border-[#FBB03B]/30'
-          }`}>
-          {item.status}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => router.push(`/map${hasMapProperty ? `?inventoryId=${item.id}` : `?linkInventoryId=${item.id}`}`)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${hasMapProperty
+                ? 'bg-[#009688]/10 text-[#009688] hover:bg-[#009688]/20 border border-[#009688]/30'
+                : 'bg-gray-50 text-brand-spanish-gray hover:bg-[#009688]/10 hover:text-[#009688] border border-gray-200'
+              }`}
+            title={hasMapProperty ? 'View on Map' : 'Mark on Map'}
+          >
+            <HiMap size={14} />
+            {hasMapProperty ? 'View on Map' : 'Open in Map'}
+          </button>
+          <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${item.status === 'AVAILABLE' ? 'bg-[#009688]/10 text-[#009688] border-[#009688]/30' :
+            item.status === 'SOLD' ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-[#FBB03B]/10 text-[#FBB03B] border-[#FBB03B]/30'
+            }`}>
+            {item.status}
+          </div>
         </div>
       </div>
 
@@ -131,9 +158,9 @@ export default function InventoryDetail({ item: initialItem }) {
             {item.images.map((img, idx) => (
               <div key={idx} className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-brand-spanish-gray/20 shadow-sm hover:shadow-md transition-all">
                 <img src={img} alt={`Property ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                <a 
-                  href={img} 
-                  target="_blank" 
+                <a
+                  href={img}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
                 >

@@ -404,7 +404,32 @@ model InventoryItem {
   listingDate       DateTime @default(now()) 
   updatedAt         DateTime @updatedAt
   
+  // Map Property Relation
+  mapProperty       MapProperty?
+  
   @@map("inventory_items")
+}
+
+model MapProperty {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String?
+  
+  // GeoJSON polygon coordinates stored as JSON array of [lng, lat] pairs
+  coordinates     Json      // [[lng, lat], [lng, lat], ...]
+  center          Json      // [lng, lat] center point for quick map positioning
+  color           String?   @default("#009688")
+  
+  // Link to Inventory
+  inventoryItemId String?  @unique @db.ObjectId
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+  
+  createdById     String   @db.ObjectId
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("map_properties")
 }
 
 enum PropertyTransactionType {
