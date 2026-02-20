@@ -217,6 +217,35 @@ const toolHandlers = {
             }
         }
 
+        // Fix common AI mistakes: { field: { not: null } } → { NOT: [{ field: null }] }
+        if (safeQuery.where) {
+            const fixNotNull = (where) => {
+                const notNullFields = [];
+                for (const [key, val] of Object.entries(where)) {
+                    if (val && typeof val === 'object' && !Array.isArray(val) && val.not === null) {
+                        notNullFields.push(key);
+                    }
+                }
+                if (notNullFields.length > 0) {
+                    for (const field of notNullFields) {
+                        delete where[field];
+                    }
+                    const notConditions = notNullFields.map(f => ({ [f]: null }));
+                    if (where.NOT) {
+                        if (Array.isArray(where.NOT)) {
+                            where.NOT.push(...notConditions);
+                        } else {
+                            where.NOT = [where.NOT, ...notConditions];
+                        }
+                    } else {
+                        where.NOT = notConditions;
+                    }
+                }
+                return where;
+            };
+            safeQuery.where = fixNotNull(safeQuery.where);
+        }
+
         // Prevent selecting sensitive fields for User
         if (model === "User" && safeQuery.select) {
             delete safeQuery.select.password;
@@ -289,6 +318,10 @@ const systemInstruction = `
        - Lead has \`budgetFrom\` and \`budgetTo\`, NOT \`budget\`. There is NO \`budget\` field.
        - InventoryItem has \`projectId\`, NOT \`project\` (which is a relation).
        - Always check \`scalarFields\` before writing a select/where clause.
+    6. **Filtering for "not null":** NEVER use \`{ field: { not: null } }\`. Instead:
+       - Use top-level NOT: \`{ where: { NOT: [{ phone: null }] } }\` ✅
+       - Wrong: \`{ where: { phone: { not: null } } }\` ❌ (Prisma rejects \`not: null\`)
+       - To check field exists and is set: \`{ where: { NOT: [{ fieldName: null }] } }\`
 
     ### TOOL USAGE
     1. **Check Schema First:** Use \`getDatabaseSchema\` if you are unsure about field names. Look at \`scalarFields\` for queryable columns and \`enums\` for valid values.
