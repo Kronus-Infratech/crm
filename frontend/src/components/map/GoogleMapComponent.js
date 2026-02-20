@@ -16,7 +16,7 @@ const STATUS_COLORS = {
     BLOCKED: "#FBB03B",
 };
 
-const MAP_LIBRARIES = ["drawing", "places", "marker"];
+const MAP_LIBRARIES = ["drawing", "places", "marker", "geometry"];
 
 const DEFAULT_CENTER = { lat: 28.996119, lng: 77.081654 };
 
@@ -34,6 +34,9 @@ export default function GoogleMapComponent({
     isDrawing,
     setIsDrawing,
     drawColor = "#009688",
+    measureMode = null, // null | "distance" | "area"
+    setMeasureMode,
+    fitAllTrigger = 0,
 }) {
     const { isLoaded, loadError } = useJsApiLoader({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
@@ -44,6 +47,7 @@ export default function GoogleMapComponent({
     const autocompleteRef = useRef(null);
     const [activeInfoWindow, setActiveInfoWindow] = useState(null); // property id
     const [mapType, setMapType] = useState("hybrid");
+    const mapLoadedRef = useRef(false);
 
     // Track vertex markers placed during manual drawing
     const vertexMarkersRef = useRef([]);
@@ -53,6 +57,17 @@ export default function GoogleMapComponent({
     const mapClickListenerRef = useRef(null);
     const mouseMoveListenerRef = useRef(null);
     const firstMarkerClickListenerRef = useRef(null);
+
+    // Measurement mode refs
+    const measureMarkersRef = useRef([]);
+    const measureLineRef = useRef(null);
+    const measurePolygonRef = useRef(null);
+    const measureGuideLineRef = useRef(null);
+    const measureLabelRef = useRef(null);
+    const measureClickListenerRef = useRef(null);
+    const measureMoveListenerRef = useRef(null);
+    const measureFirstClickRef = useRef(null);
+    const measurePathRef = useRef([]);
 
     // Map options
     const mapOptions = useMemo(
@@ -85,6 +100,7 @@ export default function GoogleMapComponent({
     // Handle map load
     const onMapLoad = useCallback((map) => {
         mapRef.current = map;
+        mapLoadedRef.current = true;
     }, []);
 
     // Clear all drawing artifacts
@@ -327,6 +343,313 @@ export default function GoogleMapComponent({
         };
     }, [isDrawing, isLoaded, drawColor, clearDrawingArtifacts, createVertexMarker, finishDrawing]);
 
+    // Measurement mode: distance (2 points) or area (polygon close-on-first-point)
+    useEffect(() => {
+        if (!mapRef.current || !isLoaded) return;
+        const map = mapRef.current;
+
+        if (measureClickListenerRef.current) {
+            window.google.maps.event.removeListener(measureClickListenerRef.current);
+            measureClickListenerRef.current = null;
+        }
+        if (measureMoveListenerRef.current) {
+            window.google.maps.event.removeListener(measureMoveListenerRef.current);
+            measureMoveListenerRef.current = null;
+        }
+        if (measureFirstClickRef.current) {
+            window.google.maps.event.removeListener(measureFirstClickRef.current);
+            measureFirstClickRef.current = null;
+        }
+
+        const clearMeasurement = () => {
+            measureMarkersRef.current.forEach((m) => {
+                if (m.setMap) m.setMap(null);
+                if (m.cleanup) m.cleanup();
+            });
+            measureMarkersRef.current = [];
+            if (measureLineRef.current) {
+                measureLineRef.current.setMap(null);
+                measureLineRef.current = null;
+            }
+            if (measurePolygonRef.current) {
+                measurePolygonRef.current.setMap(null);
+                measurePolygonRef.current = null;
+            }
+            if (measureGuideLineRef.current) {
+                measureGuideLineRef.current.setMap(null);
+                measureGuideLineRef.current = null;
+            }
+            if (measureLabelRef.current) {
+                measureLabelRef.current.setMap(null);
+                measureLabelRef.current = null;
+            }
+            measurePathRef.current = [];
+        };
+
+        if (!measureMode) {
+            clearMeasurement();
+            return;
+        }
+
+        map.setOptions({ draggableCursor: "crosshair", disableDoubleClickZoom: true });
+        clearMeasurement();
+
+        // Shared overlay class for labels
+        class MeasureOverlay extends window.google.maps.OverlayView {
+            constructor(pos, html) {
+                super();
+                this.pos = pos;
+                this.html = html;
+                this.div = null;
+            }
+            onAdd() {
+                this.div = document.createElement("div");
+                this.div.style.position = "absolute";
+                this.div.style.transform = "translate(-50%, -130%)";
+                this.div.style.pointerEvents = "none";
+                this.div.style.zIndex = "1001";
+                this.div.innerHTML = this.html;
+                this.getPanes().overlayLayer.appendChild(this.div);
+            }
+            draw() {
+                const proj = this.getProjection();
+                if (!proj) return;
+                const p = proj.fromLatLngToDivPixel(this.pos);
+                if (p) {
+                    this.div.style.left = p.x + "px";
+                    this.div.style.top = p.y + "px";
+                }
+            }
+            onRemove() {
+                if (this.div) this.div.parentNode?.removeChild(this.div);
+            }
+            updatePosition(pos) {
+                this.pos = pos;
+                this.draw();
+            }
+            updateContent(html) {
+                this.html = html;
+                if (this.div) this.div.innerHTML = html;
+            }
+        }
+
+        const formatDistance = (m) => {
+            const feet = m * 3.28084;
+            if (m >= 1000) return `${(m / 1000).toFixed(2)} km (${(feet / 5280).toFixed(2)} mi)`;
+            return `${m.toFixed(1)} m (${Math.round(feet)} ft)`;
+        };
+
+        // ---- DISTANCE MODE ----
+        if (measureMode === "distance") {
+            measureClickListenerRef.current = map.addListener("click", (e) => {
+                if (!e.latLng) return;
+
+                if (measureMarkersRef.current.length >= 2) {
+                    clearMeasurement();
+                }
+
+                const marker = new window.google.maps.Marker({
+                    position: e.latLng,
+                    map,
+                    icon: {
+                        path: window.google.maps.SymbolPath.CIRCLE,
+                        scale: 7,
+                        fillColor: "#ef4444",
+                        fillOpacity: 1,
+                        strokeColor: "white",
+                        strokeWeight: 2,
+                    },
+                    zIndex: 1000,
+                });
+                measureMarkersRef.current.push(marker);
+
+                if (measureMarkersRef.current.length === 2) {
+                    const p1 = measureMarkersRef.current[0].getPosition();
+                    const p2 = measureMarkersRef.current[1].getPosition();
+                    const distance = window.google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+
+                    measureLineRef.current = new window.google.maps.Polyline({
+                        path: [p1, p2],
+                        strokeColor: "#ef4444",
+                        strokeWeight: 3,
+                        strokeOpacity: 0.9,
+                        geodesic: true,
+                        map,
+                    });
+
+                    const mid = new window.google.maps.LatLng(
+                        (p1.lat() + p2.lat()) / 2,
+                        (p1.lng() + p2.lng()) / 2
+                    );
+
+                    measureLabelRef.current = new MeasureOverlay(
+                        mid,
+                        `<div style="background:#ef4444;color:white;padding:4px 12px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-family:system-ui,sans-serif">${formatDistance(distance)}</div>`
+                    );
+                    measureLabelRef.current.setMap(map);
+                }
+            });
+        }
+
+        // ---- AREA MODE ----
+        if (measureMode === "area") {
+            const handleAreaClick = (e) => {
+                if (!e.latLng) return;
+                const latLng = e.latLng;
+                const isFirst = measurePathRef.current.length === 0;
+
+                measurePathRef.current.push(latLng);
+
+                // Create vertex marker (circle for first, square for rest)
+                const markerObj = createVertexMarker(latLng, "#ef4444", map, isFirst);
+                measureMarkersRef.current.push(markerObj);
+
+                // Attach click listener to first marker to close polygon
+                if (isFirst && markerObj.clickMarker) {
+                    measureFirstClickRef.current = markerObj.clickMarker.addListener("click", () => {
+                        if (measurePathRef.current.length >= 3) {
+                            finishAreaMeasure();
+                        }
+                    });
+                }
+
+                // Update or create the preview polygon
+                if (measurePolygonRef.current) {
+                    measurePolygonRef.current.setPath(measurePathRef.current);
+                } else {
+                    measurePolygonRef.current = new window.google.maps.Polygon({
+                        paths: measurePathRef.current,
+                        fillColor: "#ef4444",
+                        fillOpacity: 0.12,
+                        strokeColor: "#ef4444",
+                        strokeWeight: 3,
+                        editable: false,
+                        clickable: false,
+                        map,
+                    });
+                }
+            };
+
+            const handleAreaMouseMove = (e) => {
+                if (!e.latLng || measurePathRef.current.length === 0) return;
+                const last = measurePathRef.current[measurePathRef.current.length - 1];
+                const first = measurePathRef.current[0];
+                const guidePath = [last, e.latLng, first];
+
+                if (measureGuideLineRef.current) {
+                    measureGuideLineRef.current.setPath(guidePath);
+                } else {
+                    measureGuideLineRef.current = new window.google.maps.Polyline({
+                        path: guidePath,
+                        strokeColor: "#ef4444",
+                        strokeWeight: 2,
+                        strokeOpacity: 0.5,
+                        icons: [
+                            {
+                                icon: { path: "M 0,-1 0,1", strokeOpacity: 0.6, scale: 3 },
+                                offset: "0",
+                                repeat: "12px",
+                            },
+                        ],
+                        clickable: false,
+                        map,
+                    });
+                }
+            };
+
+            const finishAreaMeasure = () => {
+                const path = measurePathRef.current;
+                if (path.length < 3) return;
+
+                // Remove guide line
+                if (measureGuideLineRef.current) {
+                    measureGuideLineRef.current.setMap(null);
+                    measureGuideLineRef.current = null;
+                }
+
+                // Remove move listener
+                if (measureMoveListenerRef.current) {
+                    window.google.maps.event.removeListener(measureMoveListenerRef.current);
+                    measureMoveListenerRef.current = null;
+                }
+                if (measureClickListenerRef.current) {
+                    window.google.maps.event.removeListener(measureClickListenerRef.current);
+                    measureClickListenerRef.current = null;
+                }
+                if (measureFirstClickRef.current) {
+                    window.google.maps.event.removeListener(measureFirstClickRef.current);
+                    measureFirstClickRef.current = null;
+                }
+
+                // Close polygon visually
+                measurePolygonRef.current?.setPath([...path, path[0]]);
+
+                // Compute area
+                const latLngs = path.map((p) => new window.google.maps.LatLng(p.lat(), p.lng()));
+                const areaM2 = window.google.maps.geometry.spherical.computeArea(latLngs);
+                const areaSqYd = areaM2 * 1.19599;
+                const areaSqFt = areaM2 * 10.7639;
+
+                // Compute perimeter
+                let perimeter = 0;
+                for (let i = 0; i < path.length; i++) {
+                    const j = (i + 1) % path.length;
+                    perimeter += window.google.maps.geometry.spherical.computeDistanceBetween(path[i], path[j]);
+                }
+
+                // Build label
+                let areaStr = "";
+                if (areaSqYd >= 4840) {
+                    areaStr = `${(areaSqYd / 4840).toFixed(2)} acres`;
+                } else {
+                    areaStr = `${Math.round(areaSqYd).toLocaleString("en-IN")} sq yd`;
+                }
+
+                const perimStr = formatDistance(perimeter);
+                const sqFtStr = `${Math.round(areaSqFt).toLocaleString("en-IN")} sq ft`;
+
+                // Show at centroid
+                const centroid = new window.google.maps.LatLng(
+                    path.reduce((s, p) => s + p.lat(), 0) / path.length,
+                    path.reduce((s, p) => s + p.lng(), 0) / path.length
+                );
+
+                measureLabelRef.current = new MeasureOverlay(
+                    centroid,
+                    `<div style="background:white;color:#333;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.25);font-family:system-ui,sans-serif;border:2px solid #ef4444;line-height:1.6">
+                        <div style="font-weight:800;color:#ef4444;font-size:13px;margin-bottom:2px">📐 Area Measurement</div>
+                        <div>Area: <strong>${areaStr}</strong> <span style="color:#888">(${sqFtStr})</span></div>
+                        <div>Perimeter: <strong>${perimStr}</strong></div>
+                    </div>`
+                );
+                measureLabelRef.current.setMap(map);
+
+                // Stop cursor
+                map.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+            };
+
+            measureClickListenerRef.current = map.addListener("click", handleAreaClick);
+            measureMoveListenerRef.current = map.addListener("mousemove", handleAreaMouseMove);
+        }
+
+        return () => {
+            if (measureClickListenerRef.current) {
+                window.google.maps.event.removeListener(measureClickListenerRef.current);
+                measureClickListenerRef.current = null;
+            }
+            if (measureMoveListenerRef.current) {
+                window.google.maps.event.removeListener(measureMoveListenerRef.current);
+                measureMoveListenerRef.current = null;
+            }
+            if (measureFirstClickRef.current) {
+                window.google.maps.event.removeListener(measureFirstClickRef.current);
+                measureFirstClickRef.current = null;
+            }
+            clearMeasurement();
+            if (mapRef.current) mapRef.current.setOptions({ draggableCursor: null, disableDoubleClickZoom: false });
+        };
+    }, [measureMode, isLoaded, createVertexMarker]);
+
     // Fly to highlighted property
     useEffect(() => {
         if (!mapRef.current || !highlightPropertyId) return;
@@ -337,6 +660,24 @@ export default function GoogleMapComponent({
             mapRef.current.setZoom(17);
         }
     }, [highlightPropertyId, properties]);
+
+    // Fit all properties in view
+    useEffect(() => {
+        if (!mapRef.current || !isLoaded || fitAllTrigger === 0 || properties.length === 0) return;
+        const bounds = new window.google.maps.LatLngBounds();
+        let hasCoords = false;
+        properties.forEach((prop) => {
+            if (prop.coordinates && Array.isArray(prop.coordinates)) {
+                prop.coordinates.forEach((c) => {
+                    bounds.extend({ lat: c[1], lng: c[0] });
+                    hasCoords = true;
+                });
+            }
+        });
+        if (hasCoords) {
+            mapRef.current.fitBounds(bounds, { padding: 60 });
+        }
+    }, [fitAllTrigger, isLoaded, properties]);
 
     // Autocomplete handlers
     const onAutocompleteLoad = useCallback((ac) => {
@@ -389,8 +730,8 @@ export default function GoogleMapComponent({
         <div className="relative w-full h-full">
             <GoogleMap
                 mapContainerStyle={MAP_CONTAINER_STYLE}
-                center={DEFAULT_CENTER}
-                zoom={13}
+                center={mapLoadedRef.current ? undefined : DEFAULT_CENTER}
+                zoom={mapLoadedRef.current ? undefined : 13}
                 options={mapOptions}
                 onLoad={onMapLoad}
                 mapTypeId={mapType}
@@ -469,6 +810,18 @@ export default function GoogleMapComponent({
 
                     const inv = prop.inventoryItem;
                     const color = getPropertyColor(prop);
+
+                    // Compute boundary area
+                    let areaText = null;
+                    try {
+                        if (prop.coordinates && prop.coordinates.length >= 3) {
+                            const areaM2 = window.google.maps.geometry.spherical.computeArea(
+                                prop.coordinates.map((c) => new window.google.maps.LatLng(c[1], c[0]))
+                            );
+                            const sqYd = Math.round(areaM2 * 1.19599);
+                            if (sqYd > 0) areaText = sqYd.toLocaleString("en-IN") + " sq yd";
+                        }
+                    } catch { }
 
                     return (
                         <InfoWindow
@@ -568,6 +921,20 @@ export default function GoogleMapComponent({
                                             </div>
                                         )}
                                     </>
+                                )}
+
+                                {areaText && (
+                                    <div
+                                        style={{
+                                            fontSize: "12px",
+                                            color: "#555",
+                                            marginTop: "6px",
+                                            paddingTop: "4px",
+                                            borderTop: "1px solid #eee",
+                                        }}
+                                    >
+                                        Mapped Area: <strong>{areaText}</strong>
+                                    </div>
                                 )}
 
                                 {prop.description && (
