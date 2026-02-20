@@ -48,4 +48,8 @@ api.interceptors.response.use(
   }
 );
 
+// Helpers for non-axios consumers (e.g. fetch-based SSE streaming)
+export const getAuthToken = () => Cookies.get("token");
+export const getBaseURL = () => API_URL;
+
 export default api;

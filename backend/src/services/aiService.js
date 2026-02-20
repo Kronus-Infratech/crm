@@ -8,40 +8,47 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // This helps the AI understand the database structure without needing to read the full Prisma schema file every time.
 const DB_SCHEMA = {
     User: {
-        fields: ["id", "email", "name", "phone", "roles", "department", "designation", "lastLoginAt", "createdAt"],
+        scalarFields: ["id", "email", "name", "phone", "roles", "department", "designation", "lastLoginAt", "createdAt"],
         // Excluded: password, resetPasswordToken
         relations: ["createdLeads", "assignedLeads", "activities", "transactions"]
     },
     Lead: {
-        fields: ["id", "name", "email", "phone", "property", "source", "status", "priority", "budgetFrom", "budgetTo", "followUpDate", "createdAt", "updatedAt", "financeStatus", "ledgerStatus", "feedbackRating"],
-        // Enums:
-        // status: 'NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'SITE_VISIT', 'NEGOTIATION', 'DOCUMENTATION', 'CONVERTED', 'NOT_CONVERTED'
-        // priority: 'LOW', 'MEDIUM', 'HIGH', 'URGENT'
-        // source: 'WEBSITE', 'REFERRAL', 'INSTAGRAM', 'YOUTUBE', 'EMAIL', 'WHATSAPP', 'NINETY_NINE_ACRES', 'MAGICBRICKS', 'OLX', 'COLD_OUTREACH', 'WALK_IN'
-        relations: ["createdBy", "assignedTo", "activities", "documents", "inventoryItem"]
+        scalarFields: ["id", "name", "email", "phone", "property", "source", "status", "priority", "budgetFrom", "budgetTo", "followUpDate", "createdAt", "updatedAt", "financeStatus", "ledgerStatus", "feedbackRating", "createdById", "assignedToId", "inventoryItemId"],
+        // IMPORTANT: There is NO 'budget' field. Budget is split into 'budgetFrom' (Float) and 'budgetTo' (Float).
+        enums: {
+            status: ["NEW", "CONTACTED", "INTERESTED", "NOT_INTERESTED", "SITE_VISIT", "NEGOTIATION", "DOCUMENTATION", "CONVERTED", "NOT_CONVERTED"],
+            priority: ["LOW", "MEDIUM", "HIGH", "URGENT"],
+            source: ["WEBSITE", "REFERRAL", "INSTAGRAM", "YOUTUBE", "EMAIL", "WHATSAPP", "NINETY_NINE_ACRES", "MAGICBRICKS", "OLX", "COLD_OUTREACH", "WALK_IN"]
+        },
+        relations: { createdBy: "User (via createdById)", assignedTo: "User (via assignedToId)", inventoryItem: "InventoryItem (via inventoryItemId)", activities: "Activity[]", documents: "Document[]" }
     },
     InventoryItem: {
-        fields: ["id", "plotNumber", "size", "ratePerSqYard", "totalPrice", "status", "project", "facing", "roadWidth", "propertyType", "transactionType", "ownerName", "block", "askingPrice", "listingDate"],
-        // Enums:
-        // status: 'AVAILABLE', 'BLOCKED', 'SOLD'
-        // condition: 'NEW', 'RESALE'
-        relations: ["project", "leads", "createdBy"]
+        scalarFields: ["id", "plotNumber", "size", "ratePerSqYard", "totalPrice", "status", "facing", "roadWidth", "propertyType", "transactionType", "ownerName", "ownerContact", "block", "askingPrice", "condition", "openSides", "construction", "boundaryWalls", "gatedColony", "corner", "soldTo", "soldDate", "description", "listingDate", "projectId", "createdById"],
+        enums: {
+            status: ["AVAILABLE", "BLOCKED", "SOLD"],
+            condition: ["NEW", "RESALE"],
+            propertyType: ["RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL", "AGRICULTURAL"],
+            transactionType: ["SALE", "RENT", "LEASE"]
+        },
+        // IMPORTANT: 'project' is a RELATION, not a scalar field. Use 'projectId' for groupBy/orderBy/where.
+        relations: { project: "Project (via projectId)", leads: "Lead[]", createdBy: "User (via createdById)" },
+        notes: "To group by project, use 'projectId' (not 'project'). There is NO 'BOOKED' status — use 'BLOCKED' for reserved items."
     },
     Project: {
-        fields: ["id", "name", "location", "description"],
-        relations: ["inventory", "city"]
+        scalarFields: ["id", "name", "location", "description", "cityId"],
+        relations: { inventory: "InventoryItem[]", city: "City (via cityId)" }
     },
     Activity: {
-        fields: ["id", "type", "title", "description", "date", "createdAt"],
-        relations: ["user", "lead"]
+        scalarFields: ["id", "type", "title", "description", "date", "createdAt", "userId", "leadId"],
+        relations: { user: "User (via userId)", lead: "Lead (via leadId)" }
     },
     Transaction: {
-        fields: ["id", "type", "amount", "date", "source", "description"],
-        relations: ["handledBy"]
+        scalarFields: ["id", "type", "amount", "date", "source", "description", "handledById"],
+        relations: { handledBy: "User (via handledById)" }
     },
     Event: {
-        fields: ["id", "title", "description", "start", "end", "type"],
-        relations: ["user", "lead"]
+        scalarFields: ["id", "title", "description", "start", "end", "type", "userId", "leadId"],
+        relations: { user: "User (via userId)", lead: "Lead (via leadId)" }
     }
 };
 
@@ -271,13 +278,26 @@ const systemInstruction = `
     3.  **Handle Ambiguity Gracefully:** If data is unclear (e.g., no clear popular size), say "Demand is quite varied right now" instead of "The query returned 1 for everything."
     4.  **No Explaining the Tool:** Don't say "I will run a database query." Just say "Let me analyze the current market interest." and do it.
 
+    ### QUERY SAFETY RULES (MUST FOLLOW)
+    1. **Relations vs Scalars:** In \`groupBy\`, \`orderBy\`, and \`where\`, you can ONLY use **scalar fields** (e.g., \`projectId\`), NEVER relation names (e.g., \`project\`). Check the schema's \`scalarFields\` list.
+    2. **Enum Values:** ONLY use exact enum values from the schema. For InventoryItem status: AVAILABLE, BLOCKED, SOLD. There is NO 'BOOKED' status.
+    3. **groupBy + orderBy:** When using \`groupBy\`, the \`orderBy\` field inside \`_count\` must reference a scalar field that is in the \`by\` array or use \`_all: true\`.
+       Example: \`{ by: ['projectId'], orderBy: { _count: { projectId: 'desc' } } }\` ✅
+       Wrong:  \`{ by: ['project'], orderBy: { _count: { project: 'desc' } } }\` ❌
+    4. **To get project names after groupBy projectId:** First groupBy projectId to get counts, then use a separate findMany on Project with the IDs.
+    5. **Field names must be EXACT:** Only use fields listed in \`scalarFields\`. Common mistakes to avoid:
+       - Lead has \`budgetFrom\` and \`budgetTo\`, NOT \`budget\`. There is NO \`budget\` field.
+       - InventoryItem has \`projectId\`, NOT \`project\` (which is a relation).
+       - Always check \`scalarFields\` before writing a select/where clause.
+
     ### TOOL USAGE
-    1. **Check Schema First:** Use \`getDatabaseSchema\` if you are unsure about field names.
+    1. **Check Schema First:** Use \`getDatabaseSchema\` if you are unsure about field names. Look at \`scalarFields\` for queryable columns and \`enums\` for valid values.
     2. **Smart Querying:**
        - **"Show me luxury villas":** Use \`vectorSearch(collection='inventory_items', query='luxury villas')\`.
        - **"Find leads interested in commercial plots":** Use \`vectorSearch(collection='leads', query='commercial plots')\`.
        - **"Count of SOLD items":** Use \`runDatabaseQuery(model='InventoryItem', action='count', query={ where: { status: 'SOLD' } })\`.
        - **"Specific Lead details":** Use \`runDatabaseQuery\` with \`where: { name: ... }\` for exact lookup.
+       - **"Most popular project":** Use \`groupBy\` on Lead by \`property\` field, or on InventoryItem by \`projectId\`.
     3. **Combine Tools:** You can run a vector search to find relevant items, then use their IDs to query more details if needed.
     
     ### RESPONSE FORMAT
@@ -288,8 +308,7 @@ const systemInstruction = `
 `;
 
 const model = genAI.getGenerativeModel({
-    // model: "gemini-2.5-pro",
-    model: "gemini-3-pro-preview",
+    model: process.env.GEMINI_MODEL,
     tools: tools,
     systemInstruction: systemInstruction
 });
@@ -330,7 +349,6 @@ const generateInsight = async (userMessage, history = []) => {
                     try {
                         const data = await handler(call.args);
                         toolResults[call.name] = data;
-                        // console.log(`[AI] Tool ${call.name} returned data:`, JSON.stringify(data).substring(0, 100) + "...");
                     } catch (toolError) {
                         console.error(`[AI] Tool Error (${call.name}):`, toolError);
                         toolResults[call.name] = { error: "Action failed." };
@@ -365,6 +383,177 @@ const generateInsight = async (userMessage, history = []) => {
     }
 };
 
+// --- Status messages for each tool ---
+const toolStatusMessages = {
+    getDatabaseSchema: "understanding data structure",
+    vectorSearch: "searching across records",
+    runDatabaseQuery: "looking in database",
+};
+
+// --- Rotating thinking statuses ---
+const thinkingPhases = [
+    "thinking",
+    "processing your request",
+    "analysing data",
+    "preparing response",
+];
+
+/**
+ * Streaming version of generateInsight.
+ * Sends SSE events: { type: 'status', message } and { type: 'token', token } and { type: 'done' }
+ * @param {string} userMessage
+ * @param {Array} history
+ * @param {function} sendEvent - (eventType, data) => void
+ */
+const generateInsightStream = async (userMessage, history = [], sendEvent) => {
+    try {
+        let cleanHistory = [...history];
+        if (cleanHistory.length > 0 && cleanHistory[0].role === 'model') {
+            cleanHistory.shift();
+        }
+
+        const chat = model.startChat({
+            history: cleanHistory,
+            generationConfig: {
+                maxOutputTokens: 2000,
+            },
+        });
+
+        let thinkingIndex = 0;
+        const sendThinkingStatus = () => {
+            sendEvent('status', thinkingPhases[thinkingIndex % thinkingPhases.length]);
+            thinkingIndex++;
+        };
+
+        sendThinkingStatus();
+
+        console.log(`[AI Stream] Processing: "${userMessage}"`);
+
+        // First message — non-streaming so we can check for function calls
+        let result = await chat.sendMessage(userMessage);
+        let response = result.response;
+        let calls = response.functionCalls();
+        let callCount = 0;
+
+        // If no tool calls needed, stream the answer directly
+        if (!calls || calls.length === 0) {
+            sendEvent('status', 'composing answer');
+            // Re-send via streaming to get real token-by-token output
+            // We can't re-send the same message, so just emit the text we have
+            const text = response.text();
+            sendEvent('token', text);
+            sendEvent('done', '');
+            console.log(`[AI Stream] Completed with 0 tool passes (no streaming needed).`);
+            return;
+        }
+
+        // Tool-calling loop — use non-streaming sendMessage for intermediate rounds,
+        // then sendMessageStream on the final round to get real token streaming.
+        let lastToolParts = null;
+        while (calls && calls.length > 0 && callCount < 10) {
+            callCount++;
+            const toolResults = {};
+
+            for (const call of calls) {
+                const handler = toolHandlers[call.name];
+                if (handler) {
+                    const statusMsg = toolStatusMessages[call.name] || "processing";
+                    sendEvent('status', statusMsg);
+
+                    try {
+                        const data = await handler(call.args);
+                        toolResults[call.name] = data;
+                    } catch (toolError) {
+                        console.error(`[AI Stream] Tool Error (${call.name}):`, toolError);
+                        toolResults[call.name] = { error: "Action failed." };
+                    }
+                }
+            }
+
+            sendEvent('status', 'analysing results');
+
+            const parts = Object.keys(toolResults).map(name => ({
+                functionResponse: {
+                    name: name,
+                    response: { content: toolResults[name] }
+                }
+            }));
+
+            // Non-streaming to check if more function calls are needed
+            const nextResult = await chat.sendMessage(parts);
+            response = nextResult.response;
+            calls = response.functionCalls();
+            lastToolParts = parts;
+
+            if (calls && calls.length > 0) {
+                sendThinkingStatus();
+            }
+        }
+
+        // All tool calls done — now stream the final text answer
+        sendEvent('status', 'composing answer');
+
+        // We already have the non-streamed text. Now replay the last tool response
+        // with sendMessageStream to get real token-by-token streaming.
+        // The chat history already includes the last exchange, so we ask the model
+        // to output the same answer but via streaming by sending a nudge.
+        try {
+            const streamResult = await chat.sendMessageStream(
+                "Please provide your complete answer now."
+            );
+
+            let hasText = false;
+            for await (const chunk of streamResult.stream) {
+                try {
+                    const text = chunk.text();
+                    if (text) {
+                        hasText = true;
+                        sendEvent('token', text);
+                    }
+                } catch {
+                    // function call parts — ignore
+                }
+            }
+
+            if (hasText) {
+                sendEvent('done', '');
+                console.log(`[AI Stream] Completed with ${callCount} tool passes (streamed).`);
+                return;
+            }
+        } catch (streamErr) {
+            console.warn(`[AI Stream] Streaming replay failed, falling back:`, streamErr.message);
+        }
+
+        // Fallback: emit the text from the non-streamed response
+        let finalText = '';
+        try {
+            finalText = response.text();
+        } catch (e) {
+            try {
+                const candidateParts = response.candidates?.[0]?.content?.parts || [];
+                finalText = candidateParts.filter(p => p.text).map(p => p.text).join('');
+            } catch { /* exhausted */ }
+        }
+
+        if (finalText) {
+            sendEvent('token', finalText);
+            sendEvent('done', '');
+            console.log(`[AI Stream] Completed with ${callCount} tool passes (fallback ${finalText.length} chars).`);
+        } else {
+            console.error(`[AI Stream] No text after ${callCount} tool passes.`);
+            sendEvent('error', "I couldn't generate a response. Please try rephrasing your question.");
+        }
+    } catch (error) {
+        console.error("Gemini Stream API Error:", error);
+        if (error.message?.includes("429")) {
+            sendEvent('error', "I'm currently receiving too many requests. Please wait a moment.");
+        } else {
+            sendEvent('error', "I'm having trouble analyzing the data right now. Please try again.");
+        }
+    }
+};
+
 module.exports = {
-    generateInsight
+    generateInsight,
+    generateInsightStream,
 };

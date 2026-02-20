@@ -182,7 +182,7 @@ export default function CalendarPage() {
                         </div>
 
                         {/* Mobile: Compact Lines */}
-                        <div className="flex md:hidden mt-auto flex-wrap gap-0.5 max-h-[12px] overflow-hidden">
+                        <div className="flex md:hidden mt-auto flex-wrap gap-0.5 max-h-3 overflow-hidden">
                             {dateEvents.slice(0, 3).map((event, idx) => (
                                 <div
                                     key={idx}

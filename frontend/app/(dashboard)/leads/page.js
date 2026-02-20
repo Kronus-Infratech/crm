@@ -248,8 +248,8 @@ export default function LeadsPage() {
                     <button
                         onClick={() => setShowOverdueOnly(!showOverdueOnly)}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all border-2 ${showOverdueOnly
-                                ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/20'
-                                : 'bg-white text-red-500 border-red-200 hover:border-red-400 hover:bg-red-50'
+                            ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/20'
+                            : 'bg-white text-red-500 border-red-200 hover:border-red-400 hover:bg-red-50'
                             }`}
                     >
                         <HiClock size={16} />

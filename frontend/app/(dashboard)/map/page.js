@@ -335,8 +335,8 @@ export default function GoogleMapPage() {
                             type="button"
                             onClick={() => setFormData({ ...formData, color: c })}
                             className={`w-8 h-8 rounded-full border-2 transition-all ${formData.color === c
-                                    ? "border-brand-dark-gray scale-110 shadow-md"
-                                    : "border-transparent"
+                                ? "border-brand-dark-gray scale-110 shadow-md"
+                                : "border-transparent"
                                 }`}
                             style={{ backgroundColor: c }}
                         />
@@ -544,8 +544,8 @@ export default function GoogleMapPage() {
                                         <div
                                             key={prop.id}
                                             className={`p-3 rounded-lg cursor-pointer transition-all border ${isActive
-                                                    ? "bg-[#009688]/5 border-[#009688]/30 shadow-sm"
-                                                    : "border-transparent hover:bg-gray-50 hover:border-gray-100"
+                                                ? "bg-[#009688]/5 border-[#009688]/30 shadow-sm"
+                                                : "border-transparent hover:bg-gray-50 hover:border-gray-100"
                                                 }`}
                                             onClick={() => {
                                                 setHighlightPropertyId(isActive ? null : prop.id);

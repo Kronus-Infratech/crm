@@ -7,5 +7,6 @@ const { protect } = require('../middleware/auth');
 router.use(protect);
 
 router.post('/chat', aiController.getAIChatResponse);
+router.post('/chat/stream', aiController.getAIChatResponseStream);
 
 module.exports = router;

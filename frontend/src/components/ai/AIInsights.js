@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { HiPaperAirplane, HiSparkles, HiUser, HiRefresh, HiLightBulb } from "react-icons/hi";
-import api from "@/src/services/api";
+import { getAuthToken, getBaseURL } from "@/src/services/api";
 import clsx from "clsx";
 import toast from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
@@ -17,7 +17,10 @@ export default function AIInsights() {
     ]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const [streamingText, setStreamingText] = useState("");
+    const [statusMessage, setStatusMessage] = useState("");
     const scrollRef = useRef(null);
+    const abortRef = useRef(null);
 
     const scrollToBottom = () => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -25,37 +28,109 @@ export default function AIInsights() {
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [messages, streamingText, statusMessage]);
 
     const handleSend = async (e) => {
         e?.preventDefault();
         if (!input.trim() || loading) return;
 
         const userMessage = { role: "user", parts: [{ text: input }] };
-        setMessages(prev => [...prev, userMessage]);
+        const currentMessages = [...messages, userMessage];
+        setMessages(currentMessages);
+        const messageText = input;
         setInput("");
         setLoading(true);
+        setStreamingText("");
+        setStatusMessage("thinking");
 
         try {
-            // Format history for Gemini (excluding the last message we just added)
-            // Backend expects array of { role, parts: [{ text }] }
-            const res = await api.post("/ai/chat", {
-                message: input,
-                history: messages
+            const token = getAuthToken();
+            const controller = new AbortController();
+            abortRef.current = controller;
+
+            const response = await fetch(`${getBaseURL()}/ai/chat/stream`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    message: messageText,
+                    history: messages, // Send history before adding user message
+                }),
+                signal: controller.signal,
             });
 
-            if (res.data.success) {
-                setMessages(prev => [...prev, { role: "model", parts: [{ text: res.data.data }] }]);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulated = "";
+            let buffer = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                // Keep the last (possibly incomplete) line in the buffer
+                buffer = lines.pop() || "";
+
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed.startsWith("data: ")) continue;
+
+                    try {
+                        const payload = JSON.parse(trimmed.slice(6));
+
+                        if (payload.type === "status") {
+                            setStatusMessage(payload.data);
+                        } else if (payload.type === "token") {
+                            accumulated += payload.data;
+                            setStreamingText(accumulated);
+                            setStatusMessage(""); // Clear status once tokens start
+                        } else if (payload.type === "done") {
+                            // Finalize — move streaming text into messages
+                            setMessages(prev => [...prev, { role: "model", parts: [{ text: accumulated }] }]);
+                            setStreamingText("");
+                            setStatusMessage("");
+                        } else if (payload.type === "error") {
+                            setMessages(prev => [...prev, { role: "model", parts: [{ text: `⚠️ ${payload.data}` }] }]);
+                            setStreamingText("");
+                            setStatusMessage("");
+                        }
+                    } catch {
+                        // Ignore malformed JSON lines
+                    }
+                }
+            }
+
+            // If stream ended without a 'done' event but we have accumulated text
+            if (accumulated) {
+                setMessages(prev => {
+                    // Avoid adding duplicate if 'done' event already added it
+                    const last = prev[prev.length - 1];
+                    if (last?.role === 'model' && last?.parts?.[0]?.text === accumulated) return prev;
+                    return [...prev, { role: "model", parts: [{ text: accumulated }] }];
+                });
+                setStreamingText("");
             }
         } catch (error) {
-            console.error("AI Error:", error);
+            if (error.name === "AbortError") return;
+            console.error("AI Stream Error:", error);
             toast.error("Failed to get response from AI. Please try again.");
             setMessages(prev => [...prev, {
                 role: "model",
                 parts: [{ text: "⚠️ Sorry, I encountered an error. Please check your connection or API key." }]
             }]);
+            setStreamingText("");
         } finally {
             setLoading(false);
+            setStatusMessage("");
+            abortRef.current = null;
         }
     };
 
@@ -65,6 +140,27 @@ export default function AIInsights() {
         "How is our lead growth this month?",
         "Analyze the hot properties right now."
     ];
+
+    // Animated status dots
+    const StatusIndicator = ({ message }) => (
+        <div className="flex gap-3 items-start">
+            <div className="w-8 h-8 rounded-full bg-white border border-[#009688]/20 flex items-center justify-center text-[#009688] shrink-0 shadow-sm">
+                <HiSparkles size={16} className="" />
+            </div>
+            <div className="bg-white border border-[#009688]/10 p-4 rounded-2xl rounded-tl-none shadow-sm">
+                <div className="flex items-center gap-2.5">
+                    <div className="flex gap-1">
+                        <span className="w-1.5 h-1.5 bg-[#009688] rounded-full animate-bounce"></span>
+                        <span className="w-1.5 h-1.5 bg-[#009688] rounded-full animate-bounce [animation-delay:0.15s]"></span>
+                        <span className="w-1.5 h-1.5 bg-[#009688] rounded-full animate-bounce [animation-delay:0.3s]"></span>
+                    </div>
+                    <span className="text-xs text-gray-500 font-semibold tracking-wide">
+                        Kronus AI is <span className="text-[#009688] font-bold">{message}</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="flex-1 flex flex-col h-full bg-gray-50/30">
@@ -112,6 +208,32 @@ export default function AIInsights() {
                     </div>
                 ))}
 
+                {/* Streaming text (partial response being received) */}
+                {streamingText && (
+                    <div className="flex gap-3 items-start">
+                        <div className="w-8 h-8 rounded-full bg-white border border-[#009688]/20 flex items-center justify-center text-[#009688] shrink-0 shadow-sm">
+                            <HiSparkles size={16} />
+                        </div>
+                        <div className="max-w-[92%] md:max-w-[80%] p-3 md:p-4 rounded-2xl text-[13px] md:text-sm leading-relaxed bg-white text-brand-dark-gray border border-brand-spanish-gray/20 rounded-tl-none shadow-sm">
+                            <div className="markdown-container model-markdown">
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                        table: ({ node, ...props }) => (
+                                            <div className="overflow-x-auto my-4 -mx-1 px-1">
+                                                <table {...props} className="min-w-full border-collapse border border-gray-100 rounded-lg overflow-hidden" />
+                                            </div>
+                                        )
+                                    }}
+                                >
+                                    {streamingText}
+                                </ReactMarkdown>
+                            </div>
+                            <span className="inline-block w-0.5 h-4 bg-[#009688] animate-pulse ml-0.5 align-text-bottom" />
+                        </div>
+                    </div>
+                )}
+
                 {/* Suggestions - Centered when chat is empty */}
                 {messages.length === 1 && (
                     <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
@@ -133,18 +255,11 @@ export default function AIInsights() {
                     </div>
                 )}
 
-                {loading && (
-                    <div className="flex gap-3 animate-pulse">
-                        <div className="w-8 h-8 rounded-full bg-white border border-brand-spanish-gray/20 flex items-center justify-center text-[#009688]">
-                            <HiSparkles size={16} />
-                        </div>
-                        <div className="bg-white border border-brand-spanish-gray/20 p-4 rounded-2xl rounded-tl-none w-32 flex gap-1 items-center justify-center">
-                            <span className="w-1.5 h-1.5 bg-[#009688] rounded-full animate-bounce"></span>
-                            <span className="w-1.5 h-1.5 bg-[#009688] rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                            <span className="w-1.5 h-1.5 bg-[#009688] rounded-full animate-bounce [animation-delay:0.4s]"></span>
-                        </div>
-                    </div>
+                {/* Dynamic status indicator (shown while processing, before tokens arrive) */}
+                {loading && statusMessage && !streamingText && (
+                    <StatusIndicator message={statusMessage} />
                 )}
+
                 <div ref={scrollRef} />
             </div>
 

@@ -148,7 +148,7 @@ export default function FinancePage() {
             </div>
 
             {/* Content Tabs */}
-            <div className="bg-white rounded-lg border border-brand-spanish-gray/20 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+            <div className="bg-white rounded-lg border border-brand-spanish-gray/20 shadow-sm overflow-hidden flex flex-col min-h-125">
                 <div className="flex border-b border-gray-100 px-6 pt-4">
                     <button
                         onClick={() => setActiveTab("TRANSACTIONS")}

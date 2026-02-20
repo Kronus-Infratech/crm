@@ -264,7 +264,7 @@ function ProfileField({ label, name, register, isEditing, value, disabled, note,
         return (
             <div>
                 <label className="block text-sm font-medium text-gray-500 mb-1">{label}</label>
-                <div className="text-gray-900 font-medium py-2 border-b border-gray-100 min-h-[40px]">
+                <div className="text-gray-900 font-medium py-2 border-b border-gray-100 min-h-10">
                     {value || <span className="text-gray-400 italic">Not set</span>}
                 </div>
             </div>

@@ -163,9 +163,9 @@ export default function UsersPage() {
                 </div>
             </div>
 
-            <Card className="p-0 overflow-hidden min-h-[244px] relative">
+            <Card className="p-0 overflow-hidden min-h-61 relative">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[800px]">
+                    <table className="w-full text-left border-collapse min-w-200">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider">
                                 <th className="px-6 py-4">Name</th>
@@ -219,7 +219,7 @@ export default function UsersPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex flex-wrap gap-1">
                                                 {(user.roles || []).map(role => (
-                                                    <RoleBadge key={role} role={role.replace("SALESMAN","SALES EXECUTIVE")} />
+                                                    <RoleBadge key={role} role={role.replace("SALESMAN", "SALES EXECUTIVE")} />
                                                 ))}
                                             </div>
                                         </td>
