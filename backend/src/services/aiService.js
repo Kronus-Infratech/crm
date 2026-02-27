@@ -210,6 +210,43 @@ const toolHandlers = {
         // 3. Enforce Limits & Cleanup Query
         const safeQuery = { ...query };
 
+        // --- groupBy sanitization ---
+        if (action === "groupBy") {
+            // groupBy does not support 'select' — strip it
+            if (safeQuery.select) {
+                delete safeQuery.select;
+            }
+            // Ensure _count is present
+            if (!safeQuery._count && !safeQuery._sum && !safeQuery._avg && !safeQuery._min && !safeQuery._max) {
+                safeQuery._count = true;
+            }
+            // Fix orderBy: strip any non-aggregate field that's not in `by`
+            if (safeQuery.orderBy && safeQuery.by) {
+                const bySet = new Set(Array.isArray(safeQuery.by) ? safeQuery.by : [safeQuery.by]);
+                const aggregateKeys = new Set(['_count', '_sum', '_avg', '_min', '_max']);
+                const fixedOrderBy = {};
+                const orderByObj = safeQuery.orderBy;
+                for (const [key, val] of Object.entries(orderByObj)) {
+                    if (aggregateKeys.has(key)) {
+                        fixedOrderBy[key] = val;
+                    } else if (bySet.has(key)) {
+                        fixedOrderBy[key] = val;
+                    }
+                    // else: drop it — field not in `by`
+                }
+                // If nothing survived, default to _count desc
+                if (Object.keys(fixedOrderBy).length === 0) {
+                    fixedOrderBy._count = { _all: 'desc' };
+                }
+                safeQuery.orderBy = fixedOrderBy;
+            }
+        }
+
+        // --- distinct is unreliable with MongoDB — remove it ---
+        if (action === "findMany" && safeQuery.distinct) {
+            delete safeQuery.distinct;
+        }
+
         // Enforce limit on 'take' for list queries
         if (action === "findMany") {
             if (!safeQuery.take || safeQuery.take > 50) {
@@ -261,6 +298,43 @@ const toolHandlers = {
             if (!prisma[prismaModelName]) {
                 return { error: `Prisma model '${prismaModelName}' not found.` };
             }
+
+            // --- Validate ObjectID-shaped fields before execution ---
+            // Catches AI-invented IDs like "p_green_valley" that would cause Prisma to crash
+            const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+            const validateIds = (obj, path = '') => {
+                if (!obj || typeof obj !== 'object') return null;
+                if (Array.isArray(obj)) {
+                    for (const item of obj) {
+                        const err = validateIds(item, path);
+                        if (err) return err;
+                    }
+                    return null;
+                }
+                for (const [key, val] of Object.entries(obj)) {
+                    if (typeof val === 'string' && (key === 'id' || key.endsWith('Id')) && val.length > 0) {
+                        if (!objectIdRegex.test(val)) {
+                            return `Invalid ID value for '${key}': "${val}". IDs must be 24-character hex strings (MongoDB ObjectIDs). Look up the entity by name first to get the real ID.`;
+                        }
+                    }
+                    if (val && typeof val === 'object') {
+                        // Skip checking inside 'in' arrays that aren't ID arrays
+                        const err = validateIds(val, key);
+                        if (err) return err;
+                    }
+                }
+                return null;
+            };
+
+            const idError = validateIds(safeQuery);
+            if (idError) {
+                return { error: idError };
+            }
+
+            // Log query for debugging
+            const queryKeys = Object.keys(safeQuery);
+            if (safeQuery.by) console.log(`  by:`, JSON.stringify(safeQuery.by));
+            if (safeQuery.orderBy) console.log(`  orderBy:`, JSON.stringify(safeQuery.orderBy));
 
             // e.g., prisma.lead.findMany(query)
             const result = await prisma[prismaModelName][action](safeQuery);
@@ -322,6 +396,14 @@ const systemInstruction = `
        - Use top-level NOT: \`{ where: { NOT: [{ phone: null }] } }\` ✅
        - Wrong: \`{ where: { phone: { not: null } } }\` ❌ (Prisma rejects \`not: null\`)
        - To check field exists and is set: \`{ where: { NOT: [{ fieldName: null }] } }\`
+    7. **IDs are MongoDB ObjectIDs (24-character hex strings like "6789abcd1234ef5678901234").** NEVER invent or guess IDs. If you need a project's ID, first query \`Project.findMany\` with \`{ where: { name: { contains: "...", mode: "insensitive" } }, select: { id: true, name: true } }\` to get the real ID, then use that ID in subsequent queries.
+    8. **groupBy queries MUST NOT include \`select\`.** Instead use \`_count: true\` (or \`_count: { fieldName: true }\`) at the top level. 
+       Correct example: \`{ by: ['property'], _count: true, orderBy: { _count: { property: 'desc' } }, where: { NOT: [{ property: null }] }, take: 5 }\` ✅
+       Wrong: \`{ by: ['property'], select: { _count: { select: { _all: true } }, property: true } }\` ❌
+    9. **NEVER use \`distinct\` in findMany.** It does not work reliably with MongoDB. Use \`groupBy\` instead.
+       - To get distinct values: \`{ action: 'groupBy', by: ['property'], _count: true }\` ✅
+       - Wrong: \`{ action: 'findMany', distinct: ['property'] }\` ❌
+    10. **orderBy in groupBy:** Every non-aggregate field in \`orderBy\` must be in the \`by\` array. Only use \`_count\`, \`_sum\`, \`_avg\`, \`_min\`, \`_max\` aggregates in orderBy.
 
     ### TOOL USAGE
     1. **Check Schema First:** Use \`getDatabaseSchema\` if you are unsure about field names. Look at \`scalarFields\` for queryable columns and \`enums\` for valid values.
