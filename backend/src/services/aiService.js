@@ -208,14 +208,23 @@ const toolHandlers = {
         }
 
         // 3. Enforce Limits & Cleanup Query
-        const safeQuery = { ...query };
+        // Deep clone via JSON to get a plain object (Gemini SDK returns protobuf-backed objects
+        // where spread/delete may not work reliably)
+        let safeQuery = JSON.parse(JSON.stringify(query));
 
         // --- groupBy sanitization ---
         if (action === "groupBy") {
-            // groupBy does not support 'select' — strip it
-            if (safeQuery.select) {
-                delete safeQuery.select;
+            // Rebuild query with ONLY allowed groupBy keys (no 'select', no 'distinct')
+            const allowedGroupByKeys = ['by', 'where', 'orderBy', 'having', 'take', 'skip',
+                '_count', '_sum', '_avg', '_min', '_max'];
+            const cleanQuery = {};
+            for (const key of allowedGroupByKeys) {
+                if (safeQuery[key] !== undefined) {
+                    cleanQuery[key] = safeQuery[key];
+                }
             }
+            safeQuery = cleanQuery;
+
             // Ensure _count is present
             if (!safeQuery._count && !safeQuery._sum && !safeQuery._avg && !safeQuery._min && !safeQuery._max) {
                 safeQuery._count = true;
@@ -240,11 +249,13 @@ const toolHandlers = {
                 }
                 safeQuery.orderBy = fixedOrderBy;
             }
+            console.log(`[AI] Sanitized groupBy query:`, JSON.stringify(safeQuery));
         }
 
         // --- distinct is unreliable with MongoDB — remove it ---
         if (action === "findMany" && safeQuery.distinct) {
-            delete safeQuery.distinct;
+            const { distinct, ...rest } = safeQuery;
+            safeQuery = rest;
         }
 
         // Enforce limit on 'take' for list queries
