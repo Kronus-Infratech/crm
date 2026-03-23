@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HiPlus, HiOfficeBuilding, HiSearch, HiPencil, HiTrash, HiDotsVertical } from "react-icons/hi";
+import { HiPlus, HiOfficeBuilding, HiSearch, HiPencil, HiTrash, HiDotsVertical, HiDownload } from "react-icons/hi";
 import { toast } from "react-hot-toast";
 
 import Heading from "@/src/components/ui/Heading";
@@ -14,6 +14,7 @@ import InventoryForm from "@/src/components/inventory/InventoryForm";
 import InventoryDetail from "@/src/components/inventory/InventoryDetail";
 import ProjectForm from "@/src/components/inventory/ProjectForm";
 import CityForm from "@/src/components/inventory/CityForm";
+import InventoryExportModal from "@/src/components/inventory/InventoryExportModal";
 import { HiChevronDown } from "react-icons/hi";
 
 export default function InventoryPage() {
@@ -56,6 +57,7 @@ export default function InventoryPage() {
 
     const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     // Fetch Cities
     const fetchCities = async () => {
@@ -506,6 +508,14 @@ export default function InventoryPage() {
                 </div>
 
                 <div className="flex items-center gap-4 w-full md:w-auto">
+                    <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        onClick={() => setIsExportModalOpen(true)}
+                    >
+                        <HiDownload size={16} /> Download CSV
+                    </Button>
+
                     <select
                         className="text-sm font-bold bg-gray-50 border-brand-spanish-gray/30 rounded-lg text-brand-dark-gray focus:ring-[#009688]/20 focus:border-[#009688] py-2"
                         value={statusFilter}
@@ -616,6 +626,12 @@ export default function InventoryPage() {
             >
                 <InventoryDetail item={viewingItem} />
             </Modal>
+
+            <InventoryExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                cities={cities}
+            />
         </div>
     );
 }

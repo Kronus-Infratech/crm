@@ -23,6 +23,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const ledgerRoutes = require('./routes/ledgerRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const mapRoutes = require('./routes/mapRoutes');
+const kpiRoutes = require('./routes/kpiRoutes');
 const { initCronJobs } = require('./services/cronService');
 
 // Initialize express app
@@ -78,6 +79,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/ledger', ledgerRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/map', mapRoutes);
+app.use('/api/kpi', kpiRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -100,6 +102,7 @@ app.get('/', (req, res) => {
       ledger: '/api/ledger',
       reports: '/api/reports',
       map: '/api/map',
+      kpi: '/api/kpi',
     },
   });
 });

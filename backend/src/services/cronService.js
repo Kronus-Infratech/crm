@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const prisma = require('../config/database');
 const emailClient = require('../services/emailClient');
 const { getReportingData, generateReportPDF } = require('./reportService');
+const { recalculateQuarterKPIs } = require('./kpiService');
 
 /**
  * Initialize all scheduled tasks
@@ -43,6 +44,32 @@ const initCronJobs = () => {
   cron.schedule('0 20 * * 1', async () => {
     console.log('Running 8 PM Cron: Generating Weekly Organization Report...');
     await sendAutomatedReport('Weekly');
+  }, {
+    timezone: "Asia/Kolkata"
+  });
+
+  // 6. Daily KPI recalculation: Every day at 2:00 AM
+  cron.schedule('0 2 * * *', async () => {
+    console.log('Running 2:00 AM Cron: Recalculating quarterly sales KPIs...');
+    try {
+      await recalculateQuarterKPIs();
+      console.log('KPI recalculation completed.');
+    } catch (error) {
+      console.error('Error in KPI recalculation cron:', error);
+    }
+  }, {
+    timezone: "Asia/Kolkata"
+  });
+
+  // 7. Quarter start reset/bootstrap: 00:05 on Jan/Apr/Jul/Oct 1st
+  cron.schedule('5 0 1 1,4,7,10 *', async () => {
+    console.log('Running Quarter Reset Cron: Initializing fresh quarterly KPI records...');
+    try {
+      await recalculateQuarterKPIs();
+      console.log('Quarter reset/bootstrap completed.');
+    } catch (error) {
+      console.error('Error in quarter reset cron:', error);
+    }
   }, {
     timezone: "Asia/Kolkata"
   });

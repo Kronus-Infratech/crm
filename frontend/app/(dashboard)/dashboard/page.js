@@ -27,6 +27,7 @@ export default function DashboardPage() {
     valueBreakdown: { won: 0, lost: 0, pipeline: 0 }
   });
   const [recentLeads, setRecentLeads] = useState([]);
+  const [kpiSummary, setKpiSummary] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -35,15 +36,17 @@ export default function DashboardPage() {
         const isManager = userRoles.includes('ADMIN') || userRoles.includes('MANAGER') || userRoles.includes('DIRECTOR') || userRoles.includes('EXECUTIVE');
 
         // Fetch stats concurrently with safety
-        const [userStatsRes, leadStatsRes, recentLeadsRes] = await Promise.allSettled([
+        const [userStatsRes, leadStatsRes, recentLeadsRes, kpiSummaryRes] = await Promise.allSettled([
           isManager ? api.get("/users/stats") : Promise.resolve({ data: { data: { activeUsers: 0 } } }),
           api.get("/leads/stats"),
-          api.get("/leads", { params: { limit: 5, sortOrder: "desc", sortBy: "createdAt" } })
+          api.get("/leads", { params: { limit: 5, sortOrder: "desc", sortBy: "createdAt" } }),
+          isManager ? api.get("/kpi/admin-summary") : Promise.resolve({ data: { data: null } })
         ]);
 
         const userStats = userStatsRes.status === 'fulfilled' ? userStatsRes.value.data.data : { activeUsers: 0 };
         const leadStats = leadStatsRes.status === 'fulfilled' ? leadStatsRes.value.data.data : { totalLeads: 0, totalValue: 0, leadsByStatus: {}, leadsBySource: {}, performance: [], monthlyTrends: [], valueBreakdown: { won: 0, lost: 0, pipeline: 0 } };
         const recentLeadsData = recentLeadsRes.status === 'fulfilled' ? recentLeadsRes.value.data.data.leads : [];
+        const kpiSummaryData = kpiSummaryRes.status === 'fulfilled' ? kpiSummaryRes.value.data.data : null;
 
         const wonLeads = leadStats.leadsByStatus?.CONVERTED || 0;
         const totalLeads = leadStats.totalLeads || 1;
@@ -62,6 +65,7 @@ export default function DashboardPage() {
         });
 
         setRecentLeads(recentLeadsData);
+        setKpiSummary(kpiSummaryData);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -121,6 +125,37 @@ export default function DashboardPage() {
           </motion.div>
         ))}
       </div>
+
+      {isManagerOrAdmin && kpiSummary && (
+        <Card className="p-6 border-none shadow-xl shadow-brand-dark-gray/5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-black text-brand-dark-gray uppercase tracking-tight">Sales KPI Status</h3>
+            <span className="text-[10px] font-black bg-[#009688]/10 text-[#009688] px-3 py-1.5 rounded-lg">QUARTERLY</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="p-4 rounded-lg bg-gray-50 border border-brand-spanish-gray/20">
+              <p className="text-xs text-brand-spanish-gray uppercase font-bold tracking-wider">Average Sales KPI Score</p>
+              <p className="text-2xl font-black text-brand-dark-gray mt-1">{Number(kpiSummary.averageSalesKPIScore || 0).toFixed(2)}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-emerald-50/40 border border-emerald-200/60">
+              <p className="text-xs text-emerald-700 uppercase font-bold tracking-wider">Top 3 Sales Executives</p>
+              <div className="mt-2 space-y-1 text-brand-dark-gray">
+                {(kpiSummary.top3 || []).map((row, i) => (
+                  <p key={`top-${row.id || i}`}>#{i + 1} {row.user?.name || '-'} ({Number(row.finalScore || 0).toFixed(1)})</p>
+                ))}
+              </div>
+            </div>
+            <div className="p-4 rounded-lg bg-red-50/40 border border-red-200/60">
+              <p className="text-xs text-red-700 uppercase font-bold tracking-wider">Bottom 3 Sales Executives</p>
+              <div className="mt-2 space-y-1 text-brand-dark-gray">
+                {(kpiSummary.bottom3 || []).map((row, i) => (
+                  <p key={`bottom-${row.id || i}`}>#{i + 1} {row.user?.name || '-'} ({Number(row.finalScore || 0).toFixed(1)})</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Analytics Core Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">

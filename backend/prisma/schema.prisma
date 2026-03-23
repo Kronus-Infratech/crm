@@ -36,6 +36,9 @@ model User {
   events            Event[]   @relation("UserEvents")
   leaves            Leave[]   @relation("UserLeaves")
   approvedLeaves    Leave[]   @relation("ApprovedLeaves")
+  kpiTargets        QuarterlySalesTarget[] @relation("TargetUser")
+  kpiTargetsCreated QuarterlySalesTarget[] @relation("TargetCreator")
+  kpiQuarterly      SalesKPIQuarterly[]
   
   // Ledger Relations
   paymentLedgerEntries  PaymentLedgerEntry[]
@@ -511,4 +514,56 @@ enum LeaveStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+model QuarterlySalesTarget {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  user          User     @relation("TargetUser", fields: [userId], references: [id])
+  quarterKey    String
+  quarterStart  DateTime
+  quarterEnd    DateTime
+  targetRevenue Float    @default(0)
+  createdById   String?  @db.ObjectId
+  createdBy     User?    @relation("TargetCreator", fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, quarterKey])
+  @@index([quarterKey])
+  @@map("quarterly_sales_targets")
+}
+
+model SalesKPIQuarterly {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String   @db.ObjectId
+  user                  User     @relation(fields: [userId], references: [id])
+  quarterKey            String
+  quarterStart          DateTime
+  quarterEnd            DateTime
+  calculatedAt          DateTime @default(now())
+  targetRevenue         Float    @default(0)
+  revenueClosed         Float    @default(0)
+  dealsClosed           Int      @default(0)
+  siteVisits            Int      @default(0)
+  leadsAssigned         Int      @default(0)
+  leadsContacted24h     Int      @default(0)
+  leadsAged48h          Int      @default(0)
+  scheduledFollowUps    Int      @default(0)
+  completedFollowUps    Int      @default(0)
+  missedFollowUps       Int      @default(0)
+  closureScore          Float    @default(0)
+  closureBonus          Float    @default(0)
+  siteVisitScore        Float    @default(0)
+  leadResponseScore     Float    @default(0)
+  followUpComplianceScore Float  @default(0)
+  totalPenalties        Float    @default(0)
+  finalScore            Float    @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([userId, quarterKey])
+  @@index([quarterKey])
+  @@index([quarterKey, finalScore])
+  @@map("sales_kpi_quarterly")
 }

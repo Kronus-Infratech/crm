@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiHome, HiUsers, HiBriefcase, HiCurrencyRupee, HiCog, HiLogout, HiMenuAlt2, HiOfficeBuilding, HiChip, HiCalendar, HiUserAdd, HiChartBar, HiMap, HiGlobe } from "react-icons/hi";
+import { HiHome, HiUsers, HiBriefcase, HiTrendingUp, HiCurrencyRupee, HiCog, HiLogout, HiMenuAlt2, HiOfficeBuilding, HiChip, HiCalendar, HiUserAdd, HiChartBar, HiMap, HiGlobe } from "react-icons/hi";
 import clsx from "clsx";
 import { useAuth } from "@/src/contexts/AuthContext";
 
@@ -26,6 +26,7 @@ export default function DashboardLayout({ children }) {
         // { name: "Google Map", href: "/google-map", icon: HiGlobe },
         { name: "Finance", href: "/finance", icon: HiCurrencyRupee, allowedRoles: ["ADMIN", "EXECUTIVE", "DIRECTOR", "FINANCE"] },
         { name: "HR", href: "/hr", icon: HiUsers, allowedRoles: ["ADMIN", "HR"] },
+        { name: "Sales KPI", href: "/kpi", icon: HiTrendingUp },
         { name: "Calendar", href: "/calendar", icon: HiCalendar },
         { name: "AI Insights", href: "/ai", icon: HiChip },
         { name: "Reports", href: "/reports", icon: HiChartBar, allowedRoles: ["ADMIN", "EXECUTIVE", "DIRECTOR"] },

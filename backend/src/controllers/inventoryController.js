@@ -2,6 +2,12 @@ const prisma = require('../config/database');
 const { HTTP_STATUS } = require('../config/constants');
 const { generateEmbedding } = require('../utils/embedding');
 
+const escapeCsv = (value) => {
+  if (value === null || value === undefined) return '""';
+  const str = String(value).replace(/"/g, '""');
+  return `"${str}"`;
+};
+
 /**
  * @desc    Get all projects (Property Areas)
  * @route   GET /api/inventory/projects
@@ -409,6 +415,105 @@ const updateInventoryItem = async (req, res, next) => {
 };
 
 /**
+ * @desc    Download inventory CSV (all or selected cities)
+ * @route   GET /api/inventory/items/export/csv
+ * @access  Private
+ */
+const downloadInventoryCsv = async (req, res, next) => {
+  try {
+    const cityIdsRaw = req.query.cityIds;
+    const where = {};
+
+    if (cityIdsRaw && cityIdsRaw !== 'ALL') {
+      const cityIds = String(cityIdsRaw)
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+
+      if (cityIds.length > 0) {
+        where.project = { cityId: { in: cityIds } };
+      }
+    }
+
+    const items = await prisma.inventoryItem.findMany({
+      where,
+      orderBy: [{ project: { city: { name: 'asc' } } }, { project: { name: 'asc' } }, { plotNumber: 'asc' }],
+      include: {
+        project: {
+          select: {
+            name: true,
+            location: true,
+            city: { select: { name: true } }
+          }
+        },
+        createdBy: { select: { name: true, email: true } },
+        _count: { select: { leads: true } }
+      }
+    });
+
+    const headers = [
+      'City', 'Project', 'Project Location', 'Plot Number', 'Block', 'Status',
+      'Property Type', 'Transaction Type', 'Size', 'Rate Per Sq Yard', 'Total Price',
+      'Asking Price', 'Circle Rate', 'Facing', 'Road Width', 'Open Sides',
+      'Construction', 'Boundary Walls', 'Gated Colony', 'Corner', 'Condition',
+      'Owner Name', 'Owner Contact', 'Sold To', 'Sold Date', 'Connected Leads',
+      'Reference', 'Amenities', 'Description', 'Created By', 'Created By Email',
+      'Listing Date', 'Updated At'
+    ];
+
+    const rows = items.map((item) => [
+      item.project?.city?.name || '',
+      item.project?.name || '',
+      item.project?.location || '',
+      item.plotNumber || '',
+      item.block || '',
+      item.status || '',
+      item.propertyType || '',
+      item.transactionType || '',
+      item.size || '',
+      item.ratePerSqYard ?? '',
+      item.totalPrice ?? '',
+      item.askingPrice ?? '',
+      item.circleRate ?? '',
+      item.facing || '',
+      item.roadWidth || '',
+      item.openSides ?? '',
+      item.construction ?? '',
+      item.boundaryWalls ?? '',
+      item.gatedColony ?? '',
+      item.corner ?? '',
+      item.condition || '',
+      item.ownerName || '',
+      item.ownerContact || '',
+      item.soldTo || '',
+      item.soldDate ? new Date(item.soldDate).toISOString() : '',
+      item._count?.leads ?? 0,
+      item.reference || '',
+      item.amenities || '',
+      item.description || '',
+      item.createdBy?.name || '',
+      item.createdBy?.email || '',
+      item.listingDate ? new Date(item.listingDate).toISOString() : '',
+      item.updatedAt ? new Date(item.updatedAt).toISOString() : ''
+    ]);
+
+    const csv = [
+      headers.map(escapeCsv).join(','),
+      ...rows.map((row) => row.map(escapeCsv).join(','))
+    ].join('\n');
+
+    const datePart = new Date().toISOString().split('T')[0];
+    const fileName = `kronus_inventory_${datePart}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.status(HTTP_STATUS.OK).send(csv);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @desc    Delete inventory item
  * @route   DELETE /api/inventory/items/:id
  * @access  Private (AdminOnly)
@@ -491,5 +596,6 @@ module.exports = {
   deleteInventoryItem,
   updateProject,
   deleteProject,
-  getInventoryItemById
+  getInventoryItemById,
+  downloadInventoryCsv
 };

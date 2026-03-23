@@ -4,6 +4,7 @@ const {
     getProjects,
     createProject,
     getInventoryItems,
+    downloadInventoryCsv,
     createInventoryItem,
     updateInventoryItem,
     deleteInventoryItem,
@@ -32,6 +33,8 @@ router.route('/projects/:id')
 router.route('/items')
     .get(protect, getInventoryItems)
     .post(protect, createInventoryItem);
+
+router.get('/items/export/csv', protect, downloadInventoryCsv);
 
 router.route('/items/:id')
     .get(protect, getInventoryItemById)
